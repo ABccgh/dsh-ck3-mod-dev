@@ -69,8 +69,9 @@ plugin_manager  action: install_bundle  target: %USERPROFILE%\dsh-bundles\ck3mod
 ```
 
 - 首次安装：返回 `application: applied` 即生效；`restart-required` 就重启 DSH。
-- **改代码**：重新 robocopy → **重启 DSH**（Host 会缓存已加载的 ESM 模块，插件页关开不会重读代码）。
-- **只改 `cordis.patch.yml` 的配置值**：重载一次即可（插件页把该 bundle 关开，或重启）。
+- **改代码**：重新 robocopy → **重启 DSH**（Host 会缓存已加载的 ESM 模块，插件页关开不会重读代码）；
+  不想重启时按 §3.1 把 `?v=` 加一再关开 bundle。
+- **只改 `cordis.patch.yml` 的配置值**：把 bundle 关开一次即可（HMR 重组）。
 - 卸载：`plugin_manager action: remove_bundle target: @local/ck3moddev`；
   本目录与 `dsh-bundles` 副本可留可删（删了要重装才能回来）。
 
@@ -79,6 +80,29 @@ plugin_manager  action: install_bundle  target: %USERPROFILE%\dsh-bundles\ck3mod
 - `Config.listConfigs` 能看到 `include:preset-ck3mod`，状态 `schema`；
 - 新建会话时预设列表里有「CK3 模组开发」；
 - 该会话工具表含 8 个 `ck3mod_*` + `ck3wiki_*` + `steam_*`。
+
+### 3.1 为什么预设子插件写成 `file:` URL
+
+预设的 `plugins` 子行是由 **DSH 安装目录**解析的（Loader 的 baseUrl 在 `dsh/node_modules` 下），
+不是 profile 的 `node_modules`。实测矩阵：
+
+| 子行 `name` | 从 dsh base 解析 | 从 profile base 解析 |
+|---|---|---|
+| `@deepseek-ai/dsh-tool-fs` | ✅ | ❌ |
+| `@local/ck3moddev` | ❌ `ERR_MODULE_NOT_FOUND` | ✅ |
+| `file:///…/dsh-bundles/ck3moddev/lib/index.js` | ✅ | ✅ |
+
+所以 `ck3mod-tools` 行必须用 `file:` URL（写成包名时预设卡片直接「加载失败」）。
+由此带来的维护约束：
+
+1. `dsh-bundles\ck3moddev` 不能随便挪；搬了要同步改 `cordis.patch.yml` 里那一行。
+2. Node 按**完整 URL** 缓存 ESM 模块：改 `lib/` 后要重启 DSH；不想重启时把 `?v=` 加一，
+   再把 bundle 关开一次，就能强制重新 import。
+3. 每次激活都会写 `%TEMP%\ck3moddev-activation.json`（`ok` / `tools` / `maskedGlobals` / 错误栈）。
+   预设「加载失败」时先看它——客户端卡片只显示一行错误摘要。
+4. 绝对不要用 `ctx.setTimeout`：它属于 timer 服务，未在 `inject` 里声明会抛
+   `cannot get property "timer" without inject`（实测踩过，导致整个预设加载失败）。
+   需要延迟就用全局 `setTimeout` + `ctx.effect` 清理。
 
 ---
 

@@ -119,6 +119,18 @@ test('全局工具屏蔽：restrict 抛错被吞掉，不连累插件', () => {
   assert.equal(ctx.restricted.length, 0);
 });
 
+test('全局工具屏蔽：不碰 timer 服务（回归：cannot get property "timer" without inject）', () => {
+  const ctx = makeCtx(['prts_page']);
+  // 旧实现用 ctx.setTimeout 做 2 秒后的补调，但 inject 里没有 timer →
+  // Cordis 抛 `cannot get property "timer" without inject`，整个预设「加载失败」。
+  ctx.setTimeout = () => {
+    throw new Error('timer service not injected');
+  };
+  const config = normalizeConfig(BASE_CONFIG);
+  assert.doesNotThrow(() => installGlobalToolMask(ctx, config));
+  assert.ok(ctx.restricted.length >= 1);
+});
+
 test('createDeps / createTools：8 个工具的参数 schema 都是 object', () => {
   const config = normalizeConfig(BASE_CONFIG);
   const deps = createDeps(config, { run: async () => ({ code: 0, out: '' }) });

@@ -111,8 +111,17 @@
                   headChars: 4096
                   tailChars: 1024
           # ★ 本包自己的工具插件：挂在预设作用域内，只有 CK3 会话能看到这 8 个工具。
+          #
+          # 为什么用 `file:` URL 而不是包名：预设子行的模块是从**DSH 安装目录**解析的
+          # （Loader 的 baseUrl 在 dsh/node_modules 下），所以 `@local/*` 这类只装在 profile
+          # 里的包解析不到 —— 实测报 `ERR_MODULE_NOT_FOUND: Cannot find package '@local/ck3moddev'`，
+          # 预设直接显示「加载失败」。`file:` URL 在 dsh base 与 profile base 下都能解析。
+          # 安装副本固定在 %USERPROFILE%\dsh-bundles\ck3moddev；挪动目录时要同步改这里。
+          #
+          # `?v=3`：Node 按完整 URL 缓存 ESM 模块。改代码后若不重启 Host，只重载 bundle 会复用
+          # 旧模块；改 `lib/` 时把 v 加一可强制重新 import。正常运行不需要动它。
           - id: ck3mod-tools
-            name: '@local/ck3moddev'
+            name: 'file:///C:/Users/11210/dsh-bundles/ck3moddev/lib/index.js?v=3'
             config:
               workspaceRoot: 'D:\DSH workspace'
               toolsDir: 'D:\DSH workspace\ck3-modding-tools'

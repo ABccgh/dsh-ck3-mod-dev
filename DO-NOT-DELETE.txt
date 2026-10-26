@@ -4,6 +4,8 @@ DO NOT DELETE, MOVE, OR RENAME IT.
 profile : %DSH_HOME%\profiles\desktop
 junction: %DSH_HOME%\profiles\desktop\node_modules\@local\ck3moddev
 bundle  : @local/ck3moddev  (CK3 模组开发智能体预设 + 8 个 ck3mod_* 工具)
+          预设子行通过 file:///C:/Users/11210/dsh-bundles/ck3moddev/lib/index.js?v=2 引用本目录；
+          挪动本目录必须同步改 cordis.patch.yml 里那一行，否则预设显示「加载失败」。
 
 Deleting or moving this directory removes the "CK3 模组开发" preset and every
 ck3mod_* tool from the profile until the bundle is reinstalled with:
@@ -22,4 +24,7 @@ in the source is what stops the sync from deleting it.
 
 同步后**必须重启 DSH** 才会生效：Host 进程会缓存已加载的 ESM 模块，插件页关开
 与 HMR 重载都只重新装配配置，不会重新读代码。只改 cordis.patch.yml 的配置值，
-则不需要重启（但要手动重载一次）。
+则不需要重启（但要手动重载一次）。不想重启又想让新代码生效：把 patch 里的 `?v=2`
+加一，再把 bundle 关开一次（Node 按完整 URL 缓存 ESM 模块）。
+
+排查「预设加载失败」：先看 %TEMP%\ck3moddev-activation.json（ok / tools / maskedGlobals / 错误栈）。
