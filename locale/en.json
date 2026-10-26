@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "CK3 Mod Dev",
+    "description": "CK3 mod development agent preset plus 8 ck3mod_* tools: validation, build, deploy, headless smoke test, log triage, vanilla lookup and workshop preflight."
+  }
+}

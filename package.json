@@ -1,0 +1,33 @@
+{
+  "name": "@local/ck3moddev",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "CK3 mod development tools for DeepSeek Harness: check, build, deploy, headless smoke test, log triage, vanilla lookup, workshop preflight",
+  "license": "MIT",
+  "exports": {
+    ".": "./lib/index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/**/*.js",
+    "locale/*.json",
+    "icon.svg",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "meta": {
+    "title": "CK3 Mod Dev",
+    "description": "CK3 模组开发智能体：8 个 ck3mod_* 工具（校验/生成/部署/无头冒烟/日志/原版检索/工坊预检）。"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.js\""
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

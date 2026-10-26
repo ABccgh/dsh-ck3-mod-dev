@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="CK3 Mod Dev">
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#1F2937"/>
+  <path d="M14 24 L22 31 L32 17 L42 31 L50 24 L46 44 L18 44 Z" fill="#D4A017" stroke="#F5D06A" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="14" cy="24" r="2.6" fill="#F5D06A"/>
+  <circle cx="32" cy="17" r="2.6" fill="#F5D06A"/>
+  <circle cx="50" cy="24" r="2.6" fill="#F5D06A"/>
+  <path d="M23 51h18" stroke="#D4A017" stroke-width="3" stroke-linecap="round"/>
+  <path d="M27 57h10" stroke="#F5D06A" stroke-width="2" stroke-linecap="round" opacity="0.75"/>
+</svg>

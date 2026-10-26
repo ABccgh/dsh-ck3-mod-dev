@@ -1,0 +1,251 @@
+# dsh-ck3-mod-dev —— CK3 模组开发智能体 + 工具插件
+
+> 一个 DSH profile bundle：一个可在会话里选择的智能体预设 **「CK3 模组开发」**（`preset-ck3mod`），
+> 外加 8 个 `ck3mod_*` 工具。工具只做**调用与汇总**——校验规则仍然归四个 mod 自己的
+> `工具-*.mjs` 与 `ck3-modding-tools/cli.mjs`，本插件一份都不复制。
+
+- 包名：`@local/ck3moddev` · 版本 0.1.0 · MIT
+- 作用域：Windows 本机、profile `desktop`、游戏 **CK3 1.20.x "Crozier"**
+- 只做新增：不覆盖、不删除、不改动任何现有插件（`@local/ck3wiki`、`@local/steam`、`@local/prts` 等原样保留）
+
+---
+
+## 1. 它解决什么
+
+CK3 mod 的修改闭环是「改脚本/本地化 → 生成/规范化 → 校验 → 部署 → 无头冒烟 → 真机 → 工坊」。
+以前每一步都要手写 pwsh：记住 node.exe 的绝对路径、记得备份 `dlc_load.json`、记得 BOM + LF。
+这套工具把这些**易错且不可见**的步骤做成原语：
+
+| 以前 | 现在 |
+|---|---|
+| 手拼 `& $node .\cli.mjs check --all` | `ck3mod_check`（结构化 PASS/FAIL + loc 计数） |
+| 手动把发布快照复制到 `Documents\...\mod` | `ck3mod_deploy`（按 mod 自己的部署脚本，带能力探测） |
+| 手改 `dlc_load.json`、跑 exe、再改回来 | `ck3mod_headless`（备份/还原/哈希核对/日志分诊，一条命令） |
+| 改完忘跑规范化，BOM 缺失刷 `error.log` | `ck3mod_build`（生成 + 规范化，或 `--check` 只比对） |
+| 查 trigger/effect 只能翻 Wiki | `ck3mod_vanilla`（在 1.20 安装目录里真实检索） |
+| 工坊描述超 8000 字节，上传才发现 | `ck3mod_workshop`（按「段」预检，发布前拦下） |
+
+---
+
+## 2. 组成
+
+```
+dsh-ck3-mod-dev/
+├── cordis.patch.yml     只插入一行 preset-ck3mod；工具插件挂在预设作用域内
+├── lib/
+│   ├── index.js         apply()：注册 8 工具 + 本作用域内屏蔽无关全局工具
+│   ├── config.js        normalizeConfig（路径/开关/上限）
+│   ├── tool-kit.js      本地 defineTool（零 @deepseek-ai 依赖）
+│   ├── text.js          TEXT_OUTPUT / 夹紧 / 超长输出落盘
+│   ├── exec.js          spawn + 超时 + abort + 进程树杀灭
+│   ├── registry.js      mod 注册表（动态 import configs.mjs）+ 能力探测
+│   ├── gamelog.js       日志解析纯函数
+│   ├── headless.js      dlc_load 备份/还原/pending 自愈 + 日志分诊
+│   └── tools/*.js       8 个工具
+├── locale/{en,zh}.json  插件页显示元数据
+├── icon.svg             原创图标（王冠 + 脚本基线）
+└── test/                node --test
+```
+
+**智能体预设**（`preset-ck3mod`，显示名「CK3 模组开发」）自带：persona（硬规则前置）、
+`ck3-modding` skill、文件/搜索/pwsh/jobs/skill/todo/ask/web/present/plan/compaction，
+外加本包的工具插件。**不挂** delegation / goal / schedule / plugin-manager（保持精简）。
+
+---
+
+## 3. 安装 / 更新 / 卸载
+
+沿用本机其他 `@local/*` 插件的约定：仓库 → `dsh-bundles` 副本 → `plugin_manager`。
+
+```powershell
+robocopy "D:\DSH workspace\dsh-ck3-mod-dev" "%USERPROFILE%\dsh-bundles\ck3moddev" `
+  /MIR /XD .git test node_modules
+```
+
+然后：
+
+```
+plugin_manager  action: install_bundle  target: %USERPROFILE%\dsh-bundles\ck3moddev
+```
+
+- 首次安装：返回 `application: applied` 即生效；`restart-required` 就重启 DSH。
+- **改代码**：重新 robocopy → **重启 DSH**（Host 会缓存已加载的 ESM 模块，插件页关开不会重读代码）。
+- **只改 `cordis.patch.yml` 的配置值**：重载一次即可（插件页把该 bundle 关开，或重启）。
+- 卸载：`plugin_manager action: remove_bundle target: @local/ck3moddev`；
+  本目录与 `dsh-bundles` 副本可留可删（删了要重装才能回来）。
+
+安装后自查：
+
+- `Config.listConfigs` 能看到 `include:preset-ck3mod`，状态 `schema`；
+- 新建会话时预设列表里有「CK3 模组开发」；
+- 该会话工具表含 8 个 `ck3mod_*` + `ck3wiki_*` + `steam_*`。
+
+---
+
+## 4. 配置
+
+`cordis.patch.yml` 里 `ck3mod-tools` 行的 `config`，全部可省略（走默认值）：
+
+| 字段 | 默认 | 说明 |
+|---|---|---|
+| `workspaceRoot` | `D:\DSH workspace` | 工作区根 |
+| `toolsDir` | `<workspaceRoot>\ck3-modding-tools` | **唯一 mod 注册表**（`configs.mjs`） |
+| `gameRoot` | `D:\Program Files (x86)\Steam\steamapps\common\Crusader Kings III` | 只读 |
+| `userDir` | `C:\Users\11210\Documents\Paradox Interactive\Crusader Kings III` | `mod/`、`logs/`、`dlc_load.json` |
+| `nodePath` | 空 = 自动探测 | 探测顺序：配置 → `$DSH_HOME/dsh-runtimes/<runtime>/dependencies/node/bin/node{,.exe}` → PATH |
+| `allowGlobalToolPrefixes` | `['ck3wiki_', 'steam_']` | 全局工具白名单（其余在 CK3 会话里隐藏） |
+| `enableGameLaunch` | `true` | false 时 `ck3mod_headless` 只解析日志、不启动游戏 |
+| `headlessTimeoutSec` | `240` | 单次无头上限（30–900） |
+| `maxOutputChars` | `12000` | 单工具展示上限；超出部分落 `%TEMP%\ck3mod\` |
+
+派生路径：`modsDir=<userDir>\mod`、`logDir=<userDir>\logs`、`gameExe=<gameRoot>\binaries\ck3.exe`。
+
+> **为什么不能直接用 `process.execPath`**：Host 跑在 Electron 主进程里，`process.execPath` 是
+> `DeepSeek Harness.exe`，直接拿去跑 `.mjs` 会启动一个第二个 Harness。必须显式给 node 路径。
+
+---
+
+## 5. 工具清单
+
+| 工具 | 写盘 | 启动游戏 | 说明 |
+|---|---|---|---|
+| `ck3mod_status` | — | — | 环境 + 四 mod 总览：快照/本机副本、能力、git、游戏版本、日志时间、播放集哈希 |
+| `ck3mod_check` | — | — | `check` / `loc` / `reverse` / `selftest`，跑共享 CLI 的 `--json` 并渲染 |
+| `ck3mod_build` | ✅ 发布快照 | — | `generate` / `normalize`（写）或 `*-check`（只比对）/ `pipeline` |
+| `ck3mod_deploy` | ✅ `Documents\...\mod` | — | `deploy` / `check` / `clean`；按 mod 自己的部署脚本，能力探测决定 `--prune` 等 |
+| `ck3mod_headless` | ✅ 临时改 `dlc_load.json` | ✅ | 无头冒烟；带备份/还原/哈希核对/pending 自愈/日志分诊 |
+| `ck3mod_logs` | — | — | `error` / `debug` / `game`：`[E]` 行、`Enabled`/`Mounted` 隔离判断、按 mod 计数 |
+| `ck3mod_vanilla` | — | — | 在游戏安装目录检索原版脚本/本地化/`.info` 文档 |
+| `ck3mod_workshop` | — | — | 工坊描述**逐段** ≤8000 字节、descriptor 字段对照、缩略图、空 `remote_file_id` 警告 |
+
+只读工具并发安全；`build` / `deploy` / `headless` 串行，且 headless 有进程内互斥。
+
+### 5.1 能力探测（不硬编码）
+
+四个 mod 的脚本并不统一：curse 的部署支持 `--check --clean --prune --allow-launcher-rewrite`，
+dejure 少 `--prune`，free 只有 `--check`，auto-spread 根本没有部署脚本。
+插件在运行时读脚本文本里出现过的 `'--xxx'` 字面量，据此决定允许哪些参数；
+请求了不支持的开关会直接拒绝并列出该 mod 实际支持的项——**不会**把参数硬塞给脚本。
+
+### 5.2 `ck3mod_vanilla` 的检索范围
+
+| `scope` | 目录 | 体量（1.20.1.1） |
+|---|---|---|
+| `common`（默认） | `game/common` | 2888 文件 / 66 MB |
+| `events` | `game/events` | 577 文件 / 41 MB |
+| `loc` | `localization/{english,simp_chinese}` | 2501 文件 / 55 MB |
+| `docs` | 全游戏 `*.info`（脚本 API 文档） | 203 文件 / 0.8 MB |
+| `tests` | `game/tests` | 19 文件 |
+| `all` | common + events + tests + 全部 `.info`（**不含** localization） | ~107 MB |
+
+预算：最多 20000 文件 / 120 MB / 8 秒；超预算会在结果里标「部分结果」。
+
+### 5.3 `ck3mod_workshop` 的分段
+
+Steam 的 8000 字节上限是**每个上传字段**的，所以 `工坊描述-BBCode.txt` 里常有两段
+（描述 + 修补程序说明）。工具按文件自身的标记拆分，再逐段判：
+
+| 文件里的写法 | 拆分方式 |
+|---|---|
+| `########## 第 N 段：… ##########` … `########## 第 N 段结束` | 提取成对标记之间的内容 |
+| `==================== 第 2 段：… ====================` 分隔行 | 以该行为界左右各一段 |
+| 没有任何标记 | 整个文件算一段 |
+
+只要**每段** ≤ 8000 字节就 PASS；整个文件超过 8000 不算错（free/auto 就是这种形状：
+文件 8458/8360 字节，但两段分别只有 6552+1105 / 6692+890）。
+
+---
+
+## 6. 无头冒烟的安全设计
+
+这是唯一会改游戏状态的工具，流程刻意做重：
+
+1. **崩溃自愈先行**：`%TEMP%\ck3mod-headless\pending.json` 存在时，先把上次的原始
+   `dlc_load.json` 按字节写回、核对 SHA256、删标记，然后才开始本次。
+2. **前置拒绝**（任一命中都不写一个字节）：
+   `enableGameLaunch=false` · `ck3.exe` 在跑 · `dowser.exe`（启动器）在跑 ·
+   本机 mod 副本不存在 · 游戏 exe 缺失 · `dlc_load.json` 不可读或不是合法 JSON。
+3. **先立字据**：写 `pending.json`（原始字节的 base64 + SHA256 + 备份路径），
+   再把播放集改成只启用本 mod。
+4. **启动**：`ck3.exe -debug_mode -nographics -shutdown_after_history -suppress_error_log -gdpr-compliant`。
+   `-suppress_error_log` 只关「自动打开错误日志窗口」，不会少写日志（见 `game/_commandline_options.info`）。
+   进程用 `stdio: 'ignore'` 启动——崩溃处理进程可能继承管道句柄，让 Node 永远等不到退出
+   （实测：游戏 9 秒就崩了，用管道时 180 秒后还显示「运行中」）。
+   **看门狗**：轮询 `debug.log`，一旦出现 `Start running through history.`，再给 20 秒宽限；
+   还不退出就杀进程树，判定改用日志证据，而不是干等 `timeoutSec`。
+5. **还原**：`finally` 里按字节写回 → 核对哈希 → 删标记；失败时保留备份与标记并抛错，附两个绝对路径。
+6. **分诊**：`error.log` 的 `[E]` 行按 mod 文件夹名计数；`debug.log` 的
+   `Enabled` 清单判定隔离（出现别的 mod → `ISOLATION WARNING` 而不是 PASS），
+   `Mounted Data` 确认数据目录真的挂上，崩溃标记（`Instance has not been created!` 等）单独列出。
+7. **基线**（`baseline: true`）：再跑一轮空播放集，去时间戳排序后做差集 —— 对应 runbook 的「基线对照」。
+
+结论三档：
+
+- `PASS`：加载期干净 + 进程正常退出（退出码 0、无崩溃标记、隔离干净）。
+- `WARN`：加载期干净，但退出异常（本机常态：无头每次到 history 起点就崩，见下）、
+  有非本 mod 报错、隔离不干净或日志没更新。
+- `FAIL`：本 mod 有报错、没走到 history、超时/中断、或 `dlc_load.json` 还原失败。
+
+> **本机现实**：1.20.x 的无头运行每次都在 `Start running through history.` 处崩溃
+> （`Instance has not been created!`，并在 `crashes\` 下生成 `ck3_*` 目录），退出码 1。
+> 所以在本机 `ck3mod_headless` 的结论**通常是 WARN**；真正的判据是报告里的
+> 「本 mod 报错 0 + 已到 history + 隔离干净」，工具会单独打一行「判据」把那句话写出来。
+> 不要因为 WARN 就以为 mod 有问题，也不要因为加载期干净就以为功能正确。
+
+> 无头只验**加载期**：验不了互动点击、UI、tooltip。静态 + 无头全绿 ≠ 功能正确。
+
+---
+
+## 7. 全局工具屏蔽
+
+预设是「专门给 CK3 用的」，所以 `lib/index.js` 在预设作用域内调用 `ctx.tools.restrict`，
+只保留 `allowGlobalToolPrefixes` 命中的全局工具（默认 `ck3wiki_` + `steam_`），
+把 `prts_*`、github MCP、agent-team、terminal、worktree 等与 mod 开发无关的工具隐藏掉。
+
+- 只是**这个会话的视角**：插件本身照常运行，其他会话一切照旧；
+- 只 deny 确实存在的名字（`restrict` 遇到未知名字会抛），整段 try/catch；
+- 预设急切激活，2 秒后再补一次（restrictions 取交集，重复无害）；
+- 屏蔽失败不影响任何工具，只是工具表更大。
+
+---
+
+## 8. 测试
+
+```powershell
+$node = "C:\Users\11210\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe"
+cd "D:\DSH workspace\dsh-ck3-mod-dev"
+& $node --test "test/*.test.js"
+```
+
+- `tool-kit.test.js`：简写 spec → JSON Schema、参数归一、必填校验。
+- `headless.test.js`：临时目录 + fake run，覆盖 PASS/FAIL/超时/启动器占用/副本缺失/基线/自愈。
+- `plugin.test.js`：mock ctx，断言 8 个工具注册、`restrict` 的 deny 列表、apply 不返回值。
+- `tools-a.test.js` / `tools-b.test.js`：各工具的参数拼装与渲染边界。
+
+测试**不启动真实游戏**、不写真实播放集。
+
+---
+
+## 9. 已知限制
+
+- **无法验证 UI 渲染**：插件页标题/图标、预设选择器里的显示，需要人眼确认。
+- **无头 ≠ 真机**：互动、UI、tooltip、本地化显示仍然只能进游戏点。
+- **全局屏蔽是 best-effort**：Host 插件晚于 2 秒注册的工具不会被隐藏；`restrict` 语义变化时静默降级。
+- **不自动上传工坊**：只做发布前检查；上传仍由启动器手动完成。
+- **不生成缩略图**：`工具-缩略图.py` 仍需手工跑（仅 curse 有）。
+- **强杀 DSH 的极端情况**：`pending.json` 会在下次调用时自愈，但那次 `dlc_load.json` 可能短暂处于测试状态。
+
+## 10. 怎么改 / 下次 CK3 更新时
+
+- 加/删工具：改 `lib/tools/*.js` 并在 `lib/index.js` 的 `createTools` 里登记；同步 `test/plugin.test.js` 的名字列表。
+- 换默认路径：改 `cordis.patch.yml` 的 `ck3mod-tools.config`（重载即可，不必重启）。
+- CK3 更新后：先 `ck3mod_status` 看游戏版本，再 `ck3mod_check mod=all` 跑基线；
+  无头命令若因引擎参数变化失败，改 `lib/headless.js` 的 `GAME_ARGS`（唯一一处）。
+- 新增 mod：在 `ck3-modding-tools/configs.mjs` 加一项即可，**不要**在插件里另建列表。
+
+## 11. 注意事项
+
+1. 本目录是**活体安装目标**（见 `DO-NOT-DELETE.txt`）：删除或移动它会让预设与 8 个工具一起消失。
+2. 改代码必须重启 DSH；只改配置值重载一次即可。
+3. `dlc_load.json` 归启动器所有：不要手写，用 `ck3mod_headless`。
+4. 本机副本与工坊订阅版不要同时启用（会重复定义）；测完 `ck3mod_deploy action=clean` 清场。
