@@ -7,6 +7,7 @@
 - 包名：`@local/ck3moddev` · 版本 0.1.0 · MIT
 - 作用域：Windows 本机、profile `desktop`、游戏 **CK3 1.20.x "Crozier"**
 - 只做新增：不覆盖、不删除、不改动任何现有插件（`@local/ck3wiki`、`@local/steam`、`@local/prts` 等原样保留）
+- 仓库：<https://github.com/ABccgh/dsh-ck3-mod-dev>（MIT）
 
 ---
 
@@ -57,6 +58,19 @@ dsh-ck3-mod-dev/
 
 沿用本机其他 `@local/*` 插件的约定：仓库 → `dsh-bundles` 副本 → `plugin_manager`。
 
+### 3.1 从 GitHub 安装（首次）
+
+```powershell
+git clone https://github.com/ABccgh/dsh-ck3-mod-dev.git `
+  "$env:USERPROFILE\dsh-bundles\ck3moddev"
+```
+
+然后按 **§3.3** 把 `cordis.patch.yml` 里的本机路径改掉（作者机器用的是 `D:\DSH workspace`、
+`C:\Users\11210\...`；`file:` URL 里的用户名与安装目录也必须改成自己的），再执行下面的
+`install_bundle`。仓库里的默认值（`lib/config.js`）是机器中立的，只有 patch 需要按本机填。
+
+### 3.2 本机安装 / 更新
+
 ```powershell
 robocopy "D:\DSH workspace\dsh-ck3-mod-dev" "%USERPROFILE%\dsh-bundles\ck3moddev" `
   /MIR /XD .git test node_modules
@@ -70,7 +84,7 @@ plugin_manager  action: install_bundle  target: %USERPROFILE%\dsh-bundles\ck3mod
 
 - 首次安装：返回 `application: applied` 即生效；`restart-required` 就重启 DSH。
 - **改代码**：重新 robocopy → **重启 DSH**（Host 会缓存已加载的 ESM 模块，插件页关开不会重读代码）；
-  不想重启时按 §3.1 把 `?v=` 加一再关开 bundle。
+  不想重启时按 §3.3 把 `?v=` 加一再关开 bundle。
 - **只改 `cordis.patch.yml` 的配置值**：把 bundle 关开一次即可（HMR 重组）。
 - 卸载：`plugin_manager action: remove_bundle target: @local/ck3moddev`；
   本目录与 `dsh-bundles` 副本可留可删（删了要重装才能回来）。
@@ -81,7 +95,7 @@ plugin_manager  action: install_bundle  target: %USERPROFILE%\dsh-bundles\ck3mod
 - 新建会话时预设列表里有「CK3 模组开发」；
 - 该会话工具表含 8 个 `ck3mod_*` + `ck3wiki_*` + `steam_*`。
 
-### 3.1 为什么预设子插件写成 `file:` URL
+### 3.3 为什么预设子插件写成 `file:` URL
 
 预设的 `plugins` 子行是由 **DSH 安装目录**解析的（Loader 的 baseUrl 在 `dsh/node_modules` 下），
 不是 profile 的 `node_modules`。实测矩阵：
@@ -258,6 +272,8 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 - **不自动上传工坊**：只做发布前检查；上传仍由启动器手动完成。
 - **不生成缩略图**：`工具-缩略图.py` 仍需手工跑（仅 curse 有）。
 - **强杀 DSH 的极端情况**：`pending.json` 会在下次调用时自愈，但那次 `dlc_load.json` 可能短暂处于测试状态。
+- **`cordis.patch.yml` 含本机绝对路径**：`file:` URL 是预设子插件的唯一稳定引用方式（见 §3.3），
+  所以部署 patch 天然是「本机配置」，换机或换目录要照 §3.1 改；`lib/config.js` 的默认值则是机器中立的。
 
 ## 10. 怎么改 / 下次 CK3 更新时
 

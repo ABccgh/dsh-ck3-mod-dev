@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import test from 'node:test';
+import test, { after } from 'node:test';
 
 import {
   buildDlcLoadBytes,
@@ -12,12 +12,26 @@ import {
   sha256,
 } from '../lib/headless.js';
 
+/** 本文件造过的临时工作区；测试结束后统一删除（否则每跑一次就漏一批目录）。 */
+const createdWorkspaces = [];
+
+after(() => {
+  for (const dir of createdWorkspaces) {
+    try {
+      fs.rmSync(dir, { recursive: true, force: true });
+    } catch {
+      // 清理失败不影响测试结论。
+    }
+  }
+});
+
 /**
  * 造一个临时「用户目录 + 游戏目录 + 本机 mod 副本」。
  * @returns {Record<string, any>} 路径集合与原始 dlc_load 字节。
  */
 function makeWorkspace() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ck3mod-headless-test-'));
+  createdWorkspaces.push(root);
   const userDir = path.join(root, 'user');
   const logDir = path.join(userDir, 'logs');
   const modsDir = path.join(userDir, 'mod');
