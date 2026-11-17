@@ -255,7 +255,7 @@ Steam 的 8000 字节上限是**每个上传字段**的，所以 `工坊描述-B
 
 | 文件 | 作用 |
 |---|---|
-| `SKILL.md` | 流水线、硬规则、Wiki 路由表、覆盖与兼容、手动调试闭环，以及 interaction / CB / 政体 / Resources 四组「已核实要点」（都带 `.info` 行号） |
+| `SKILL.md` | 流水线、硬规则、Wiki 路由表、覆盖与兼容、手动调试闭环，以及 interaction / CB / 政体 / Resources / 议会 / 故事循环 / 斗争 七组「已核实要点」（都带 `.info` 行号） |
 | `references/ck3-wiki-atlas.md` | 生成物：Category:Modding 全 67 页 + Category:1.20 校验集 + 补丁链，带最后编辑与 `{{version}}` |
 | `scripts/wiki-atlas.mjs` | 生成器；`--check` 验鲜，漂移退出码 1 |
 
