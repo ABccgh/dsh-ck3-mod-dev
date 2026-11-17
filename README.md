@@ -4,7 +4,7 @@
 > 外加 8 个 `ck3mod_*` 工具。工具只做**调用与汇总**——校验规则仍然归四个 mod 自己的
 > `工具-*.mjs` 与 `ck3-modding-tools/cli.mjs`，本插件一份都不复制。
 
-- 包名：`@local/ck3moddev` · 版本 0.1.0 · MIT
+- 包名：`@local/ck3moddev` · 版本 0.2.0 · MIT
 - 作用域：Windows 本机、profile `desktop`、游戏 **CK3 1.20.x "Crozier"**
 - 只做新增：不覆盖、不删除、不改动任何现有插件（`@local/ck3wiki`、`@local/steam`、`@local/prts` 等原样保留）
 - 仓库：<https://github.com/ABccgh/dsh-ck3-mod-dev>（MIT）
@@ -48,9 +48,10 @@ dsh-ck3-mod-dev/
 └── test/                node --test
 ```
 
-**智能体预设**（`preset-ck3mod`，显示名「CK3 模组开发」）自带：persona（硬规则前置）、
-`ck3-modding` skill、文件/搜索/pwsh/jobs/skill/todo/ask/web/present/plan/compaction，
-外加本包的工具插件。**不挂** delegation / goal / schedule / plugin-manager（保持精简）。
+**智能体预设**（`preset-ck3mod`，显示名「CK3 模组开发」）自带：persona（硬规则 + 三层查证前置）、
+文件/搜索/pwsh/jobs/skill/todo/ask/web/present/plan/compaction，外加本包的工具插件。
+skill 提供器加载本机 `~\.agents\skills\ck3-modding`（**skill 本体不在本包内，需单独安装**，
+见 §8）。**不挂** delegation / goal / schedule / plugin-manager（保持精简）。
 
 ---
 
@@ -167,7 +168,7 @@ dejure 少 `--prune`，free 只有 `--check`，auto-spread 根本没有部署脚
 
 ### 5.2 `ck3mod_vanilla` 的检索范围
 
-| `scope` | 目录 | 体量（1.20.1.1） |
+| `scope` | 目录 | 体量（1.20.1.1 实测） |
 |---|---|---|
 | `common`（默认） | `game/common` | 2888 文件 / 66 MB |
 | `events` | `game/events` | 577 文件 / 41 MB |
@@ -247,7 +248,46 @@ Steam 的 8000 字节上限是**每个上传字段**的，所以 `工坊描述-B
 
 ---
 
-## 8. 测试
+## 8. 知识层：Wiki 索引与三层查证
+
+0.2.0 起，「怎么查资料」是这个预设的一等公民。知识层**不在本包**，而在 skill
+`C:\Users\11210\.agents\skills\ck3-modding`：
+
+| 文件 | 作用 |
+|---|---|
+| `SKILL.md` | 流水线、硬规则、Wiki 路由表、覆盖与兼容、手动调试闭环 |
+| `references/ck3-wiki-atlas.md` | 生成物：Category:Modding 全 67 页 + Category:1.20 校验集 + 补丁链，带最后编辑与 `{{version}}` |
+| `scripts/wiki-atlas.mjs` | 生成器；`--check` 验鲜，漂移退出码 1 |
+
+### 8.1 三层真相
+
+| 层 | 来源 | 回答什么 |
+|---|---|---|
+| 1 Wiki | `ck3wiki_*`（预设里保留可见） | 语义、示例、工作流、补丁说明 |
+| 2 本机原版 1.20.1.2 | `.info` / `common`（`ck3mod_vanilla`），或控制台 `script_docs` | 键名、参数、现在还存不存在 |
+| 3 本仓契约 | `数据-*.mjs` + `工具-静态校验.mjs` + loc 检查 | 我们自己的不变量 |
+
+一句话：**Wiki 用来理解，原版用来确认，静态校验用来兜底**。`Effects list` / `Triggers list`
+是抄录版、页面自己都写着 outdated，只能用来找名字。
+
+### 8.2 刷新索引
+
+```powershell
+$node = "C:\Users\11210\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe"
+cd "$env:USERPROFILE\.agents\skills\ck3-modding"
+& $node .\scripts\wiki-atlas.mjs            # 重写 references\ck3-wiki-atlas.md（本机实测约 70 秒）
+& $node .\scripts\wiki-atlas.mjs --check    # 只比对，不写文件；漂移退出码 1
+```
+
+CK3 每次大版本更新后跑一次；`--check` 适合放在发版前。脚本**必须带描述性 UA**——默认 Node
+UA 会被站点 WAF 回 HTML（实测 `Unexpected token '<'`），脚本里已写死一个只读 UA。
+
+### 8.3 为什么不在本包里
+
+索引是 skill 的资源，不是插件运行时：不加载不占上下文，换机器跟着 skill 目录走。
+本包只负责 persona 里那条「先查索引、再定层、再动手」的纪律，以及 8 个工具。
+
+## 9. 测试
 
 ```powershell
 $node = "C:\Users\11210\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe"
@@ -264,7 +304,7 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 
 ---
 
-## 9. 已知限制
+## 10. 已知限制
 
 - **无法验证 UI 渲染**：插件页标题/图标、预设选择器里的显示，需要人眼确认。
 - **无头 ≠ 真机**：互动、UI、tooltip、本地化显示仍然只能进游戏点。
@@ -274,18 +314,40 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 - **强杀 DSH 的极端情况**：`pending.json` 会在下次调用时自愈，但那次 `dlc_load.json` 可能短暂处于测试状态。
 - **`cordis.patch.yml` 含本机绝对路径**：`file:` URL 是预设子插件的唯一稳定引用方式（见 §3.3），
   所以部署 patch 天然是「本机配置」，换机或换目录要照 §3.1 改；`lib/config.js` 的默认值则是机器中立的。
+- **Wiki 索引是快照，不是真相**：`--check` 只说明「表体与线上一致」，不保证页面内容正确；
+  页面本身也会过期（`Effects list` / `Triggers list` 是抄录版），结论仍要回 `.info` 复核。
+- **skill 不在本包内**：换机时除了装本包，还要把 `~\.agents\skills\ck3-modding` 一起带过去，
+  否则预设只剩 persona + 工具，没有路由表与索引。
 
-## 10. 怎么改 / 下次 CK3 更新时
+## 11. 怎么改 / 下次 CK3 更新时
 
 - 加/删工具：改 `lib/tools/*.js` 并在 `lib/index.js` 的 `createTools` 里登记；同步 `test/plugin.test.js` 的名字列表。
 - 换默认路径：改 `cordis.patch.yml` 的 `ck3mod-tools.config`（重载即可，不必重启）。
 - CK3 更新后：先 `ck3mod_status` 看游戏版本，再 `ck3mod_check mod=all` 跑基线；
   无头命令若因引擎参数变化失败，改 `lib/headless.js` 的 `GAME_ARGS`（唯一一处）。
+- **CK3 大版本更新后**还要刷新知识层：改 `scripts/wiki-atlas.mjs` 的 `GAME_VERSION` 常量与
+  `SKILL.md` 的 Environment 段（游戏版本、四个 mod 版本），再跑 `wiki-atlas.mjs` 重建索引。
 - 新增 mod：在 `ck3-modding-tools/configs.mjs` 加一项即可，**不要**在插件里另建列表。
 
-## 11. 注意事项
+## 12. 注意事项
 
 1. 本目录是**活体安装目标**（见 `DO-NOT-DELETE.txt`）：删除或移动它会让预设与 8 个工具一起消失。
 2. 改代码必须重启 DSH；只改配置值重载一次即可。
 3. `dlc_load.json` 归启动器所有：不要手写，用 `ck3mod_headless`。
 4. 本机副本与工坊订阅版不要同时启用（会重复定义）；测完 `ck3mod_deploy action=clean` 清场。
+
+## 13. 更新记录
+
+### 0.2.0（2026-11-17）— Wiki 知识层
+
+- 全站勘察 CK3 Wiki（7964 页 / 491 条目）：Category:Modding 67 页、Category:1.20 84 页、
+  1.19/1.20 补丁链；生成本地索引 `ck3-wiki-atlas.md` 与生成器 `wiki-atlas.mjs`（带 `--check`）。
+- persona 重写：版本更正为 **1.20.1.2 "Crozier"**、四个 mod 版本、三层查证纪律、手动调试闭环；
+  验证层从六层扩到七层（新增「控制台 run 脚本」）。
+- 预设 `description` / locale / `package.json` meta 同步；**未改 `lib/`，不需要重启 DSH**。
+- skill 同步升到 0.2.0：新增「Wiki 路由表」「覆盖与兼容」「手动调试闭环」；硬规则 9 改成
+  「自动入口仍未证实，但控制台 run 脚本是可重复的手动路径」。
+
+### 0.1.0（2026-10-26）— 首个版本
+
+- 预设 + 8 个 `ck3mod_*` 工具（校验/生成/部署/无头冒烟/日志/原版检索/工坊预检），70 个单测全绿。
