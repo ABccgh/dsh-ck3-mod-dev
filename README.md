@@ -50,8 +50,8 @@ dsh-ck3-mod-dev/
 
 **智能体预设**（`preset-ck3mod`，显示名「CK3 模组开发」）自带：persona（硬规则 + 三层查证前置）、
 文件/搜索/pwsh/jobs/skill/todo/ask/web/present/plan/compaction，外加本包的工具插件。
-skill 提供器加载本机 `~\.agents\skills\ck3-modding`（**skill 本体不在本包内，需单独安装**，
-见 §8）。**不挂** delegation / goal / schedule / plugin-manager（保持精简）。
+skill 提供器加载本机 `~\.agents\skills\ck3-modding`（源在本仓库 `skills/`，用 `工具-同步技能.mjs`
+部署，见 §8）。**不挂** delegation / goal / schedule / plugin-manager（保持精简）。
 
 ---
 
@@ -250,15 +250,16 @@ Steam 的 8000 字节上限是**每个上传字段**的，所以 `工坊描述-B
 
 ## 8. 知识层：Wiki 索引与三层查证
 
-0.2.0 起，「怎么查资料」是这个预设的一等公民。知识层**不在本包**，而在 skill
-`C:\Users\11210\.agents\skills\ck3-modding`：
+0.2.0 起，「怎么查资料」是这个预设的一等公民。知识层的**源在主仓库**，部署副本在
+`%USERPROFILE%\.agents\skills\ck3-modding`（DSH 实际加载的位置），用 `工具-同步技能.mjs` 单向同步：
 
 | 文件 | 作用 |
 |---|---|
-| `SKILL.md` | 流水线、硬规则、Wiki 路由表（「要点」列指向实测小节）、覆盖与兼容、手动调试闭环 |
-| `references/verified-notes.md` | 七组实测要点：interaction / CB / 政体 / Resources / 议会 / 故事循环 / 斗争，每条带 1.20.1.2 的 `.info` 行号，按需只读一节 |
-| `references/ck3-wiki-atlas.md` | 生成物：Category:Modding 全 67 页 + Category:1.20 校验集 + 补丁链，带最后编辑与 `{{version}}` |
-| `scripts/wiki-atlas.mjs` | 生成器；`--check` 验鲜，漂移退出码 1 |
+| `skills/ck3-modding/SKILL.md` | 流水线、硬规则、Wiki 路由表（「要点」列指向实测小节）、覆盖与兼容、手动调试闭环 |
+| `skills/ck3-modding/references/verified-notes.md` | 七组实测要点：interaction / CB / 政体 / Resources / 议会 / 故事循环 / 斗争，每条带 1.20.1.2 的 `.info` 行号，按需只读一节 |
+| `skills/ck3-modding/references/ck3-wiki-atlas.md` | 生成物：Category:Modding 全 67 页 + Category:1.20 校验集 + 补丁链，带最后编辑与 `{{version}}` |
+| `skills/ck3-modding/scripts/wiki-atlas.mjs` | 索引生成器；`--check` 验鲜，漂移退出码 1 |
+| `工具-同步技能.mjs` | 仓库 `skills/` → 用户 skill 目录；`--check` 只比对，`--dest` 改目标 |
 
 ### 8.1 三层真相
 
@@ -283,10 +284,24 @@ cd "$env:USERPROFILE\.agents\skills\ck3-modding"
 CK3 每次大版本更新后跑一次；`--check` 适合放在发版前。脚本**必须带描述性 UA**——默认 Node
 UA 会被站点 WAF 回 HTML（实测 `Unexpected token '<'`），脚本里已写死一个只读 UA。
 
-### 8.3 为什么不在本包里
+### 8.3 为什么源在仓库、部署在用户目录
 
-索引是 skill 的资源，不是插件运行时：不加载不占上下文，换机器跟着 skill 目录走。
-本包只负责 persona 里那条「先查索引、再定层、再动手」的纪律，以及 8 个工具。
+DSH 只从 skill 根目录（`~/.agents/skills` 等）发现 skill，而 GitHub 只认仓库内容——两边都得有。
+折中办法是**仓库存源、用户目录存部署副本**，`工具-同步技能.mjs` 单向覆盖、`--check` 比哈希防漂移。
+
+没选「让预设直接读包内 `skills/` + 删掉用户副本」：那要改 `skill-filesystem` 配置并重载，
+配置一旦写错就一个 skill 都加载不到；同步脚本出错只是副本过期，`--check` 立刻能发现。
+
+### 8.4 同步知识层
+
+```powershell
+$node = "C:\Users\11210\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe"
+cd "D:\DSH workspace\dsh-ck3-mod-dev"
+& $node .\工具-同步技能.mjs            # 部署（4 文件 / 约 64 KB）
+& $node .\工具-同步技能.mjs --check    # 只比对；漂移退出码 1
+```
+
+改了 `skills/` 下任何文件都要跑一次同步，否则会话里加载的还是旧副本。
 
 ## 9. 测试
 
@@ -317,8 +332,8 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
   所以部署 patch 天然是「本机配置」，换机或换目录要照 §3.1 改；`lib/config.js` 的默认值则是机器中立的。
 - **Wiki 索引是快照，不是真相**：`--check` 只说明「表体与线上一致」，不保证页面内容正确；
   页面本身也会过期（`Effects list` / `Triggers list` 是抄录版），结论仍要回 `.info` 复核。
-- **skill 不在本包内**：换机时除了装本包，还要把 `~\.agents\skills\ck3-modding` 一起带过去，
-  否则预设只剩 persona + 工具，没有路由表与索引。
+- **skill 是两处副本**：仓库 `skills/` 是源，`~\.agents\skills\ck3-modding` 是部署副本；改完必须跑
+  `工具-同步技能.mjs`，否则会话里加载的是旧副本。`--check` 可随时验漂移。
 
 ## 11. 怎么改 / 下次 CK3 更新时
 
@@ -338,6 +353,13 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 4. 本机副本与工坊订阅版不要同时启用（会重复定义）；测完 `ck3mod_deploy action=clean` 清场。
 
 ## 13. 更新记录
+
+### 仓库整理（2026-11-17）— 知识层入库
+
+- `skills/ck3-modding/` 入库：SKILL.md + `references/verified-notes.md` + `references/ck3-wiki-atlas.md`
+  + `scripts/wiki-atlas.mjs`（skill 0.2.4，与本地部署副本逐文件哈希一致）。
+- 新增 `工具-同步技能.mjs`：仓库 → `~\.agents\skills` 单向同步，`--check` 比哈希报漂移。
+- README §8 改写（源/部署两层）、已知限制与 `package.json` 的 `files` 同步；插件运行时未变，版本仍 0.2.0。
 
 ### 0.2.0（2026-11-17）— Wiki 知识层
 

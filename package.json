@@ -13,6 +13,7 @@
   },
   "files": [
     "lib/**/*.js",
+    "skills/**",
     "locale/*.json",
     "icon.svg",
     "cordis.patch.yml",
