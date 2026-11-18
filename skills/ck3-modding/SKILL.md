@@ -9,7 +9,7 @@ description: |
   the four published mods, the shared toolchain, or the wiki atlas.
 metadata:
   author: "local workspace"
-  version: "0.6.0"
+  version: "0.6.1"
 ---
 
 # CK3 Modding — Workspace Playbook
@@ -345,6 +345,8 @@ documented expected count and say so.
     判据过期时改判据、并从真源取（`META`、表导出），**别放宽整条规则，也别删检查来变绿**。
 20. **写进清单的问题只有变成机器检查才算处理**：候选清单/复盘里记下的问题，没有落成脚本断言就等于
     没发现；收进实现前先问「这条会不会被 `工具-检查.mjs` / golden check 拦住」。
+    **知识层自己也有兜底**：`工具-知识层检查.mjs` 断言硬规则 1–20、三份文件的必需节、复盘映射锚点、
+    版本口径与部署副本哈希——删了规则、断了映射、忘了同步，它都会报红。
 
 ## Verification layers
 

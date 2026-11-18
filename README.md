@@ -4,7 +4,7 @@
 > 外加 8 个 `ck3mod_*` 工具。工具只做**调用与汇总**——校验规则仍然归四个 mod 自己的
 > `工具-*.mjs` 与 `ck3-modding-tools/cli.mjs`，本插件一份都不复制。
 
-- 包名：`@local/ck3moddev` · 版本 0.4.1 · MIT
+- 包名：`@local/ck3moddev` · 版本 0.4.2 · MIT
 - 作用域：Windows 本机、profile `desktop`、游戏 **CK3 1.21.0 "Florin"**
 - 只做新增：不覆盖、不删除、不改动任何现有插件（`@local/ck3wiki`、`@local/steam`、`@local/prts` 等原样保留）
 - 仓库：<https://github.com/ABccgh/dsh-ck3-mod-dev>（MIT）
@@ -268,6 +268,7 @@ Steam 的 8000 字节上限是**每个上传字段**的，所以 `工坊描述-B
 | `skills/ck3-modding/scripts/wiki-atlas.mjs` | 索引生成器；`--check` 验鲜，漂移退出码 1 |
 | `skills/ck3-modding/references/ingame-acceptance.md` | 真机验收 runbook：准备 / 启动（`-skip -play=`）/ 四 mod 矩阵 / 证据规范 / 收尾 / §9 机器代点（可选） |
 | `工具-同步技能.mjs` | 仓库 `skills/` → 用户 skill 目录；`--check` 只比对，`--dest` 改目标 |
+| `工具-知识层检查.mjs` | **知识层 lint**：硬规则 1–20 连续、三份文件的必需节、复盘映射锚点（A1…H7）、版本口径、部署副本哈希；失败退出码 1 |
 | `工具-真机现场.mjs` | 真机验收现场保护：`--begin` 快照存档/设置/播放集，`--end` 按字节还原并核对 SHA256 |
 
 ### 8.1 三层真相
@@ -311,11 +312,13 @@ DSH 只从 skill 根目录（`~/.agents/skills` 等）发现 skill，而 GitHub 
 ```powershell
 $node = "C:\Users\11210\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe"
 cd "D:\DSH workspace\dsh-ck3-mod-dev"
-& $node .\工具-同步技能.mjs            # 部署（4 文件 / 约 64 KB）
+& $node .\工具-同步技能.mjs            # 部署（5 文件 / 约 128 KB）
 & $node .\工具-同步技能.mjs --check    # 只比对；漂移退出码 1
+& $node .\工具-知识层检查.mjs          # 内容 + 部署副本一起验；--no-deploy 只验内容
 ```
 
-改了 `skills/` 下任何文件都要跑一次同步，否则会话里加载的还是旧副本。
+改了 `skills/` 下任何文件都要跑一次同步，否则会话里加载的还是旧副本；
+`工具-知识层检查.mjs` 会把「忘了同步」和「规则/映射被删」一起报出来（H7 的落地）。
 
 ## 9. 测试
 
@@ -329,6 +332,8 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 - `headless.test.js`：临时目录 + fake run，覆盖 PASS/FAIL/超时/启动器占用/副本缺失/基线/自愈。
 - `plugin.test.js`：mock ctx，断言 8 个工具注册、`restrict` 的 deny 列表、apply 不返回值。
 - `tools-a.test.js` / `tools-b.test.js`：各工具的参数拼装与渲染边界。
+- `knowledge-lint.test.js`：复制真实知识层到临时目录后做变异（删硬规则 20、改版本、改锚点、空部署副本），
+  断言 `工具-知识层检查.mjs` 能分别报 `SKILL/rules` / `VERSION` / `C1` / `DEPLOY/skill`。
 
 测试**不启动真实游戏**、不写真实播放集。
 
@@ -375,7 +380,8 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
      入口与期望、证据命令；`[ingame]` 一节同步更新。
   4. 改 `SKILL.md` 的 Environment 与「1.2x 变化」段；`metadata.version` 加一。
   5. 重跑 `cli.mjs check --all`（四个 mod 的 vanilla token 是否还在）；必要时跑无头冒烟与真机验收。
-  6. `工具-同步技能.mjs` 同步 + `--check`；robocopy + 关开 bundle；更新 README 版本与 §13。
+  6. `工具-同步技能.mjs` 同步 + `--check`；`工具-知识层检查.mjs` 必须绿（规则/节/映射/版本/部署副本）；
+     robocopy + 关开 bundle；更新 README 版本与 §13。
 - 新增 mod：在 `ck3-modding-tools/configs.mjs` 加一项即可，**不要**在插件里另建列表。
 
 ## 12. 注意事项
@@ -387,6 +393,24 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 5. **开游戏前先 `--begin`，收场用杀进程 + `--end`**；游戏内「退出游戏」会覆盖 `autosave_exit` / `last_save`。
 
 ## 13. 更新记录
+
+### 0.4.2（2026-11-18）— 复盘条目 linter 化：`工具-知识层检查.mjs`
+
+- **触发**：0.4.1 把 H7 写成了硬规则，但「警告只有变成机器检查才算存在」**本身还只是纪律**；
+  用户要求把复盘条目检查化，不留口头约定。
+- **新增 `工具-知识层检查.mjs`**（仓库根脚本，不入 bundle）——五组断言：
+  ① SKILL 硬规则编号必须 1–20 连续（`EXPECTED_RULE_COUNT` 先改再增规则）；
+  ② 三份知识层文件的必需节（SKILL 13 节 / verified-notes 14 组 + 改名表 / runbook §0–§9 与 4.1、4.4）；
+  ③ **复盘映射锚点 28 条**：A1…H7 的关键句（`build_queue_reserve_categories`、`96,074`、`Raw Input`、
+  `前提先于功能`…）必须还在原文件里，删掉即断链；
+  ④ 版本口径：package.json = README 顶部 = README §13 最新条目，且 README 要提当前 skill 版本；
+  ⑤ 部署副本哈希：`~/.agents/skills/ck3-modding` 全量、bundle 六个关键文件。副本缺失只提示不算失败，
+  `--no-deploy` 可完全跳过。
+- **`test/knowledge-lint.test.js`**：复制真实知识层到临时目录后做变异（删硬规则 20 / 改版本 / 改锚点 /
+  空部署副本），分别断言报 `SKILL/rules`、`VERSION`、`C1`、`DEPLOY/skill`；另测 `--help`、未知参数、
+  缺失副本只提示。
+- **SKILL.md 0.6.1**：硬规则 20 补「知识层自己也有兜底」；persona 补「知识层改完跑 `工具-知识层检查.mjs`」。
+- **未改 `lib/`**，8 个工具不变；单测 78 → **86 pass**。
 
 ### 0.4.1（2026-11-18）— 复盘收尾：判断层硬规则 17–20
 
