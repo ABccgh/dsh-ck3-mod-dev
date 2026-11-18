@@ -27,6 +27,10 @@
 
 ## 2. 准备（五步，全部在开游戏之前）
 
+**0）先确认「本局能观测到本次改动」**（2026-11-18 de-jure v2.3 踩过）：把本次改动需要的政体 / 等级 / 阶段列出来，
+再决定用哪份存档。例：v2.3 补的是「行政政体的 Influence」，而第一轮用户新开的是**部落**局——那一项整局不可见，
+等于没测，只能补第二轮。不可观测的项当场标 SKIP，别等验收完才发现。
+
 ```powershell
 $node = "C:\Users\11210\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe"
 cd "D:\DSH workspace\ck3-modding-tools"
@@ -96,10 +100,15 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 |---|---|---|---|---|
 | D1 CB 可见 | 对**公国**宣战 | 宣战界面 CB 列表 | 出现「法理征服[TITLE]（法理）」，**威望成本 100、虔诚 100（不是 0）** | 宣战窗截图 |
 | D2 男爵领 | 对男爵领宣战 | 看 CB 列表 | **看不到**「法理征服」 | 截图 |
-| D3 胜 | 打赢一场 | 看结算 + 地图 | 整块法理区域伯爵领到手（含第三方持有）；出现**战后报告 widget**（攻守双方） | 战后报告截图 + 地图 |
-| D4 白和 | 另打一场白和 | 看结算 | 不出现 widget；掉威望，不崩 | 截图 |
-| D5 打输 | 再打输一场 | 看结算 | 不出现 widget；付赔款、掉威望，不崩 | 截图 |
-| D6 日志 | 全程 | `error.log` | `cn_dejure_conquest` **0 条** | 日志命令 |
+| D3 胜 | 打赢一场 | 看结算 + 地图 | 整块法理区域伯爵领到手（含第三方持有）；**POW 释放消息只出现一次**（翻倍即 wrapper 双调）；**不弹**战后报告（v2.3 已移除） | 结算截图 + 地图 |
+| D3b Influence | 用**行政政体**（如拜占庭）打赢 | 看影响力数值 | 胜利结算时影响力**增加**（`add_influence_attacker_victory_effect`） | 结算前后数值 |
+| D4 白和 | 另打一场白和 | 看结算 | 掉威望 + **压力结算提示**（1.21 原版行为）；不弹报告；不崩 | 截图 |
+| D5 打输 | 再打输一场 | 看结算 | 付赔款 **10**、掉威望、内部不满；不弹报告；不崩 | 截图 |
+| D6 决策 | 胜利后 365 天内 | 决策列表 | 「整合法理头衔」可点，一次创建多个头衔，扣 **150 威望**；用掉后消失 | 决策截图 |
+| D7 日志 | 全程 | `error.log` | `cn_dejure_conquest` **0 条**，且无 `Script location` 指向本 mod | 日志命令 |
+
+> 三种收场（胜 / 白和 / 败）各走一次是硬要求：三处各调一个不同的 war-end wrapper。
+> D3b 只在行政政体局可测——准备阶段就要定好用哪份存档（见 §2 第 0 步）。
 
 三种收场各走一次是它的验收要求（三处调用不同原版效果）。
 
@@ -177,6 +186,8 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 & $node .\工具-真机现场.mjs --check
 
 # 4) 清掉本地 mod 副本（free 的部署脚本没有 --clean，手工删）
+#    删之前先把上传后的 descriptor 字节数 / 末字节 / SHA256 记进验证记录 —— 三信号证据就在这两个文件里，
+#    文件一删证据就没了（de-jure v2.3 收尾做法）。
 cd "D:\DSH workspace\ck3-curse";           & $node .\工具-部署.mjs --clean
 cd "D:\DSH workspace\ck3-de-jure-conquest"; & $node .\工具-部署.mjs --clean
 Remove-Item "C:\Users\11210\Documents\Paradox Interactive\Crusader Kings III\mod\free_resources*" -Recurse -Force

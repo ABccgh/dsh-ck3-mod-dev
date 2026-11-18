@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 /**
- * 知识层 lint：把复盘（`.admin/retro-2026-11-18-ck3mod.md` 与续篇
- * `.admin/retro-2026-11-18b-ck3mod-auto-v2.1.md`）的映射表变成**可执行断言**。
+ * 知识层 lint：把复盘（`.admin/retro-2026-11-18-ck3mod.md`、续篇 `retro-2026-11-18b-ck3mod-auto-v2.1.md`
+ * 与 `retro-2026-11-18c-ck3mod-dejure-v2.3.md`）的映射表变成**可执行断言**。
  *
  * 为什么需要：复盘里的教训如果只写成规则，下一次改文档时删掉一条也没人知道——这正是 H7
- * 「写进清单的问题只有变成机器检查才算处理」。这个脚本把 A1…H7、P1–P16 的落点、硬规则编号、
+ * 「写进清单的问题只有变成机器检查才算处理」。这个脚本把 A1…H7、P1–P16、Q1–Q12 的落点、硬规则编号、
  * 各节标题、版本口径、部署副本哈希都变成断言，跑一次即知映射是否断裂。
  *
  * 检查分五组：
  *   1. SKILL.md 硬规则：编号必须是 1..N 连续、无缺号无重号（N 与 EXPECTED_RULE_COUNT 一致）；
  *   2. 三份知识层文件的必需节（SKILL / verified-notes / ingame-acceptance）；
  *   3. 复盘映射锚点：每条编号对应的关键句必须还在原文件里（删了 = 复盘落地断链）；
- *      锚点集 = 11-18 的 A1…H7（28 条）+ 11-18b 的 P1–P16（23 条）；
+ *      锚点集 = 11-18 的 A1…H7（28 条）+ 11-18b 的 P1–P16（23 条）+ 11-18c 的 Q1–Q12（13 条）；
  *   4. 版本口径：package.json / README 顶部 / README §13 最新条目 / SKILL metadata 互相一致；
  *   5. 部署副本：仓库 vs `~/.agents/skills/ck3-modding` vs `~/dsh-bundles/ck3moddev` 的哈希。
  *
@@ -38,7 +38,7 @@ const DEPLOY_DEFAULT = path.join(os.homedir(), '.agents', 'skills', 'ck3-modding
 const BUNDLE_DEFAULT = path.join(os.homedir(), 'dsh-bundles', 'ck3moddev');
 
 /** 硬规则的期望条数。新增规则时**先改这里**，让「改了数字」成为一次有意识的动作。 */
-const EXPECTED_RULE_COUNT = 26;
+const EXPECTED_RULE_COUNT = 29;
 
 /** bundle 安装副本里参与比对的关键文件（其余是运行时无关文件）。 */
 const BUNDLE_FILES = [
@@ -171,6 +171,20 @@ const ANCHORS = [
   { id: 'P15', file: SKILL_FILE, needle: '只改仓库副本', label: '规则 21' },
   { id: 'P16', file: SKILL_FILE, needle: '工具-文档链接检查.mjs', label: '规则 20 文档链接兜底' },
   { id: 'P24', file: SKILL_FILE, needle: '一开始就划给人', label: '规则 24 人机分工' },
+  // 2026-11-18c · 法理征服 v2.3（Q1–Q12）
+  { id: 'Q1', file: SKILL_FILE, needle: '清理 / 重构', label: '规则 27：patch note「清理」是语义变更' },
+  { id: 'Q2', file: NOTES_FILE, needle: 'DIRECT_CALLS', label: 'wrapper 化让 H 段覆盖退化' },
+  { id: 'Q3', file: NOTES_FILE, needle: '模式跳过部署比对', label: '判据与部署状态解耦' },
+  { id: 'Q4', file: NOTES_FILE, needle: '旧版校验器', label: '换判据要证明差值来源' },
+  { id: 'Q5', file: NOTES_FILE, needle: '形状对了就不再 −1', label: 'descriptor 形状对了就不掉字节' },
+  { id: 'Q6', file: NOTES_FILE, needle: '语义等价就跳过写盘', label: '部署脚本按语义跳过写盘' },
+  { id: 'Q7', file: SKILL_FILE, needle: '能观测到本次改动', label: '规则 28：验收场景可观测性' },
+  { id: 'Q7', file: RUNBOOK_FILE, needle: '本局能观测到本次改动', label: '§2 第 0 步' },
+  { id: 'Q8', file: SKILL_FILE, needle: '功能移除也一样', label: '规则 29：变更范围机器可证' },
+  { id: 'Q9', file: NOTES_FILE, needle: '证不了', label: '取证边界' },
+  { id: 'Q10', file: NOTES_FILE, needle: '上传动作会改播放集', label: '上传会写 dlc_load.json' },
+  { id: 'Q11', file: RUNBOOK_FILE, needle: '删之前先把上传后的 descriptor', label: '删副本前留证据' },
+  { id: 'Q12', file: NOTES_FILE, needle: 'api.steampowered.com', label: '断网时三信号降级 SKIP' },
 ];
 
 /**

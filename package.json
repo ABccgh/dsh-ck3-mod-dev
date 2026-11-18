@@ -1,6 +1,6 @@
 {
   "name": "@local/ck3moddev",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "private": true,
   "type": "module",
   "description": "CK3 mod development tools for DeepSeek Harness: check, build, deploy, headless smoke test, log triage, vanilla lookup, workshop preflight",

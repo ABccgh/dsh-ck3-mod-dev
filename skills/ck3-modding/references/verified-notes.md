@@ -81,6 +81,13 @@ Wiki 没有 CB 专页，只有玩家向的 `Casus belli`。规格在 `common/cas
   → **用 wrapper 就必须删掉被它覆盖的内联调用**，否则 POW/停战/石碑/声望各来两遍（数值翻倍，真机上很隐蔽）。
 - 原版 `individual_duchy_de_jure_cb`（`00_dejure_war.txt:546`）现在三个块各只有一行 wrapper
   （victory L668 / white peace L724 / defeat L774），是「1.21 正确形态」的参照物。
+- **wrapper 化会让「按 `= yes` 抽取」的存在性校验悄悄退化**：de-jure 改用 wrapper 后，H 段覆盖的原版对象
+  从 12 个掉到 5 个（其余调用躲进 wrapper，或写成 `scope:x = { … }` 单行）。补一份 **`DIRECT_CALLS`**
+  按名直调清单（de-jure 是 7 项：`modify_all_participants_fame_values` /
+  `modify_allies_of_participants_fame_values` / `pay_short_term_gold_reparations_effect` /
+  `accolade_attacker|defender_war_end_glory_gain_med_effect` / `accolade_defender_war_end_glory_gain_low_effect` /
+  `scale_10_war_defender_win`），逐条核 `^<name>\s*=` 存在，并把清单长度打进结论行——
+  「校验器覆盖面变小」本身就是要修的 bug。
 - 工作范例：`ck3-de-jure-conquest` 的 `zz_cn_dejure_conquest.txt`（v2.3 起按 wrapper 写法；
   `工具-静态校验.mjs` 的 L 段有「wrapper 在场 + 内联残留为零」断言，N 段有 v2.2↔v2.3 差异断言）。
 
@@ -313,6 +320,17 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   `00_laamp_triggers.txt` **184**、原版 story cycle 的 `cannot change faith` **3**、
   原版 DLC 的 `Wrong scope for effect` **6**。
   → **看到 8k 条 [E] 不等于 mod 坏了**：先按 `Script location` 分组，再看有没有指向自己的文件。
+- **验收场景要先能观测到改动（de-jure v2.3 实测）**：v2.3 的头号改动是行政政体胜利结算 Influence，
+  而第一轮用户新开的是**流求部落局**（公国级、部落政体）——那一项在整局里根本不会出现，等于没测；
+  第二轮改拜占庭行政政体才闭合。准备阶段先写清「本次改动需要什么政体/等级/阶段才可见」，不满足就换局。
+- **取证有边界，别把「间接证据」写成「机器证明」**：存档能证明「这个 CB 被用过」（`war_name` 缓存）
+  与「有过 365 天胜利 flag」，但**证不了**「本次胜利的那一刻影响力涨了」——flag 有寿命（第二局存档到 1184 年，
+  早已过期），而影响力是连续数值、可变因素太多。这类只能记「用户实机确认」，机器侧只兜「0 报错 + 无残留」。
+- **上传动作会改播放集**：de-jure v2.3 上传后 `dlc_load.json` 从 1 项（`mod/auto_spread.mod`，
+  SHA256 `DEDF70…`）变成 **0 项**（`A9E53E…`）。这是启动器在上传/编辑播放集时的正常行为，
+  不是 mod 或测试造成的；收尾只记录 SHA 变化与原因，不擅自还原（播放集归启动器/用户）。
+- **`--end` 还原的是字节，不是 mtime**：真机现场收尾核对用 SHA256（工具已内置），
+  用户目录里 `autosave_exit.ck3` 的修改时间会变成收尾那一刻，别拿 mtime 判「存档被改了」。
 
 ## [automation] 真机自动化（agent 代点，2026-11-18 实跑 free v4.1）
 
@@ -381,6 +399,9 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   `Invoke-RestMethod -Method Post -Uri https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/ -Body @{itemcount=1;'publishedfileids[0]'='<id>'}`
   → `file_size` / `time_created` / `time_updated` / `description` / `tags`。
   `steam_workshop_search` 也能拿到「订阅 / 更新日期 / MiB」但精度只到 0.1 MiB。
+  **断网时两个域名会一起失败**（de-jure v2.3 收尾实测：`api.steampowered.com` 10 s 超时、
+  `steamcommunity.com` fetch failed）→ 三信号降级为「descriptor 回写」1 个，页面体积/日期与条目 ID 复核
+  必须记 **SKIP + 原因**，不许写成「已核对」。
 - **自己上传的条目不会出现在** `steamapps/workshop/content/1158310/<id>`（Steam 不下载自己的作品）→
   核对只信 API，别去工坊副本目录找文件比哈希。
 - **核对四件套**（free v4.1 全过）：`time_created` 未变（没新建条目）· `file_size` 等于本地内层 −1 字节 ·
@@ -391,6 +412,12 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   ——那是启动器「回写 `supported_version` + 吃掉行尾 1 字节」之后的形状。生成器若按常规模板带 `\n` 就会多 1 字节
   （auto v2.1 首版生成出 156 / 243 B，L 段立刻报红）。正确做法：生成器不留行尾换行，快照做到「与上一版
   逐字节只差 version / supported_version 两处值」，并用静态校验 **L 段**（`v_prev` ↔ `v_new` 差异断言）守住。
+- **形状对了就不再 −1**：de-jure v2.3 按上一条生成（外层 257 / 内层 163 B、末字节 `"`），上传后长度**完全不变**，
+  只有 `supported_version` 从 `1.21.*` 被写成 `1.21.0`。所以「−1 字节」只发生在**快照带行尾换行**时；
+  把 −1 当常态，会把正常情况误判成异常（本轮实测 SHA256：外层 `A2DDBFAF…83761B`、内层 `5E5D7362…7DBCC6`）。
+- **部署脚本对外层 `.mod` 有「语义等价就跳过写盘」的兜底**：生成器改了字节形状后，`工具-部署.mjs` 认为字段相同
+  就不重写旧文件（输出「写入 1 / 已是最新 8」），本机副本仍留着旧字节。要逐字节一致：先 `--clean` 再 deploy
+  （或删掉目标文件再部署）。这条与上一条配合——形状改了就必须重建本机副本，否则 `--check` 会报不一致。
 - **手写 mod 只有 descriptor 会漂**：`version` / `supported_version` 在内外两份各写一遍。给没有内容生成器的 mod
   补一个只生成 descriptor 的 `工具-生成.mjs` + `数据-元数据.mjs`（约 60 行；auto v2.1 即此型），
   内容文件仍手写；改版本只改 `META` 一处。
@@ -416,3 +443,10 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   曾把结论写死成 `32/32`，auto 只有 7 条也显示 `32/32`（2026-11-18 修复）。显示必须从脚本输出解析
   （`反向验证：N / N 项如期报错`）；`configs.mjs` 的 `expect` 按 mod 写期望值——断言的是「显示等于实际」，
   不是断言常量。
+- **`--root` 模式跳过部署比对**：拿 v1.0 反例跑 `--root` 时，K 段原本会去比「当前本机副本」——
+  部署的是新版，反例就凭空多出 3 条「不一致」（de-jure 实测 20 → 23）。判据必须与部署状态解耦：
+  在 `--root` 模式下 K 段只提示跳过。同理，任何「拿样本比当前环境」的检查都要先问「这个环境变量该不该参与」。
+- **换了判据，反例期望值必须重导，并证明差值来源**：de-jure 的 L 段从「必须有 `add_truce_*`」改成
+  「必须有 wrapper + 内联零残留」后，v1.0 反例从 16 变成 20。直接改数字等于自证；正确做法是用
+  `git show HEAD:工具-静态校验.mjs` 把**旧版校验器**跑在同一样本上（旧版仍是 16），
+  再逐条对出新增的 4 条（缺 3 个 wrapper + 6 处内联残留合成 1 条）——差值来自断言集合变化，不是判据失灵。

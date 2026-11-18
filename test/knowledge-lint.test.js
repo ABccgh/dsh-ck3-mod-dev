@@ -69,7 +69,15 @@ test('删掉硬规则 26 报 SKILL/rules', () => {
   const { code, out } = run(['--repo', root, '--no-deploy']);
   assert.equal(code, 1, out);
   assert.match(out, /\[SKILL\/rules\]/);
-  assert.match(out, /应为 1–26/);
+  assert.match(out, /应为 1–29/);
+});
+
+test('改掉 Q5 的锚点句时报 Q5', () => {
+  const root = makeRepo();
+  write(root, NOTES_REL, read(root, NOTES_REL).replaceAll('形状对了就不再 −1', '形状随便'));
+  const { code, out } = run(['--repo', root, '--no-deploy']);
+  assert.equal(code, 1, out);
+  assert.match(out, /\[Q5\]/);
 });
 
 test('package.json 与 README 版本不一致报 VERSION', () => {

@@ -9,7 +9,7 @@ description: |
   the four published mods, the shared toolchain, or the wiki atlas.
 metadata:
   author: "local workspace"
-  version: "0.7.0"
+  version: "0.7.1"
 ---
 
 # CK3 Modding — Workspace Playbook
@@ -54,13 +54,14 @@ Never infer a path or a command from memory; read the mod README first.
   `launcher\launcher-settings.json` = `1.21.0 (Florin)`、`titus_branch.txt` = `release/1.21.0`、
   `appmanifest_1158310.acf` buildid `26622941` 可复核）。
 - 四个 mod 的当前发布快照：`ck3-auto-spread` **2.1** · `ck3-curse` **1.0** ·
-  `ck3-de-jure-conquest` **2.2** · `ck3-free-resources` **4.1**。
-  **free / auto 都已按 1.21 发布**（free 2026-11-18 16:23；auto 同日 20:21。仓库快照
-  `supported_version="1.21.*"`、工坊侧被启动器回写为 `1.21.0`；free 工坊 `file_size` 96,074 B，
-  auto 内层 75,393 B、精确 `file_size` 记 **SKIP**——shell 拿不到 Steam API key）。
-  **仍声明 `1.20.*` 的只有 curse / de-jure**，1.21 下静态/loc + 无头都 PASS，
+  `ck3-de-jure-conquest` **2.3** · `ck3-free-resources` **4.1**。
+  **free / auto / de-jure 都已按 1.21 发布**（free 2026-11-18 16:23；auto 同日 20:21；de-jure 同日 22:41。
+  仓库快照 `supported_version="1.21.*"`、工坊侧被启动器回写为 `1.21.0`；free 工坊 `file_size` 96,074 B，
+  auto 内层 75,393 B、精确 `file_size` 记 **SKIP**——shell 拿不到 Steam API key；de-jure 的页面信号本轮断网 SKIP，
+  只核到 descriptor 回写 + 双层字节形状 257/163 B 未变）。
+  **仍声明 `1.20.*` 的只有 curse**，1.21 下静态/loc + 无头都 PASS，
   但**没重发工坊就别说"已支持 1.21"**。
-- **free / auto 的本机副本已删**（改用工坊订阅，避免重复定义）；要本地测先跑各自 `工具-部署.mjs` 重建。
+- **free / auto / dejure 的本机副本都已删**（改用工坊订阅，避免重复定义）；要本地测先跑各自 `工具-部署.mjs` 重建。
 - **新版本上手第一件事**：跑该 mod 的 `工具-静态校验.mjs`。H 段（引擎 token）与 H2 段（原版角色货币覆盖）
   会回答「只发兼容版，还是要功能更新」——free 的 H2 就是 2026-11-18 为此加的。
   **判完若只是兼容发布，再用 L 段（`v_prev` ↔ `v_new` 差异断言）把「兼容发布 = 内容零改动」变成机器事实**，
@@ -197,9 +198,9 @@ cd "D:\DSH workspace\ck3-curse"
 & $node .\工具-检查.mjs reverse
 ```
 
-Baseline at 2026-11-18 (1.21.0): curse loc 122 / de-jure 36 (v2.2) / free 84 / auto 94, all 0 errors,
-`check --all` 4/4 PASS. `auto`'s static validator supports `--root`; `check` runs it against the release
-snapshot and it passes. Passing `--root` is preferred over deploying a local copy.
+Baseline at 2026-11-18 (1.21.0): curse loc 122 / de-jure 28（v2.3，移除战后报告后 36→28）/ free 84 / auto 94, all 0 errors,
+`check --all` 4/4 PASS、`reverse --all` 4/4 PASS。`auto` 与 `dejure` 的静态校验都支持 `--root`；
+`check` runs against the release snapshot and passes. Passing `--root` is preferred over deploying a local copy.
 Spelling: `ck3spell` is blocked by hosts; `spellcheck.py` (pyspellchecker + game English corpus)
 found 0 real typos in the four mods; only the `behaviour`/`behavior` style variant.
 
@@ -242,7 +243,7 @@ Common order: **edit source → generate (if table-driven) → normalize → che
 | Mod | Source of truth | Generate/normalize | Check | Notes |
 |---|---|---|---|---|
 | `ck3-curse` | `数据-mod表.mjs` + hand-written script/loc | `工具-生成.mjs`, `工具-规范化.mjs`, `工具-缩略图.py` | `工具-检查.mjs` (`A–O` via `工具-静态校验.mjs`; reverse via `工具-反向验证.mjs`) | 4 interactions, 24 traits, no Vanilla overrides |
-| `ck3-de-jure-conquest` | `数据-mod表.mjs` + CB script/loc | `工具-生成.mjs`, `工具-规范化.mjs` | `工具-检查.mjs` (`--root` v1.0 must report **16**) | CB is hand-written; v2.0 settlement checklist in `发布说明.md` |
+| `ck3-de-jure-conquest` | `数据-mod表.mjs` + CB script/loc | `工具-生成.mjs`, `工具-规范化.mjs` | `工具-检查.mjs`（静态 **A–O**：L 结构含 1.21 wrapper + 内联残留；M 决策锚点 + wrapper 契约 + 战后报告已移除；N v2.2↔v2.3 差异；O configs↔快照；`--root` v1.0 must report **20**） | CB is hand-written; v2.3 = 1.21 兼容 + 结算对齐 + 移除战后报告；v2.0 settlement checklist 在 `发布说明.md` |
 | `ck3-free-resources` | `数据-资源表.mjs` | `工具-生成.mjs` (golden check), `工具-部署.mjs` | `工具-检查.mjs` | generated events/loc; never hand-edit products |
 | `ck3-auto-spread` | `数据-元数据.mjs`（META / 快照路径）+ hand-written script/loc | `工具-生成.mjs`（**只生成两份 descriptor**，`--check` golden） | `工具-检查.mjs`（静态 A–M，含 L 段差异；loc 94；reverse 7） | settings via global variables + game rules；v2.1 起有 `工具-部署.mjs`（`--check` / `--clean`），**没有内容生成器** |
 
@@ -360,6 +361,8 @@ documented expected count and say so.
 19. **校验判据要能区分「有意产物」与「真故障」**：启动器回写 descriptor（`1.21.*`→`1.21.0`、
     `file_size` −1 字节）是有意产物；把有意产物判成故障、或让两条判据互相矛盾，比没有检查更糟。
     判据过期时改判据、并从真源取（`META`、表导出），**别放宽整条规则，也别删检查来变绿**。
+    **判据还要与部署状态解耦**：拿反例样本跑 `--root` 时，不要让它去比「当前本机副本」——本机部署的是哪一版，
+    反例就会多出几条假的「不一致」（de-jure 实测 20 → 23）。
 20. **写进清单的问题只有变成机器检查才算处理**：候选清单/复盘里记下的问题，没有落成脚本断言就等于
     没发现；收进实现前先问「这条会不会被 `工具-检查.mjs` / golden check 拦住」。
     **知识层自己也有兜底**：`工具-知识层检查.mjs` 断言硬规则编号（1–N 连续）、三份文件的必需节、
@@ -388,6 +391,24 @@ documented expected count and say so.
     没有生成器的 mod 补一个只生成 descriptor 的 `工具-生成.mjs` + `数据-元数据.mjs`（内容文件仍手写）。
     上传后确认只认三个机器信号（descriptor 被回写成实测版本 + `steam_workshop_search` 的日期/体积 +
     条目 ID 未变）；精确 `file_size` 拿不到就写 **SKIP**，别猜。
+    **形状对了就不会再 −1**：快照末字节本来没有 `\n` 时，上传后长度不变（de-jure v2.3 实测 257 / 163 B
+    原样，只把 `1.21.*` 回写成 `1.21.0`）——把「−1 字节」当常态，会把正常误判成异常。
+    另外：`工具-部署.mjs` 对外层 `.mod` 有「语义等价就跳过写盘」的兜底，生成器改了形状它也**不会**重写旧文件；
+    要逐字节一致得先 `--clean` 再 deploy。
+27. **「清理 / 重构」类 patch note 要当语义变更审；判据自己也会变弱**。1.21 只写 "Cleaned up casus belli …
+    effects"，实际把每个抢地 CB 的战争结束块抽成了 wrapper（`00_war_effects.txt:3170/3178/3243`）——
+    抄 1.20 内联写法的 mod 会**静默少结算**（行政政体 Influence、防御方无地冒险者失地提示），
+    而 grep 旧 token 依旧命中、静态校验照样绿。判定时去层 2 对比原版正文，别看条目标题。
+    反过来的坑：wrapper 化会让「按 `= yes` 抽取」的存在性校验从 12 个对象掉到 5 个——**判据悄悄变弱也是 bug**，
+    要补「按名直调清单」（de-jure 的 `DIRECT_CALLS` 7 项）并把清单长度打进结论行。
+28. **开测前先确认「这一局能观测到本次改动」**。政体 / 等级 / 阶段不匹配时，那一项等于没测：
+    de-jure v2.3 的头号改动是行政政体的 Influence，而第一轮用户新开的是**部落**局，全程看不到它，
+    靠第二轮拜占庭局才闭合。准备阶段写清「本次改动的可观测条件」，不满足就换局或明确 SKIP——
+    别用「他说没问题」代替「测到了」。
+29. **变更范围要机器可证，功能移除也一样**。「删掉一个功能」不是口头承诺：de-jure v2.3 移除战后报告时，
+    A 段断言两个文件**不存在**、M 段断言脚本与 loc 里 0 处 `cn_report` / `cn_dejure.0001`、
+    N 段允许「文件集合只少这两个 + loc 只删 8 行」。需求可以在验收中变更，但必须**纳入同一版**（未上传时）
+    并让差异断言把「只改了这些」钉死。
 
 ## Verification layers
 
