@@ -4,7 +4,7 @@
 > 外加 8 个 `ck3mod_*` 工具。工具只做**调用与汇总**——校验规则仍然归四个 mod 自己的
 > `工具-*.mjs` 与 `ck3-modding-tools/cli.mjs`，本插件一份都不复制。
 
-- 包名：`@local/ck3moddev` · 版本 0.3.1 · MIT
+- 包名：`@local/ck3moddev` · 版本 0.4.1 · MIT
 - 作用域：Windows 本机、profile `desktop`、游戏 **CK3 1.21.0 "Florin"**
 - 只做新增：不覆盖、不删除、不改动任何现有插件（`@local/ck3wiki`、`@local/steam`、`@local/prts` 等原样保留）
 - 仓库：<https://github.com/ABccgh/dsh-ck3-mod-dev>（MIT）
@@ -263,10 +263,10 @@ Steam 的 8000 字节上限是**每个上传字段**的，所以 `工坊描述-B
 | 文件 | 作用 |
 |---|---|
 | `skills/ck3-modding/SKILL.md` | 流水线、硬规则、Wiki 路由表（「要点」列指向实测小节）、1.21 变化、覆盖与兼容、真机验收铁律 |
-| `skills/ck3-modding/references/verified-notes.md` | 12 组实测要点：interaction / CB / 政体 / Resources / 议会 / 故事循环 / 斗争 / district / trade / road / laws / ingame，每条带 **1.21.0** 的 `.info` 行号，按需只读一节；顶部另有「1.21 改名与 patch note 落差」表 |
+| `skills/ck3-modding/references/verified-notes.md` | 14 组实测要点：interaction / CB / 政体 / Resources / 议会 / 故事循环 / 斗争 / district / trade / road / laws / ingame / automation / release，每条带 **1.21.0** 的 `.info` 行号，按需只读一节；顶部另有「1.21 改名与 patch note 落差」表 |
 | `skills/ck3-modding/references/ck3-wiki-atlas.md` | 生成物：Category:Modding 全 67 页 + **1.21 新内容 11 页 + 机制语义 25 页** + Category:1.21 校验集 + 补丁链，带最后编辑与 `{{version}}` |
 | `skills/ck3-modding/scripts/wiki-atlas.mjs` | 索引生成器；`--check` 验鲜，漂移退出码 1 |
-| `skills/ck3-modding/references/ingame-acceptance.md` | 真机验收 runbook：准备 / 启动（`-skip -play=`）/ 四 mod 矩阵 / 证据规范 / 收尾 |
+| `skills/ck3-modding/references/ingame-acceptance.md` | 真机验收 runbook：准备 / 启动（`-skip -play=`）/ 四 mod 矩阵 / 证据规范 / 收尾 / §9 机器代点（可选） |
 | `工具-同步技能.mjs` | 仓库 `skills/` → 用户 skill 目录；`--check` 只比对，`--dest` 改目标 |
 | `工具-真机现场.mjs` | 真机验收现场保护：`--begin` 快照存档/设置/播放集，`--end` 按字节还原并核对 SHA256 |
 
@@ -387,6 +387,21 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 5. **开游戏前先 `--begin`，收场用杀进程 + `--end`**；游戏内「退出游戏」会覆盖 `autosave_exit` / `last_save`。
 
 ## 13. 更新记录
+
+### 0.4.1（2026-11-18）— 复盘收尾：判断层硬规则 17–20
+
+- **触发**：复盘（`D:\DSH workspace\.admin\retro-2026-11-18-ck3mod.md`）的 A/B/C/D/E 各项已全部落地，
+  但 H1–H7 的**判断层教训**只散在 curse 发布说明与 `verified-notes.md` 的 `[interaction]` 一节里；
+  同时 README 自身还留着两处旧口径（版本 0.3.1、verified-notes「12 组」）。
+- **SKILL.md 0.6.0**：硬规则新增 **17 前提先于功能**（H1/H2/H3）、**18 抄片段先看包裹结构与原版注释**
+  （H5/H6）、**19 判据要能区分有意产物与真故障**（H4/B3——判据过期从 `META` 取，不许删检查变绿）、
+  **20 警告只有变成机器检查才算存在**（H7）。
+- **`verified-notes.md [release]` 补一条**：校验器自己的断言不许写死版本，一律从 `数据-资源表.mjs` 的
+  `META` 取、部署容差由 `META.supportedVersion` 推（B4：free v4.1 时是校验器先报红）。
+- **persona 加一行**判断层四条摘要；README 修正版本号与 `verified-notes` 节数（12 → 14，补
+  `[automation]` / `[release]`），runbook 行补 §9。
+- **生效**：仓库 → robocopy → `plugin_manager` 关开 bundle（只改配置值，不必重启 DSH）；
+  `工具-同步技能.mjs` 重写 skill 部署副本。**未改 `lib/`**，单测 78 pass。
 
 ### 0.4.0（2026-11-18）— 发布链路与真机自动化的实测沉淀
 

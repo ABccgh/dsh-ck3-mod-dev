@@ -9,7 +9,7 @@ description: |
   the four published mods, the shared toolchain, or the wiki atlas.
 metadata:
   author: "local workspace"
-  version: "0.5.0"
+  version: "0.6.0"
 ---
 
 # CK3 Modding — Workspace Playbook
@@ -334,6 +334,17 @@ documented expected count and say so.
     `Documents\...\mod\*.mod`，清场后它会显示空库、没有可上传物；② **两个 descriptor 归启动器管** ——
     点上传时它会把 `supported_version` 从通配回写成实测版本（`1.21.*`→`1.21.0`）并吃掉行尾 1 字节，
     所以静态校验对这两个文件按字段比，`file_size` 比本地少 1 字节是正常现象。
+17. **前提先于功能**：现象是「功能没生效」时，先逐条确认前置条件真的成立——目标对象还活着
+    （拿死人做 `add_hook` 会静默失败）、对象过得了代码里的闸门（AI 受害者被 `is_ai = no` 挡掉）、
+    命令在零售版被接受（Wiki 只证明「存在」）。前置条件不成立时，代码看起来就是「写错了」。
+18. **抄原版片段先看包裹结构，再读原版注释**：照抄下来的常常只是更大结构里的一截——`scope:<flag>`
+    是选区不是条件（勾选后写 `scope:x = { … }` 会变成切作用域，表现为「没勾也全加」，条件要写
+    `always = scope:x`）；原版在那一行的注释就是设计意图，先读再判 bug。
+19. **校验判据要能区分「有意产物」与「真故障」**：启动器回写 descriptor（`1.21.*`→`1.21.0`、
+    `file_size` −1 字节）是有意产物；把有意产物判成故障、或让两条判据互相矛盾，比没有检查更糟。
+    判据过期时改判据、并从真源取（`META`、表导出），**别放宽整条规则，也别删检查来变绿**。
+20. **写进清单的问题只有变成机器检查才算处理**：候选清单/复盘里记下的问题，没有落成脚本断言就等于
+    没发现；收进实现前先问「这条会不会被 `工具-检查.mjs` / golden check 拦住」。
 
 ## Verification layers
 

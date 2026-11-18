@@ -329,6 +329,9 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   `genOuterMod()` 生成（内层无 `path`、外层带 `path`），`工具-生成.mjs --check` 把两个都纳入 golden check。
   快照目录名也从表里导出（`buildDir` / `buildInnerDir` / `buildOuterMod`）——之前硬编码在
   生成器 / 部署 / 静态校验 / `ck3-modding-tools/configs.mjs` 四处，搬版本必漏。
+- **校验器自己也会过期**：断言别写死版本（`supported_version="1.20.*"`、`version="4.0"`），一律从
+  `数据-资源表.mjs` 的 `META` 取；部署副本的容差也由 `META.supportedVersion` 推（`1.21.*` → 允许
+  `1.21.*` / `1.21.x`）。free v4.1 之前这两处写死旧值，改完版本后是**校验器**先报红。
 - **"要不要全面更新"的机器判据**：静态校验 H 段（引擎 token 对照 `common/`+`events/`）+
   H2 段（解析 `common/governments/_governments.info` 的 `build_queue_reserve_categories`，
   与 `CURRENCIES` 一一比对）。1.21 实测：原版 9 种角色货币（gold/prestige/piety/renown/influence/
