@@ -68,7 +68,21 @@ Wiki 没有 CB 专页，只有玩家向的 `Casus belli`。规格在 `common/cas
   `religious` / `de_jure` 两个组**被代码引用、必须存在**（L5-7）；`can_only_start_via_script = yes` 的组不进宣战界面、也不给 AI（L60-65）。
 - group 侧还有 `should_invalidate`（L41-56，战争失效条件）、`allowed_for_character_display_regardless`（L26-39）、
   `should_check_for_interface_availability`（L67-72）、`debug`（L75-80）——1.20 的笔记里都没有。
-- 工作范例：`ck3-de-jure-conquest` 的 `zz_cn_dejure_conquest.txt`（512 行，v2.2 已发布）。
+- **战争结束块在 1.21 被抽成了 wrapper，抄 1.20 的 CB 正文会静默少结算**（Patch 1.21 §Modding 只说
+  "Cleaned up casus belli … effects to make them easier to patch"，不说这是行为变化）。
+  三个入口在 `common/scripted_effects/00_war_effects.txt`：
+  `on_victory_aggressive_war_effect`(L3170) / `on_white_peace_effect`(L3178) / `on_defeat_aggressive_war_effect`(L3243)；
+  底座是 `general_on_war_end_effect`(L3143，POW 消息 + EP3 佣兵结算)、`on_victory_effect`(L3150)、`on_defeat_effect`(L3222)。
+  相对 1.20 内联版**多出来**的东西：`add_influence_attacker_victory/defeat_effect`（只对
+  `government_has_flag = government_has_influence` 的行政政体生效，`07_dlc_ep3_scripted_effects.txt:4221-4237`）、
+  防御方 `ep3_war_loss_adventurer_tt_effect`（同文件 L10746，自包含，只用 `target_titles` + `scope:war_loser`）、
+  白和的双方压力结算；另有 `scope:special_truce` / `scope:no_penalty_for_defeat` 两个闸门
+  （只由 religious_war / tributarize / ep3_wars / mpo_wars / tgp_china_wars 设置，普通 mod CB 恒放行）。
+  → **用 wrapper 就必须删掉被它覆盖的内联调用**，否则 POW/停战/石碑/声望各来两遍（数值翻倍，真机上很隐蔽）。
+- 原版 `individual_duchy_de_jure_cb`（`00_dejure_war.txt:546`）现在三个块各只有一行 wrapper
+  （victory L668 / white peace L724 / defeat L774），是「1.21 正确形态」的参照物。
+- 工作范例：`ck3-de-jure-conquest` 的 `zz_cn_dejure_conquest.txt`（v2.3 起按 wrapper 写法；
+  `工具-静态校验.mjs` 的 L 段有「wrapper 在场 + 内联残留为零」断言，N 段有 v2.2↔v2.3 差异断言）。
 
 ## [government] 政体（government）
 
