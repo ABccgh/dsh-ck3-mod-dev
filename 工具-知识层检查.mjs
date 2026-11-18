@@ -1,15 +1,17 @@
 #!/usr/bin/env node
 /**
- * 知识层 lint：把复盘（`.admin/retro-2026-11-18-ck3mod.md`）的映射表变成**可执行断言**。
+ * 知识层 lint：把复盘（`.admin/retro-2026-11-18-ck3mod.md` 与续篇
+ * `.admin/retro-2026-11-18b-ck3mod-auto-v2.1.md`）的映射表变成**可执行断言**。
  *
  * 为什么需要：复盘里的教训如果只写成规则，下一次改文档时删掉一条也没人知道——这正是 H7
- * 「写进清单的问题只有变成机器检查才算处理」。这个脚本把 A1…E3、H1–H7 的落点、硬规则编号、
+ * 「写进清单的问题只有变成机器检查才算处理」。这个脚本把 A1…H7、P1–P16 的落点、硬规则编号、
  * 各节标题、版本口径、部署副本哈希都变成断言，跑一次即知映射是否断裂。
  *
  * 检查分五组：
  *   1. SKILL.md 硬规则：编号必须是 1..N 连续、无缺号无重号（N 与 EXPECTED_RULE_COUNT 一致）；
  *   2. 三份知识层文件的必需节（SKILL / verified-notes / ingame-acceptance）；
  *   3. 复盘映射锚点：每条编号对应的关键句必须还在原文件里（删了 = 复盘落地断链）；
+ *      锚点集 = 11-18 的 A1…H7（28 条）+ 11-18b 的 P1–P16（23 条）；
  *   4. 版本口径：package.json / README 顶部 / README §13 最新条目 / SKILL metadata 互相一致；
  *   5. 部署副本：仓库 vs `~/.agents/skills/ck3-modding` vs `~/dsh-bundles/ck3moddev` 的哈希。
  *
@@ -36,7 +38,7 @@ const DEPLOY_DEFAULT = path.join(os.homedir(), '.agents', 'skills', 'ck3-modding
 const BUNDLE_DEFAULT = path.join(os.homedir(), 'dsh-bundles', 'ck3moddev');
 
 /** 硬规则的期望条数。新增规则时**先改这里**，让「改了数字」成为一次有意识的动作。 */
-const EXPECTED_RULE_COUNT = 20;
+const EXPECTED_RULE_COUNT = 26;
 
 /** bundle 安装副本里参与比对的关键文件（其余是运行时无关文件）。 */
 const BUNDLE_FILES = [
@@ -69,7 +71,7 @@ const SKILL_SECTIONS = [
   '## References',
 ];
 
-/** verified-notes.md 必须有的分节（14 组实测要点）。 */
+/** verified-notes.md 必须有的分节（14 组实测要点 + 改名表 + 验证判据）。 */
 const NOTES_SECTIONS = [
   '## 1.21 改名与「patch note ≠ 实机名」',
   '## [interaction] 角色互动（character interaction）',
@@ -86,6 +88,7 @@ const NOTES_SECTIONS = [
   '## [ingame] 真机验收（启动参数 / 存档 / 1.21 UI）',
   '## [automation] 真机自动化（agent 代点，2026-11-18 实跑 free v4.1）',
   '## [release] 发布与工坊核对（2026-11-18 free v4.0 → v4.1）',
+  '## [verify] 验证判据（无头 / A5 / 反向显示）',
 ];
 
 /** ingame-acceptance.md 必须有的节（含 §9 机器代点）。 */
@@ -107,6 +110,7 @@ const RUNBOOK_SECTIONS = [
   '### 9.3 探针 mod 模板（不点菜单就能截到面板）',
   '### 9.4 能自动 / 不能自动（free v4.1 实测）',
   '### 9.5 证据',
+  '### 9.6 点击纪律与人机分工（2026-11-18b 实测）',
 ];
 
 /**
@@ -143,6 +147,30 @@ const ANCHORS = [
   { id: 'H4', file: SKILL_FILE, needle: '有意产物', label: 'H4 判据区分' },
   { id: 'H5', file: SKILL_FILE, needle: '包裹结构', label: 'H5/H6 抄片段' },
   { id: 'H7', file: SKILL_FILE, needle: '工具-知识层检查.mjs', label: 'H7 已检查化' },
+  // 2026-11-18b（auto v2.1）16 条新坑的落点：P1–P16，共 23 条锚点。
+  { id: 'P1', file: SKILL_FILE, needle: '兼容发布 = 内容零改动', label: '判断层：L 段差异断言' },
+  { id: 'P2', file: NOTES_FILE, needle: '末字节是', label: 'descriptor 字节形状' },
+  { id: 'P2', file: SKILL_FILE, needle: '没有行尾换行', label: '规则 26 形状' },
+  { id: 'P3', file: NOTES_FILE, needle: '只生成 descriptor', label: '无内容生成器只补 descriptor' },
+  { id: 'P4', file: NOTES_FILE, needle: '三个机器信号', label: '上传确认与 SKIP' },
+  { id: 'P5', file: NOTES_FILE, needle: '也会被一起回写', label: '内层 descriptor 回写' },
+  { id: 'P6', file: RUNBOOK_FILE, needle: 'on_game_start_after_lobby = {', label: '探针双钩子模板' },
+  { id: 'P6', file: SKILL_FILE, needle: '两个开局钩子', label: '规则 23' },
+  { id: 'P7', file: NOTES_FILE, needle: '新游戏选人界面', label: '-skip 落点' },
+  { id: 'P8', file: RUNBOOK_FILE, needle: '清空已选', label: '选角色点击纪律' },
+  { id: 'P9', file: RUNBOOK_FILE, needle: '1.1241', label: '全尺寸截图坐标系数' },
+  { id: 'P9', file: RUNBOOK_FILE, needle: '36 px', label: '事件面板行高' },
+  { id: 'P10', file: RUNBOOK_FILE, needle: '1.2–1.5 s', label: '点击间隔' },
+  { id: 'P11', file: RUNBOOK_FILE, needle: '自动暂停', label: '跑时间项归人' },
+  { id: 'P12', file: NOTES_FILE, needle: '没自退', label: '无头未自退判据' },
+  { id: 'P12', file: SKILL_FILE, needle: '没自退', label: '规则 25' },
+  { id: 'P13', file: NOTES_FILE, needle: 'Script location', label: 'A5 判据' },
+  { id: 'P13', file: SKILL_FILE, needle: 'Script location', label: '规则 25 日志分组' },
+  { id: 'P14', file: SKILL_FILE, needle: '不许硬编码样本数', label: '规则 22' },
+  { id: 'P14', file: NOTES_FILE, needle: '32/32', label: '反向结论行' },
+  { id: 'P15', file: SKILL_FILE, needle: '只改仓库副本', label: '规则 21' },
+  { id: 'P16', file: SKILL_FILE, needle: '工具-文档链接检查.mjs', label: '规则 20 文档链接兜底' },
+  { id: 'P24', file: SKILL_FILE, needle: '一开始就划给人', label: '规则 24 人机分工' },
 ];
 
 /**

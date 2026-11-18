@@ -10,6 +10,7 @@ const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SCRIPT = path.join(REPO, '工具-知识层检查.mjs');
 const SKILL_REL = path.join('skills', 'ck3-modding', 'SKILL.md');
 const NOTES_REL = path.join('skills', 'ck3-modding', 'references', 'verified-notes.md');
+const RUNBOOK_REL = path.join('skills', 'ck3-modding', 'references', 'ingame-acceptance.md');
 
 /** 本文件建过的临时根目录；跑完统一删，别在 %TEMP% 里留 `ck3-lint-*`。 */
 const created = [];
@@ -62,13 +63,13 @@ test('真实知识层副本通过（--no-deploy）', () => {
   assert.match(out, /知识层检查通过/);
 });
 
-test('删掉硬规则 20 报 SKILL/rules', () => {
+test('删掉硬规则 26 报 SKILL/rules', () => {
   const root = makeRepo();
-  write(root, SKILL_REL, read(root, SKILL_REL).replace(/^20\. \*\*.*$/m, ''));
+  write(root, SKILL_REL, read(root, SKILL_REL).replace(/^26\. \*\*.*$/m, ''));
   const { code, out } = run(['--repo', root, '--no-deploy']);
   assert.equal(code, 1, out);
   assert.match(out, /\[SKILL\/rules\]/);
-  assert.match(out, /应为 1–20/);
+  assert.match(out, /应为 1–26/);
 });
 
 test('package.json 与 README 版本不一致报 VERSION', () => {
@@ -89,6 +90,22 @@ test('复盘锚点被改掉时报对应编号', () => {
   assert.equal(code, 1, out);
   assert.match(out, /\[C1\]/);
   assert.match(out, /96,074/);
+});
+
+test('runbook 的坐标系数被改掉时报 P9', () => {
+  const root = makeRepo();
+  write(root, RUNBOOK_REL, read(root, RUNBOOK_REL).replaceAll('1.1241', '9.9999'));
+  const { code, out } = run(['--repo', root, '--no-deploy']);
+  assert.equal(code, 1, out);
+  assert.match(out, /\[P9\]/);
+});
+
+test('删掉 [verify] 节报 NOTES/sections', () => {
+  const root = makeRepo();
+  write(root, NOTES_REL, read(root, NOTES_REL).replace(/^## \[verify\].*$/m, ''));
+  const { code, out } = run(['--repo', root, '--no-deploy']);
+  assert.equal(code, 1, out);
+  assert.match(out, /\[NOTES\/sections\]/);
 });
 
 test('部署副本缺失只提示、不算失败', () => {

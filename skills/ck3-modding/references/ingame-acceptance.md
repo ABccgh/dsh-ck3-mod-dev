@@ -59,6 +59,7 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 
 `-play` 收头衔键（文档示例 `e_byzantium`；本机 1066 威尼斯 = `k_venice`，见 `[ingame]`）。
 `-skip` / `-play=` / `-bookmark=` / `-loadsave=` 都来自 `game/_commandline_options.info` L9-22。
+**`-skip` 直接落到新游戏选人界面**（不是主菜单）；「游戏规则」按钮就在该界面右下（2026-11-18 实测）。
 实测：`-debug_mode -nographics -skip -play=k_venice -shutdown_after_history` **28.7 s 到 history 后自行退出（exit 0）**，
 说明这套参数确实直接进了游戏；**日志里没有「玩家角色」行，`-play` 是否精确锁定该头衔未被直接证明**——
 验收时以暂停菜单左上角的统治者名为准，不对就换回路线 B。
@@ -129,7 +130,12 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 | A2 设置面板 | 决议 →「自动传播」 | 看面板 | 五个开关（信仰/教派/文化/控制力/人物）+「传播速度设置」+「AI 设置」 | 面板截图 |
 | A3 跑时间 | 全开 + 标准档跑 1–2 年 | 看领地 | 出现转化（信仰/文化/控制力变化） | 地图/领地截图 |
 | A4 极速档 | 切「极速」再跑 1 年 | 看领地 | 转化更快，不崩 | 截图 |
-| A5 日志 | 全程 | `error.log` | `auto_spread` **0 条** | 日志命令 |
+| A5 日志 | 全程 | `error.log` | `auto_spread` **0 条**，且无任何 `Script location` 指向本 mod 文件（先按位置分组、扣掉原版噪声） | 日志命令 |
+
+> **2026-11-18 机器代点（v2.1 / 1.21.0）结果**：A1/A2 **通过**（用户当次同意代点：规则在 AI 分类下可见可选；
+> 面板五开关逐项点亮、速度切「极速 ✓」、两子页入口在列）；A3/A4 **用户自测通过**（18:37–20:16，约 1h40m，
+> 报「没发现任何问题」）；A5 **机器复核通过**：`error.log` 里 `auto_spread` **0 条**、无 `Script location`
+> 指向本 mod，同期 8,094 条 [E] 全为原版/DLC 噪声（基线见 `verified-notes.md [ingame]`）。
 
 ## 5. 证据规范
 
@@ -225,8 +231,8 @@ Get-ChildItem "C:\Users\11210\Documents\Paradox Interactive\Crusader Kings III\m
 | `focus` | `ShowWindow(SW_RESTORE)` + `SetForegroundWindow` | 每次注入前都要做（见 9.3 的坑） |
 | `type` | `SendInput` + `KEYEVENTF_UNICODE` | 备用；键盘目前打不通，不要依赖 |
 
-**坐标换算**：`read_image` 的预览常被缩放到 1708 宽（1920/1708 ≈ **1.124**）；从预览量到的坐标要乘回去再点。
-每次点击后重新截图确认，不要连续盲点。
+**坐标换算**：`read_image` 的预览常被缩放到 1708 宽（1920/1708 ≈ **1.1241**）；从预览量到的坐标要乘回去再点。
+每次点击后重新截图确认，不要连续盲点。**完整点击纪律见 §9.6**（行高、间隔、选角色）。
 
 ### 9.3 探针 mod 模板（不点菜单就能截到面板）
 
@@ -237,8 +243,15 @@ zz_probe.mod                                # 外层，path 指向 Documents\...
 ```
 
 ```
-# 追加到原版 on_game_start / on_game_start_after_lobby —— 只能写 on_actions 列表！
+# 两个开局钩子都要挂：单人新开局常走 on_game_start_after_lobby（game_start.txt:2806），
+# 只挂 on_game_start 时面板可能不出现（日志却无报错）。只写 on_actions 列表，不要写 effect！
 on_game_start = {
+	on_actions = {
+		zz_probe_game_start
+	}
+}
+
+on_game_start_after_lobby = {
 	on_actions = {
 		zz_probe_game_start
 	}
@@ -260,6 +273,10 @@ zz_probe_game_start = {
 }
 ```
 
+- **两个钩子缺一不可**：2026-11-18 实测，只挂 `on_game_start` 时面板不出现、日志无报错；补挂
+  `on_game_start_after_lobby` 后立刻出现（同版本、同一套选人流程，唯一变量就是钩子）。两个钩子都**只能写
+  `on_actions` 列表**，靠全局变量 `zz_probe_done` 去重，避免重复触发。
+
 - **绝对不要**写 `on_game_start = { effect = { … } }`：那是**整块覆盖**，原版开局设置全丢
   （实测：局势 intro 立刻变成 `ERROR:[ghibelline_leader…]` 占位）。
 - 目标流程（需要 `scope:xxx_target`）：先 `every_courtier = { limit = { is_adult = yes } save_scope_as = xxx_target }`
@@ -274,9 +291,23 @@ zz_probe_game_start = {
 | 右键交互菜单里的条目（分类折叠也看得见） | 任何必须键盘的操作（`~` 控制台、ESC） |
 | 目标流程面板（右侧对方头像） | tooltip 完整文案（只能看截图里可见的部分） |
 | 政体门控后的列表内容、`error.log` 计数 | 数值断言的精确读数（`debug_log` 不解析数据函数，只能截图） |
+| 面板 / 开关 / 规则可见性、右键菜单、选项窗 | 跨年连续运行（原版事件会**自动暂停**游戏；必须跑时间的项一开始就划给人） |
 
 ### 9.5 证据
 
 - 截图命名 `<mod>-<项号>-<说明>.jpg`，放 `验证记录\N-游戏内验证-<版本>\`；README 里给「项号 → 结论 → 文件名」表。
 - 1920×1080 PNG 每张 3–4 MB，**转 JPEG q82** 再入库（43.8 MB → 3.1 MB 实测）。
 - 同一目录附当次 `error.log` / `debug.log`（本 mod 报错计数 + `Loaded [n] events`）。
+
+### 9.6 点击纪律与人机分工（2026-11-18b 实测）
+
+> 2026-11-18b 的 auto v2.1 代点（A1/A2）就是按这套跑通的；违反任何一条都会得到「点了但没生效」的假象。
+
+- **坐标从全尺寸截图量**：`read_image` 的预览常被缩到 1708 宽（实际 1920，系数 **1.1241**）；
+  按预览标尺直接点会偏——实测差 20 px 就落到相邻控件。
+- **事件面板每行 client 高约 36 px**：点开关时偏一行就会把**上一个**开关关掉；每次点击后重截确认状态，不要连点。
+- **两次点击间隔 ≥1.2–1.5 s**：选项点击会 `trigger_event` 回自身并重绘事件，间隔太短会丢点击。
+- **选角色**：先 hover 出 tooltip 再单点；点海面 / 不可通行地形会**清空已选**角色；点男爵领会打开角色档案
+  （不是头衔窗口）。
+- **时间项归人**：原版事件会**自动暂停**游戏（本次是拜占庭国库），「跑一年」这类必须连续跑时间的项不可无人值守。
+  分工前先问「这一项有没有必须连续跑时间的成分」，有就一开始划给人，不要试到一半再交回。

@@ -9,7 +9,7 @@ description: |
   the four published mods, the shared toolchain, or the wiki atlas.
 metadata:
   author: "local workspace"
-  version: "0.6.1"
+  version: "0.7.0"
 ---
 
 # CK3 Modding — Workspace Playbook
@@ -53,13 +53,18 @@ Never infer a path or a command from memory; read the mod README first.
 - Game version: **1.21.0 "Florin"**（Wiki 记 2026-11-17 与 Silk & Silver 同日发布；本机 2026-11-18 更新，
   `launcher\launcher-settings.json` = `1.21.0 (Florin)`、`titus_branch.txt` = `release/1.21.0`、
   `appmanifest_1158310.acf` buildid `26622941` 可复核）。
-- 四个 mod 的当前发布快照：`ck3-auto-spread` **2.0** · `ck3-curse` **1.0** ·
+- 四个 mod 的当前发布快照：`ck3-auto-spread` **2.1** · `ck3-curse` **1.0** ·
   `ck3-de-jure-conquest` **2.2** · `ck3-free-resources` **4.1**。
-  **free 已按 1.21 发布**（2026-11-18 16:23 上传；仓库快照 `supported_version="1.21.*"`、
-  工坊侧被启动器回写为 `1.21.0`、`file_size` 96,074 B）；其余三个仍声明 `1.20.*`，
-  1.21 下静态/loc + 无头都 PASS，但**没重发工坊就别说"已支持 1.21"**。
+  **free / auto 都已按 1.21 发布**（free 2026-11-18 16:23；auto 同日 20:21。仓库快照
+  `supported_version="1.21.*"`、工坊侧被启动器回写为 `1.21.0`；free 工坊 `file_size` 96,074 B，
+  auto 内层 75,393 B、精确 `file_size` 记 **SKIP**——shell 拿不到 Steam API key）。
+  **仍声明 `1.20.*` 的只有 curse / de-jure**，1.21 下静态/loc + 无头都 PASS，
+  但**没重发工坊就别说"已支持 1.21"**。
+- **free / auto 的本机副本已删**（改用工坊订阅，避免重复定义）；要本地测先跑各自 `工具-部署.mjs` 重建。
 - **新版本上手第一件事**：跑该 mod 的 `工具-静态校验.mjs`。H 段（引擎 token）与 H2 段（原版角色货币覆盖）
   会回答「只发兼容版，还是要功能更新」——free 的 H2 就是 2026-11-18 为此加的。
+  **判完若只是兼容发布，再用 L 段（`v_prev` ↔ `v_new` 差异断言）把「兼容发布 = 内容零改动」变成机器事实**，
+  别停在口头承诺（auto v2.1 即此型）。
 - 改之前先复核：`ck3mod_status`（预设内）或 `cli.mjs check --all`，确认基线还是绿的。
 
 ## 1.21 变化（大版本迁移必读）
@@ -160,6 +165,8 @@ patch note 也不可信到名字级别（见 `verified-notes.md` 顶部「改名
 | 地图 / 地形 | `Map modding`、`Terrain modding` | `map_data/` | — |
 | 控制台与调试 | `Mod troubleshooting`、`Console commands`（1.21） | `_commandline_options.info` | — |
 | 真机验收 / 启动参数 / 存档保护 | —（`_commandline_options.info` 就是文档） | `_commandline_options.info`、`pdx_settings.txt`、`game/tests/` | `[ingame]` |
+| 发布 / 工坊核对 / descriptor 形状 | `Mod structure`（2023 页，键表仍准） | 各 mod 的 `.mod` / `descriptor.mod`、`数据-元数据.mjs` | `[release]` |
+| 机器代点 / 探针 / 点击纪律 | — | `references/ingame-acceptance.md` §9 | `[automation]` |
 | 打包 / descriptor | `Mod structure`（2023 页，键表仍准） | 各 mod 的 `.mod` / `descriptor.mod` | — |
 | 兼容 / 覆盖 | `Mod compatibility`、`Modding` 的 Override rules | — | — |
 
@@ -237,7 +244,7 @@ Common order: **edit source → generate (if table-driven) → normalize → che
 | `ck3-curse` | `数据-mod表.mjs` + hand-written script/loc | `工具-生成.mjs`, `工具-规范化.mjs`, `工具-缩略图.py` | `工具-检查.mjs` (`A–O` via `工具-静态校验.mjs`; reverse via `工具-反向验证.mjs`) | 4 interactions, 24 traits, no Vanilla overrides |
 | `ck3-de-jure-conquest` | `数据-mod表.mjs` + CB script/loc | `工具-生成.mjs`, `工具-规范化.mjs` | `工具-检查.mjs` (`--root` v1.0 must report **16**) | CB is hand-written; v2.0 settlement checklist in `发布说明.md` |
 | `ck3-free-resources` | `数据-资源表.mjs` | `工具-生成.mjs` (golden check), `工具-部署.mjs` | `工具-检查.mjs` | generated events/loc; never hand-edit products |
-| `ck3-auto-spread` | hand-written script/loc | no generator (v2.0), **no deploy script** | `工具-检查.mjs` (`--root` static validator + loc) | settings via global variables + game rules; 1.20 rite fields already used |
+| `ck3-auto-spread` | `数据-元数据.mjs`（META / 快照路径）+ hand-written script/loc | `工具-生成.mjs`（**只生成两份 descriptor**，`--check` golden） | `工具-检查.mjs`（静态 A–M，含 L 段差异；loc 94；reverse 7） | settings via global variables + game rules；v2.1 起有 `工具-部署.mjs`（`--check` / `--clean`），**没有内容生成器** |
 
 After editing, always run the mod's `工具-检查.mjs check` (or the original `工具-静态校验.mjs`)
 and keep it output green. Do not "fix" a check by deleting it; if a check is stale, update its
@@ -274,9 +281,15 @@ documented expected count and say so.
 3. **杀进程收场**：`Stop-Process -Name ck3 -Force` → `--end`。**绝不点游戏内「退出游戏」**，
    它会写 `autosave_exit.ck3` / `last_save.ck3`，冲掉用户上一次的退出存档。
 
+**代点两步（仅用户当次明确同意时）**：① 探针 mod **两个开局钩子都要挂**——`on_game_start` +
+`on_game_start_after_lobby`（单人新开局常走后者；只挂前者时面板不出现、日志却无报错），
+用全局变量去重；② **凡「必须连续跑时间」的项一开始就划给人**（原版事件会自动暂停游戏），
+点击纪律（全尺寸截图量坐标、行高 36 px、间隔 ≥1.2–1.5 s、选角色先 hover）见 runbook §9.6。
+
 **启动**：`ck3.exe -debug_mode -suppress_error_log -skip -play=<title_key>`（路线 A，已文档化）或走主菜单
 （路线 B，已验证）。**`-develop` 不存在**：`_commandline_options.info` 无此项，exe 里也搜不到；
-热载用 `-debug_mode` + 控制台 `reload`。
+热载用 `-debug_mode` + 控制台 `reload`。注：`-skip` 会**直接落到新游戏选人界面**（不是主菜单），
+游戏规则按钮在该界面右下。
 
 **闭环工具**（细节在 runbook）
 
@@ -336,6 +349,8 @@ documented expected count and say so.
     `Documents\...\mod\*.mod`，清场后它会显示空库、没有可上传物；② **两个 descriptor 归启动器管** ——
     点上传时它会把 `supported_version` 从通配回写成实测版本（`1.21.*`→`1.21.0`）并吃掉行尾 1 字节，
     所以静态校验对这两个文件按字段比，`file_size` 比本地少 1 字节是正常现象。
+    它读的是外层 `.mod`，但**内层 `descriptor.mod` 也会被一起回写** → 按字段比必须覆盖内外两份
+    （容差 `1.21.*` / `1.21.x`）。
 17. **前提先于功能**：现象是「功能没生效」时，先逐条确认前置条件真的成立——目标对象还活着
     （拿死人做 `add_hook` 会静默失败）、对象过得了代码里的闸门（AI 受害者被 `is_ai = no` 挡掉）、
     命令在零售版被接受（Wiki 只证明「存在」）。前置条件不成立时，代码看起来就是「写错了」。
@@ -347,8 +362,32 @@ documented expected count and say so.
     判据过期时改判据、并从真源取（`META`、表导出），**别放宽整条规则，也别删检查来变绿**。
 20. **写进清单的问题只有变成机器检查才算处理**：候选清单/复盘里记下的问题，没有落成脚本断言就等于
     没发现；收进实现前先问「这条会不会被 `工具-检查.mjs` / golden check 拦住」。
-    **知识层自己也有兜底**：`工具-知识层检查.mjs` 断言硬规则 1–20、三份文件的必需节、复盘映射锚点、
-    版本口径与部署副本哈希——删了规则、断了映射、忘了同步，它都会报红。
+    **知识层自己也有兜底**：`工具-知识层检查.mjs` 断言硬规则编号（1–N 连续）、三份文件的必需节、
+    复盘映射锚点（11-18 的 A1…H7 + 11-18b 的 P1–P16）、版本口径与部署副本哈希——删了规则、断了映射、
+    忘了同步，它都会报红；**文档索引**由 `.admin\工具-文档链接检查.mjs` 兜底，收尾必跑。
+21. **知识层只改仓库副本**。skill 的源在 `dsh-ck3-mod-dev\skills\ck3-modding\`，DSH 实际加载的是
+    `~\.agents\skills\ck3-modding`（部署副本）；`工具-同步技能.mjs` 方向固定为**仓库 → 部署副本**。
+    直接改部署副本会被下一次同步覆盖（2026-11-18 实测）。改完必须同步 + `--check` + `工具-知识层检查.mjs`。
+22. **校验器的结论行不许硬编码样本数**。各 mod 的反向样本数不同（curse 32、auto 7），显示必须从脚本
+    输出解析（`反向验证：N / N 项如期报错`）；期望值只写在 `configs.mjs` 的 `expect` 里，
+    断言的是「显示等于实际」，不是断言常量。
+23. **探针两个开局钩子都要挂**。单人新开局常走 `on_game_start_after_lobby`（`game_start.txt:2806`），
+    只挂 `on_game_start` 时面板不出现、日志却无报错；两个钩子都写 `on_actions = { zz_probe_game_start }`，
+    用全局变量去重。模板见 `references/ingame-acceptance.md §9.3`。
+24. **代点点击纪律；要跑时间的项一开始就划给人**。坐标从**全尺寸截图**量（预览 1708 宽，系数 1.1241），
+    事件面板每行约 36 px；两次点击间隔 ≥1.2–1.5 s（选项点击会 `trigger_event` 重绘事件）；
+    选角色先 hover 出 tooltip 再单点（点海面/不可通行地形会清空已选、点男爵领会打开角色档案）；
+    原版事件会**自动暂停**游戏，「跑一年」这类必须连续跑时间的项不要试图自动化。细则见 runbook §9.6。
+25. **无头判据固定；「没自退」不单独算失败；日志先按 `Script location` 分组**。判据三件套：
+    到 `Start running through history.` + 本 mod 报错 0 + 播放集 SHA256 还原；到 history 但没自退是
+    概率性的（同一部署 33.1 s 未退、30 秒后复跑 25.9 s exit 0），先复跑一次再下结论。A5 两条：
+    mod token 0 条 **且** 没有 `Script location` 指向本 mod 的文件；1.21 原版噪声可达 8,094 条 [E]，
+    不先按位置分组就会误判（基线见 `verified-notes.md [ingame]`）。
+26. **发布快照是发布物：字节形状跟启动器一致，上传确认只认机器信号**。两份 descriptor 上传后末字节是 `"`、
+    没有行尾换行；生成器不许带 `\n`，快照做到「与上一版逐字节只差两处值」（静态校验 L 段守住）。
+    没有生成器的 mod 补一个只生成 descriptor 的 `工具-生成.mjs` + `数据-元数据.mjs`（内容文件仍手写）。
+    上传后确认只认三个机器信号（descriptor 被回写成实测版本 + `steam_workshop_search` 的日期/体积 +
+    条目 ID 未变）；精确 `file_size` 拿不到就写 **SKIP**，别猜。
 
 ## Verification layers
 
@@ -357,23 +396,31 @@ documented expected count and say so.
 | Loc structure | shared `loc` | BOM, header, `$...$`, `[...]`, `#tag`, cross-language `$` sets |
 | Static rules | per-mod `工具-静态校验.mjs` | braces, descriptors, loc keys, Vanilla token existence, mod-specific invariants |
 | Reverse | shared `reverse` + per-mod reverse | whether checks actually fire on deliberate defects |
-| Headless | `ck3.exe -debug_mode -nographics -shutdown_after_history` | load-time errors only; not interactions/on_game_start |
+| Headless | `ck3.exe -debug_mode -nographics -shutdown_after_history` | load-time errors only; 判据 = 到 history + 本 mod 0 报错 + 播放集还原；「没自退」先复跑；not interactions/on_game_start |
 | Console run-script（手动） | `run/` + 控制台 `run x.txt` | 条件搭建与效果链，可重复；仍需人开游戏 |
 | Console `scripted_tests`（1.21，手动） | 游戏内控制台 `scripted_tests [pattern]` | 原版自带 20 个测试文件；需要已载入存档；无人值守入口未打通 |
-| In-game（人点、机记；用户明确要求时可机器代点） | `工具-真机现场.mjs` + 点击 + 截图 + `error.log` token 计数 | 互动 / UI / tooltip / 决策 / 宣战界面；不能证明数值平衡与长期运行 |
+| In-game（人点、机记；用户明确要求时可机器代点） | `工具-真机现场.mjs` + 点击 + 截图 + `error.log` token 计数 | 互动 / UI / tooltip / 决策 / 宣战界面；不能证明数值平衡与长期运行；**必须连续跑时间的项留给人** |
 | Workshop | launcher upload + page check | packaging/size/ID, not logic |
+| 知识层 / 文档索引 | `工具-知识层检查.mjs` + `.admin\工具-文档链接检查.mjs` | 硬规则编号、必需节、复盘锚点断链、版本口径、部署副本漂移、索引里的死链 |
 
 Never claim a layer passed if it was skipped; say **SKIP** and why.
 
 > 1.21 实测：空播放集无头 **26.5 s 到 `Start running through history.` 后自行退出、exit 0**，
 > 1.20 那个「到 history 必崩」的现象没有复现。但装 mod 后是否仍干净，要按当次报告判。
+> auto v2.1（1.21）另见：第 1 轮 33.1 s 到 history **未自退**（判 WARN），复跑 25.9 s、exit 0、PASS
+> ——「没自退」是概率性的，先复跑再判（硬规则 25）。
 
 ## References
 
 - Wiki 索引（本次勘察生成）：`references/ck3-wiki-atlas.md`
-- 实测要点（按域，带 `.info` 行号）：`references/verified-notes.md`（含 `[release]` 发布/工坊核对、`[automation]` 真机自动化）
-- 真机验收 runbook（含 §9 机器代点）：`references/ingame-acceptance.md`
+- 实测要点（按域，带 `.info` 行号）：`references/verified-notes.md`（含 `[release]` 发布/工坊核对、
+  `[automation]` 真机自动化、`[verify]` 无头/A5/反向判据）
+- 真机验收 runbook（含 §9 机器代点与 §9.6 点击纪律）：`references/ingame-acceptance.md`
 - 踩坑总账（2026-11-18 项目收尾）：`D:\DSH workspace\.admin\retro-2026-11-18-ck3mod.md`
+- 踩坑续篇（2026-11-18b auto v2.1）：`D:\DSH workspace\.admin\retro-2026-11-18b-ck3mod-auto-v2.1.md`
+  —— 16 条新坑（P1–P16），§八 的 5 处补丁已于插件 0.5.0 / skill 0.7.0 落地
+- 文档索引兜底：`D:\DSH workspace\.admin\工具-文档链接检查.mjs`（收尾必跑；`--all` 扫整个 `.admin`）
+- auto 的 L 段与回滚：`D:\DSH workspace\ck3-auto-spread\README.md`、`发布说明.md`
 - 索引生成器：`scripts/wiki-atlas.mjs`（`--check` 验鲜，`--out` 改输出位置）
 - Shared tools: `D:\DSH workspace\ck3-modding-tools\README.md`
 - Survey / decisions: `D:\DSH workspace\ck3-modding-survey\README.md`, `06-落地候选.md`

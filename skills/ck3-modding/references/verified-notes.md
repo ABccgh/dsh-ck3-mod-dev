@@ -4,7 +4,8 @@
 > 游戏版本：**1.21.0 "Florin"**（2026-11-17 发布，本机 2026-11-18 更新）；核对日期：2026-11-18。
 > 用法：只在要动某个域时读对应一节（`[slug]`），不要整篇读。
 > 维护：写进来的必须能指认（`.info` 行号 / vanilla 实例）；大版本更新后逐条复核，**失效的删掉**，不要留在里面。
-> 收录：`[interaction]` `[cb]` `[government]` `[resources]` `[council]` `[story]` `[struggle]` `[district]` `[trade]` `[road]` `[laws]` `[ingame]` `[automation]` `[release]`
+> 收录：`[interaction]` `[cb]` `[government]` `[resources]` `[council]` `[story]` `[struggle]` `[district]` `[trade]` `[road]` `[laws]` `[ingame]` `[automation]` `[release]` `[verify]`
+> 分工：本文件只放**实测事实**；怎么点、怎么跑在 `ingame-acceptance.md`；规则与红线在 `SKILL.md` 的 Hard rules。
 
 ---
 
@@ -289,6 +290,15 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   （auto 的 `ai` → 过滤器选 AI 就能翻到），规则名/描述/取值全部走 loc。
 - **debug_mode 地图 hover**：左上显示 `ID / 名称 / 最低人口 / X,Y`（实测 `ID: 12763 sea_indian_ocean`），
   报 bug 时用它定位省份。
+- **`-skip` 直接落到新游戏选人界面**（不是主菜单）：A1 的「游戏规则」按钮就在选人界面右下（2026-11-18 实测）。
+- **1.21 原版报错噪声基线**（判 A5 / 加载基线时先扣掉）：一次 1h40m、只启用本 mod 的会话，
+  `error.log` **8,094 条 [E]**，本 mod **0 条**、**没有任何 `Script location` 指向本 mod**。前几名全是原版/DLC：
+  `common/important_actions/00_realm_actions.txt:1227` **3,528**（`Failed to fetch variable for 'amount_owed'`，
+  `action_demand_repayment`）、`common/scripted_triggers/00_crime_triggers.txt` **1,032**（同类脚本取值问题）、
+  科举活动（`az_examination_events` / `imperial_examination_actions`）**298 + 186 + 109**、
+  `00_laamp_triggers.txt` **184**、原版 story cycle 的 `cannot change faith` **3**、
+  原版 DLC 的 `Wrong scope for effect` **6**。
+  → **看到 8k 条 [E] 不等于 mod 坏了**：先按 `Script location` 分组，再看有没有指向自己的文件。
 
 ## [automation] 真机自动化（agent 代点，2026-11-18 实跑 free v4.1）
 
@@ -303,8 +313,18 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   截图与 `SetCursorPos` 都被打折，坐标全错位。声明后截图 1920×1080、坐标 1:1。
 - **坐标换算**：`read_image` 预览往往被缩放到 1708 宽（factor 1920/1708≈1.124）；从预览量到的坐标要乘回去再点。
 - **hover 是最便宜的校验**：Paradox 的按钮/资源图标悬停会出 tooltip，用它确认「光标真的落在 UI 上」。
-- **面板从哪来**：写一个**临时探针 mod**（`Documents\...\mod\zz_xxx`，测完删）在 `on_game_start` 里
-  `trigger_event = <mod 的入口事件>`，就能不点菜单直接截图到面板；要目标流程就先
+- **点击纪律（决定代点成败）**：坐标从**全尺寸截图**量（预览常被缩到 1708 宽，系数 1.1241）；事件面板每行
+  client 高约 36 px，估偏 20 px 就会落到相邻行、**把刚开的开关又关掉**；选项点击会 `trigger_event` 回自身
+  并重绘事件，两次点击间隔 **≥1.2–1.5 s**，否则丢点击。每次点击后重截确认，不连点。
+- **选角色**：先 hover 出 tooltip 再单点；点海面 / 不可通行地形会**清空**已选角色；点男爵领会打开
+  角色档案而不是头衔窗口。
+- **原版事件会自动暂停游戏**（本次是拜占庭国库）→「跑一年」这类必须连续跑时间的项**不可无人值守**，
+  一开始就划给人；先问「这一项有没有必须连续跑时间的成分」再做分工。
+- **面板从哪来**：写一个**临时探针 mod**（`Documents\...\mod\zz_xxx`，测完删），**两个开局钩子都挂**
+  （`on_game_start` + `on_game_start_after_lobby` → 同一个 `zz_probe_game_start`，用全局变量去重），再
+  `trigger_event = <mod 的入口事件>`，就能不点菜单直接截图到面板。**只挂 `on_game_start` 会不出现**：
+  单人新开局很可能走 `on_game_start_after_lobby`（`game_start.txt:2806`），日志却无报错
+  （2026-11-18 实测：同版本、同一套选人流程，唯一变量就是钩子）。要目标流程就先
   `every_courtier = { limit = { is_adult = yes } save_scope_as = <target_scope> }` 再触发。
 - **追加 on_action 只能写列表**（这是本次踩的实坑）：`on_game_start = { effect = { … } }` 会**整块覆盖**原版，
   实测开局局势 intro 直接变成 `ERROR:[ghibelline_leader…]` 占位；正确写法
@@ -353,3 +373,32 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   `time_updated` 是刚上传的时间 · `description` 含新版本号与新游戏版本（旧版本号只应留在 changelog 历史行里）。
   本次结果：条目 3775021095、`time_created` 2026-08-01、`file_size` 96,074、`time_updated` 2026-11-18 16:23:27、
   描述 4459 字符、订阅 119 → 169。
+- **快照是发布物：字节形状要跟启动器一致**。点上传后两份 descriptor 的末字节是 `"`（0x22）、**没有行尾换行**
+  ——那是启动器「回写 `supported_version` + 吃掉行尾 1 字节」之后的形状。生成器若按常规模板带 `\n` 就会多 1 字节
+  （auto v2.1 首版生成出 156 / 243 B，L 段立刻报红）。正确做法：生成器不留行尾换行，快照做到「与上一版
+  逐字节只差 version / supported_version 两处值」，并用静态校验 **L 段**（`v_prev` ↔ `v_new` 差异断言）守住。
+- **手写 mod 只有 descriptor 会漂**：`version` / `supported_version` 在内外两份各写一遍。给没有内容生成器的 mod
+  补一个只生成 descriptor 的 `工具-生成.mjs` + `数据-元数据.mjs`（约 60 行；auto v2.1 即此型），
+  内容文件仍手写；改版本只改 `META` 一处。
+- **内层 descriptor 也会被一起回写**：启动器读的是 `Documents\...\mod\<mod>.mod`，但会顺手重写内层
+  `descriptor.mod`。所以部署脚本与校验器的「按字段比」必须同时覆盖内外两份，容差 `1.21.*` / `1.21.x`。
+- **上传确认只认三个机器信号**：`$env:STEAM_API_KEY` 在本机 pwsh 里**是空的**（key 在插件配置里），
+  `steam_workshop_search` 精度只到 0.1 MiB。确认上传用：① 本机两份 descriptor 的 `supported_version`
+  被回写成 `1.21.0`（mtime 变了）；② `steam_workshop_search` 显示「更新于 <日期> / 0.1 MiB / 订阅数」；
+  ③ 条目 ID 未变。**精确 `file_size` 拿不到就记 SKIP 并写原因**，别猜。
+  auto v2.1 实测：条目 3779621287、0.1 MiB、订阅 1770、内层 75,393 B（精确值 SKIP）。
+
+## [verify] 验证判据（无头 / A5 / 反向显示）
+
+> 结论层最容易被「看起来通过」骗。这里三条都是 2026-11-18b 实测后固化的判据。
+
+- **无头判据固定三件套**：到 `Start running through history.` + 本 mod 报错 **0** + 播放集
+  `dlc_load.json` **SHA256 还原**。「没自退」**不单独当加载失败**：auto v2.1 同一份部署第 1 轮 33.1 s
+  到 history 却没自退（判 WARN），30 秒后复跑 25.9 s、exit 0、PASS —— 进程自退是概率性的，**先复跑一次再下结论**。
+- **A5 / 日志判据两条**：① 本 mod token（`auto_spread` / 中文名）**0 条**；② **没有任何 `Script location`
+  指向本 mod 的文件**。只数 token 会漏掉「引擎报错但不带脚本对象名」的情况；反过来原版噪声会淹没日志
+  （1.21 基线 8,094 条 [E]，见 `[ingame]`），所以先按 `Script location` 分组。
+- **反向验证的结论行不许硬编码样本数**：各 mod 样本数不同（curse 32、auto 7），共享 `lib/reverse.mjs`
+  曾把结论写死成 `32/32`，auto 只有 7 条也显示 `32/32`（2026-11-18 修复）。显示必须从脚本输出解析
+  （`反向验证：N / N 项如期报错`）；`configs.mjs` 的 `expect` 按 mod 写期望值——断言的是「显示等于实际」，
+  不是断言常量。

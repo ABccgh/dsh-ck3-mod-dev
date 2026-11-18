@@ -4,7 +4,7 @@
 > 外加 8 个 `ck3mod_*` 工具。工具只做**调用与汇总**——校验规则仍然归四个 mod 自己的
 > `工具-*.mjs` 与 `ck3-modding-tools/cli.mjs`，本插件一份都不复制。
 
-- 包名：`@local/ck3moddev` · 版本 0.4.2 · MIT
+- 包名：`@local/ck3moddev` · 版本 0.5.0 · MIT
 - 作用域：Windows 本机、profile `desktop`、游戏 **CK3 1.21.0 "Florin"**
 - 只做新增：不覆盖、不删除、不改动任何现有插件（`@local/ck3wiki`、`@local/steam`、`@local/prts` 等原样保留）
 - 仓库：<https://github.com/ABccgh/dsh-ck3-mod-dev>（MIT）
@@ -165,7 +165,7 @@ plugin_manager  action: install_bundle  target: %USERPROFILE%\dsh-bundles\ck3mod
 ### 5.1 能力探测（不硬编码）
 
 四个 mod 的脚本并不统一：curse 的部署支持 `--check --clean --prune --allow-launcher-rewrite`，
-dejure 少 `--prune`，free 只有 `--check`，auto-spread 根本没有部署脚本。
+dejure 少 `--prune`，free 只有 `--check`，auto-spread **v2.1 起**有 `--check` / `--clean`（此前根本没有部署脚本）。
 插件在运行时读脚本文本里出现过的 `'--xxx'` 字面量，据此决定允许哪些参数；
 请求了不支持的开关会直接拒绝并列出该 mod 实际支持的项——**不会**把参数硬塞给脚本。
 
@@ -224,7 +224,8 @@ Steam 的 8000 字节上限是**每个上传字段**的，所以 `工坊描述-B
 结论三档：
 
 - `PASS`：加载期干净 + 进程正常退出（退出码 0、无崩溃标记、隔离干净）。
-- `WARN`：加载期干净，但退出异常（本机常态：无头每次到 history 起点就崩，见下）、
+- `WARN`：加载期干净，但退出异常（1.21 已不是常态：到 history 未自退是**概率性**的——
+  auto v2.1 第 1 轮 33.1 s 未退、30 秒后复跑 25.9 s、exit 0，判据先复跑一次）、
   有非本 mod 报错、隔离不干净或日志没更新。
 - `FAIL`：本 mod 有报错、没走到 history、超时/中断、或 `dlc_load.json` 还原失败。
 
@@ -263,12 +264,12 @@ Steam 的 8000 字节上限是**每个上传字段**的，所以 `工坊描述-B
 | 文件 | 作用 |
 |---|---|
 | `skills/ck3-modding/SKILL.md` | 流水线、硬规则、Wiki 路由表（「要点」列指向实测小节）、1.21 变化、覆盖与兼容、真机验收铁律 |
-| `skills/ck3-modding/references/verified-notes.md` | 14 组实测要点：interaction / CB / 政体 / Resources / 议会 / 故事循环 / 斗争 / district / trade / road / laws / ingame / automation / release，每条带 **1.21.0** 的 `.info` 行号，按需只读一节；顶部另有「1.21 改名与 patch note 落差」表 |
+| `skills/ck3-modding/references/verified-notes.md` | 15 组实测要点：interaction / CB / 政体 / Resources / 议会 / 故事循环 / 斗争 / district / trade / road / laws / ingame / automation / release / verify，每条带 **1.21.0** 的 `.info` 行号，按需只读一节；顶部另有「1.21 改名与 patch note 落差」表 |
 | `skills/ck3-modding/references/ck3-wiki-atlas.md` | 生成物：Category:Modding 全 67 页 + **1.21 新内容 11 页 + 机制语义 25 页** + Category:1.21 校验集 + 补丁链，带最后编辑与 `{{version}}` |
 | `skills/ck3-modding/scripts/wiki-atlas.mjs` | 索引生成器；`--check` 验鲜，漂移退出码 1 |
 | `skills/ck3-modding/references/ingame-acceptance.md` | 真机验收 runbook：准备 / 启动（`-skip -play=`）/ 四 mod 矩阵 / 证据规范 / 收尾 / §9 机器代点（可选） |
 | `工具-同步技能.mjs` | 仓库 `skills/` → 用户 skill 目录；`--check` 只比对，`--dest` 改目标 |
-| `工具-知识层检查.mjs` | **知识层 lint**：硬规则 1–20 连续、三份文件的必需节、复盘映射锚点（A1…H7）、版本口径、部署副本哈希；失败退出码 1 |
+| `工具-知识层检查.mjs` | **知识层 lint**：硬规则 1–26 连续、三份文件的必需节、复盘映射锚点（A1…H7 + P1–P16，共 51 条）、版本口径、部署副本哈希；失败退出码 1 |
 | `工具-真机现场.mjs` | 真机验收现场保护：`--begin` 快照存档/设置/播放集，`--end` 按字节还原并核对 SHA256 |
 
 ### 8.1 三层真相
@@ -312,7 +313,7 @@ DSH 只从 skill 根目录（`~/.agents/skills` 等）发现 skill，而 GitHub 
 ```powershell
 $node = "C:\Users\11210\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe"
 cd "D:\DSH workspace\dsh-ck3-mod-dev"
-& $node .\工具-同步技能.mjs            # 部署（5 文件 / 约 128 KB）
+& $node .\工具-同步技能.mjs            # 部署（5 文件 / 约 142 KB）
 & $node .\工具-同步技能.mjs --check    # 只比对；漂移退出码 1
 & $node .\工具-知识层检查.mjs          # 内容 + 部署副本一起验；--no-deploy 只验内容
 ```
@@ -332,8 +333,9 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 - `headless.test.js`：临时目录 + fake run，覆盖 PASS/FAIL/超时/启动器占用/副本缺失/基线/自愈。
 - `plugin.test.js`：mock ctx，断言 8 个工具注册、`restrict` 的 deny 列表、apply 不返回值。
 - `tools-a.test.js` / `tools-b.test.js`：各工具的参数拼装与渲染边界。
-- `knowledge-lint.test.js`：复制真实知识层到临时目录后做变异（删硬规则 20、改版本、改锚点、空部署副本），
-  断言 `工具-知识层检查.mjs` 能分别报 `SKILL/rules` / `VERSION` / `C1` / `DEPLOY/skill`。
+- `knowledge-lint.test.js`：复制真实知识层到临时目录后做变异（删硬规则 26、改版本、改锚点、删 `[verify]` 节、
+  空部署副本），断言 `工具-知识层检查.mjs` 能分别报 `SKILL/rules` / `VERSION` / `C1` / `P9` /
+  `NOTES/sections` / `DEPLOY/skill`。
 
 测试**不启动真实游戏**、不写真实播放集。
 
@@ -364,6 +366,11 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
   （如决议列表）不可**。配方见 `skills/ck3-modding/references/ingame-acceptance.md §9`。
 - **真机会写用户存档**：CK3 没有独立用户目录，`autosave*.ck3` / `last_save.ck3` / `continue_game.json`
   都会被覆盖（2026-11-18 实测）。没有 `--begin` 的现场就不许开游戏——这是硬规则，不是建议。
+- **工坊精确 `file_size` 无机器路径**：`$env:STEAM_API_KEY` 在 pwsh 里为空（key 在插件配置里），
+  `steam_workshop_search` 只到 0.1 MiB。上传确认用三个信号（descriptor 被回写 / 搜索页日期体积 /
+  条目 ID 未变），精确字节数记 **SKIP** 并写原因（2026-11-18 auto v2.1 实例）。
+- **跨年/跑时间类真机项不可自动**：原版事件会自动暂停游戏，「跑一年」必须有人；代点只覆盖
+  面板 / 开关 / 规则可见性这一层（配方见 runbook §9.6）。
 
 ## 11. 怎么改 / 下次 CK3 更新时
 
@@ -381,7 +388,7 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
   4. 改 `SKILL.md` 的 Environment 与「1.2x 变化」段；`metadata.version` 加一。
   5. 重跑 `cli.mjs check --all`（四个 mod 的 vanilla token 是否还在）；必要时跑无头冒烟与真机验收。
   6. `工具-同步技能.mjs` 同步 + `--check`；`工具-知识层检查.mjs` 必须绿（规则/节/映射/版本/部署副本）；
-     robocopy + 关开 bundle；更新 README 版本与 §13。
+     `.admin\工具-文档链接检查.mjs` 必须 0 缺失；robocopy + 关开 bundle；更新 README 版本与 §13。
 - 新增 mod：在 `ck3-modding-tools/configs.mjs` 加一项即可，**不要**在插件里另建列表。
 
 ## 12. 注意事项
@@ -393,6 +400,31 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 5. **开游戏前先 `--begin`，收场用杀进程 + `--end`**；游戏内「退出游戏」会覆盖 `autosave_exit` / `last_save`。
 
 ## 13. 更新记录
+
+### 0.5.0（2026-11-18）— 复盘 11-18b 落地：硬规则 21–26 + 验证/发布/代点三节补强
+
+- **触发**：用户贴出 `D:\DSH workspace\.admin\retro-2026-11-18b-ck3mod-auto-v2.1.md`（auto v2.1 实跑出的 16 条新坑）
+  并要求「全面更新智能体」；retro §八 的 5 处「可直接粘贴补丁」本轮全部落地（其中想写成 `10b` 的那条，
+  因 lint 要求硬规则编号 1..N 连续，改为规则 **22**）。
+- **SKILL.md 0.7.0**：环境段改为 auto **2.1**（1.21 兼容发布，精确 `file_size` SKIP）、free/auto 本机副本已删；
+  「新版本上手第一件事」加第 ④ 步 L 段差异断言（兼容发布 = 内容零改动）；路由表加「发布 / descriptor 形状」
+  「机器代点 / 点击纪律」两行；auto 流水线行改为「只生成 descriptor 的生成器 + 部署脚本」；
+  **硬规则新增 21–26**（知识层只改仓库副本 / 结论行不许硬编码 / 探针双钩子 / 点击纪律与时间项归人 /
+  无头判据与噪声基线 / 快照形状与上传三信号），并补强 16（内层 descriptor 也会被回写）与 20（去掉会漂的编号区间、
+  加文档链接兜底）；验证层表加「知识层 / 文档索引」行。
+- **verified-notes.md**：`[ingame]` 加 1.21 原版噪声基线（8,094 条 [E]）与 `-skip` 落点；`[automation]` 加双钩子、
+  36 px / 1.1241 / ≥1.2–1.5 s、自动暂停、选角色点击规则；`[release]` 加 descriptor 字节形状、只补 descriptor 生成器、
+  内层回写、上传三信号与 SKIP；**新增 `[verify]`**（无头判据 / 未自退 / A5 / 结论行）。
+- **ingame-acceptance.md**：§3 `-skip` 到选人界面；§4.4 A5 判据升级 + 1.21 代点结果；§9.3 探针改**双钩子**；
+  §9.4 加「跨年连续运行」；**新增 §9.6 点击纪律与人机分工**。
+- **工具-知识层检查.mjs**：`EXPECTED_RULE_COUNT` 20 → **26**；新增 `[verify]` 与 §9.6 必需节；
+  **锚点 28 → 51 条**（新增 P1–P16 的 23 条）。**单测 86 → 88 pass**（删规则 26 / 改 `1.1241` / 删 `[verify]` 节）。
+- **persona**：去掉易漂的四个 mod 版本枚举（改为以工作区索引与 `META` 为准），补知识层方向、发布三信号、
+  无头判据、双钩子与点击纪律。
+- **README**：版本与 §5.1 auto 部署能力、§6 无头 WARN 概率性、§8 表（15 组 / 51 锚点）、§9 测试、
+  §10 两条限制、§11 文档链接检查、§13 本条目。
+- **验证**：知识层 lint **61 项全过**、单测 **88 pass**、文档链接 0 缺失、部署副本同步一致、bundle 已重载。
+- **未改 `lib/`**，8 个工具不变；四个 mod 仓库、游戏目录与用户存档未动。
 
 ### 0.4.2（2026-11-18）— 复盘条目 linter 化：`工具-知识层检查.mjs`
 
