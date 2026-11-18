@@ -9,7 +9,7 @@ description: |
   the four published mods, the shared toolchain, or the wiki atlas.
 metadata:
   author: "local workspace"
-  version: "0.4.0"
+  version: "0.5.0"
 ---
 
 # CK3 Modding — Workspace Playbook
@@ -54,9 +54,12 @@ Never infer a path or a command from memory; read the mod README first.
   `launcher\launcher-settings.json` = `1.21.0 (Florin)`、`titus_branch.txt` = `release/1.21.0`、
   `appmanifest_1158310.acf` buildid `26622941` 可复核）。
 - 四个 mod 的当前发布快照：`ck3-auto-spread` **2.0** · `ck3-curse` **1.0** ·
-  `ck3-de-jure-conquest` **2.2** · `ck3-free-resources` **4.0**，均仍声明 `supported_version="1.20.*"`。
-  1.21 下静态/loc 检查 4/4 PASS（curse 122 / dejure 36 / free 84 / auto 94），**但升 `supported_version` +
-  重发工坊是独立的发布动作，没做就别说"已支持 1.21"**。
+  `ck3-de-jure-conquest` **2.2** · `ck3-free-resources` **4.1**。
+  **free 已按 1.21 发布**（2026-11-18 16:23 上传；仓库快照 `supported_version="1.21.*"`、
+  工坊侧被启动器回写为 `1.21.0`、`file_size` 96,074 B）；其余三个仍声明 `1.20.*`，
+  1.21 下静态/loc + 无头都 PASS，但**没重发工坊就别说"已支持 1.21"**。
+- **新版本上手第一件事**：跑该 mod 的 `工具-静态校验.mjs`。H 段（引擎 token）与 H2 段（原版角色货币覆盖）
+  会回答「只发兼容版，还是要功能更新」——free 的 H2 就是 2026-11-18 为此加的。
 - 改之前先复核：`ck3mod_status`（预设内）或 `cli.mjs check --all`，确认基线还是绿的。
 
 ## 1.21 变化（大版本迁移必读）
@@ -262,7 +265,9 @@ documented expected count and say so.
 **三条铁律**
 
 1. **人点、机记**：agent 只准备现场、读日志、出结论，**不代点验收项**（用户 2026-11-18 明确要求）。
-   只有用户当次明确同意才谈 GUI 自动化，且要先建现场（`input_*` 在 ck3mod 预设里被屏蔽，只在标准会话可见）。
+   只有用户当次明确同意才谈 GUI 自动化；`input_*` 在 ck3mod 预设里被屏蔽，只能用 pwsh 注入——
+   而**全屏 + Raw Input 会吞掉注入输入**，必须先切窗口模式并声明 DPI-aware，且只信鼠标。
+   配方与探针 mod 模板见 `references/ingame-acceptance.md §9`（2026-11-18 实跑过 F2–F8）。
 2. **先快照，后开游戏**：`工具-真机现场.mjs --begin` 会快照 `dlc_load.json` / `pdx_settings.txt` /
    `last_save.ck3` / `continue_game.json` / 全部 `*.ck3`，并可同时改写播放集。一次 GUI 会话会覆盖这些文件——
    2026-11-18 实测（14:44 三个文件同时被改，两个滚动自动存档不可恢复）。
@@ -320,6 +325,15 @@ documented expected count and say so.
     `-develop` **不存在**，别写进任何文档；热载用 `-debug_mode` + 控制台 `reload`。
 14. **真机默认不代点**：agent 只准备现场、读日志、出结论；用户当次明确同意才谈 GUI 自动化
     （`input_*` 在 ck3mod 预设里被屏蔽，只在标准会话可见）。
+    **真的代点时**：全屏 + Raw Input 会吞掉注入输入，先把 `pdx_settings.txt` 的 `display_mode` 切成
+    `windowed`、进程声明 DPI-aware，并且**只信鼠标**；完整配方见 `references/ingame-acceptance.md §9`。
+15. **给 on_action 加东西只能追加，不能重写**：直接写 `on_game_start = { effect = { … } }` 会**整块覆盖**
+    原版（实测：开局局势 intro 立刻变成 `ERROR:[ghibelline_leader…]` 占位）。正确写法
+    `on_game_start = { on_actions = { my_action } }` + `my_action = { effect = { … } }`。
+16. **工坊流程的两个顺序**：① **上传前先 `ck3mod_deploy`** —— 启动器 Mod 库只认
+    `Documents\...\mod\*.mod`，清场后它会显示空库、没有可上传物；② **两个 descriptor 归启动器管** ——
+    点上传时它会把 `supported_version` 从通配回写成实测版本（`1.21.*`→`1.21.0`）并吃掉行尾 1 字节，
+    所以静态校验对这两个文件按字段比，`file_size` 比本地少 1 字节是正常现象。
 
 ## Verification layers
 
@@ -331,7 +345,7 @@ documented expected count and say so.
 | Headless | `ck3.exe -debug_mode -nographics -shutdown_after_history` | load-time errors only; not interactions/on_game_start |
 | Console run-script（手动） | `run/` + 控制台 `run x.txt` | 条件搭建与效果链，可重复；仍需人开游戏 |
 | Console `scripted_tests`（1.21，手动） | 游戏内控制台 `scripted_tests [pattern]` | 原版自带 20 个测试文件；需要已载入存档；无人值守入口未打通 |
-| In-game（人点、机记） | `工具-真机现场.mjs` + 人点击 + 截图 + `error.log` token 计数 | 互动 / UI / tooltip / 决策 / 宣战界面；不能证明数值平衡与长期运行 |
+| In-game（人点、机记；用户明确要求时可机器代点） | `工具-真机现场.mjs` + 点击 + 截图 + `error.log` token 计数 | 互动 / UI / tooltip / 决策 / 宣战界面；不能证明数值平衡与长期运行 |
 | Workshop | launcher upload + page check | packaging/size/ID, not logic |
 
 Never claim a layer passed if it was skipped; say **SKIP** and why.
@@ -342,7 +356,9 @@ Never claim a layer passed if it was skipped; say **SKIP** and why.
 ## References
 
 - Wiki 索引（本次勘察生成）：`references/ck3-wiki-atlas.md`
-- 实测要点（按域，带 `.info` 行号）：`references/verified-notes.md`
+- 实测要点（按域，带 `.info` 行号）：`references/verified-notes.md`（含 `[release]` 发布/工坊核对、`[automation]` 真机自动化）
+- 真机验收 runbook（含 §9 机器代点）：`references/ingame-acceptance.md`
+- 踩坑总账（2026-11-18 项目收尾）：`D:\DSH workspace\.admin\retro-2026-11-18-ck3mod.md`
 - 索引生成器：`scripts/wiki-atlas.mjs`（`--check` 验鲜，`--out` 改输出位置）
 - Shared tools: `D:\DSH workspace\ck3-modding-tools\README.md`
 - Survey / decisions: `D:\DSH workspace\ck3-modding-survey\README.md`, `06-落地候选.md`

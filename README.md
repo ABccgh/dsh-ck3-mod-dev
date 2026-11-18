@@ -351,8 +351,12 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 - **没有无人值守的脚本测试入口（1.21 复测）**：`tests/_tests.info` 只给了游戏内控制台命令
   `scripted_tests [pattern]`；`-automated_test` 会起一局全自动 AI 对局且不自行退出，
   `-run_console_action=scripted_tests` 10 s 退出 0 但不产生任何测试输出。可重复路径仍需人工开游戏。
-- **真机验收默认人点**：这个预设里 `input_*`（键鼠注入）被全局屏蔽，agent 不能代点；验收由人操作、
+- **真机默认人点**：这个预设里 `input_*`（键鼠注入）被全局屏蔽，agent 不能代点；验收由人操作、
   agent 负责现场（`工具-真机现场.mjs`）、日志与结论。只有用户当次明确同意才谈 GUI 自动化，且要先建现场。
+- **机器代点的能力边界（2026-11-18 实测）**：pwsh + user32 注入时，**全屏 + Raw Input 会吞掉所有输入**
+  （悬浮无 tooltip、空格不暂停）；必须先切 `display_mode=windowed` 并声明 DPI-aware，之后**鼠标可用**，
+  键盘仍会被本机控制台抢焦点。事件面板、选项、右键菜单、数值条可自动验证；**靠图标定位的入口
+  （如决议列表）不可**。配方见 `skills/ck3-modding/references/ingame-acceptance.md §9`。
 - **真机会写用户存档**：CK3 没有独立用户目录，`autosave*.ck3` / `last_save.ck3` / `continue_game.json`
   都会被覆盖（2026-11-18 实测）。没有 `--begin` 的现场就不许开游戏——这是硬规则，不是建议。
 
@@ -383,6 +387,26 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 5. **开游戏前先 `--begin`，收场用杀进程 + `--end`**；游戏内「退出游戏」会覆盖 `autosave_exit` / `last_save`。
 
 ## 13. 更新记录
+
+### 0.4.0（2026-11-18）— 发布链路与真机自动化的实测沉淀
+
+- **触发**：free v4.0 → v4.1 的 1.21 兼容发布（用户先在工坊问「要不要全面更新」，随后要求「你替我进行测试」），
+  把「判断 → 构建 → 上传 → 核对 → 代点」整条链跑了一遍，暴露 18 个新问题（总账见
+  `D:\DSH workspace\.admin\retro-2026-11-18-ck3mod.md`）。
+- **SKILL.md 0.5.0**：环境段改成「free 4.1 已按 1.21 发布、其余三个仍 1.20.*」，并写清
+  「新版本上手第一件事是跑静态校验的 token + 角色货币覆盖两段，由它回答兼容还是功能更新」；
+  **硬规则新增 15**（on_action 只能追加，直接写 `effect` 会整块覆盖原版）、
+  **16**（上传前先 deploy；两个 descriptor 归启动器，回写 `supported_version` 且少 1 字节属正常）；
+  真机段与验证表补「用户明确要求时可机器代点」。
+- **verified-notes 新增两节**：`[release]`（版本真源唯一、快照路径收敛、启动器回写、工坊详情必须 POST API、
+  自上传条目不会出现在 workshop content、核对四件套）与 `[automation]`（全屏 Raw Input 吞注入输入、
+  windowed 后鼠标可用、pwsh 抢焦点导致键盘不通、DPI-aware 坐标、探针 mod、`debug_log` 不解析数据函数、
+  `-play` 不保证锁定头衔）。
+- **ingame-acceptance 新增 §9「机器代点」**：三步前提（现场 / windowed / DPI-aware）、五个动作、
+  探针 mod 模板、能自动/不能自动清单、证据 JPEG 压缩规范；§4.3 free 矩阵补 2026-11-18 的实测结果
+  （F2–F8 通过、F1 SKIP 及原因）。
+- **persona 更新**：四 mod 版本、两条新硬规则、代点前提。
+- **未改 `lib/`**：8 个工具的参数与返回不变；关开 bundle 生效。单测保持全绿。
 
 ### 0.3.1（2026-11-18）— 真机验收步骤重写 + 现场保护
 

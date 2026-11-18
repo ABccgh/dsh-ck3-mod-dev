@@ -4,7 +4,7 @@
 > 游戏版本：**1.21.0 "Florin"**（2026-11-17 发布，本机 2026-11-18 更新）；核对日期：2026-11-18。
 > 用法：只在要动某个域时读对应一节（`[slug]`），不要整篇读。
 > 维护：写进来的必须能指认（`.info` 行号 / vanilla 实例）；大版本更新后逐条复核，**失效的删掉**，不要留在里面。
-> 收录：`[interaction]` `[cb]` `[government]` `[resources]` `[council]` `[story]` `[struggle]` `[district]` `[trade]` `[road]` `[laws]` `[ingame]`
+> 收录：`[interaction]` `[cb]` `[government]` `[resources]` `[council]` `[story]` `[struggle]` `[district]` `[trade]` `[road]` `[laws]` `[ingame]` `[automation]` `[release]`
 
 ---
 
@@ -289,3 +289,64 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   （auto 的 `ai` → 过滤器选 AI 就能翻到），规则名/描述/取值全部走 loc。
 - **debug_mode 地图 hover**：左上显示 `ID / 名称 / 最低人口 / X,Y`（实测 `ID: 12763 sea_indian_ocean`），
   报 bug 时用它定位省份。
+
+## [automation] 真机自动化（agent 代点，2026-11-18 实跑 free v4.1）
+
+用户**当次明确要求**才做（预设里 `input_*` 被屏蔽，只能用 pwsh 注入）。结论先给：**鼠标能打通，键盘不行**。
+
+- **全屏 + Raw Input 会吞掉注入输入**：`SendInput` / `mouse_event` 在 CK3 全屏下完全不生效
+  （实测：悬浮金币图标无 tooltip、空格不暂停、点「前进!」无效）。
+  把 `pdx_settings.txt` 的 `Graphics.display_mode` 改成 `windowed` 后，**鼠标点击立刻可用**（同一份脚本、同一段坐标）。
+- **键盘打不通**：每次 `pwsh -File xxx.ps1` 都会把本机控制台窗口带到前台，按键进了控制台；
+  即使同一进程内先 `SetForegroundWindow(ck3)`，`~`（控制台）与 ESC 仍无反应。→ 别把验收项设计成「只能靠键盘」。
+- **DPI 必须先声明**：未 `SetProcessDPIAware()` 时，125% 缩放下 `Screen.Bounds` 报 1536×864（物理是 1920×1080），
+  截图与 `SetCursorPos` 都被打折，坐标全错位。声明后截图 1920×1080、坐标 1:1。
+- **坐标换算**：`read_image` 预览往往被缩放到 1708 宽（factor 1920/1708≈1.124）；从预览量到的坐标要乘回去再点。
+- **hover 是最便宜的校验**：Paradox 的按钮/资源图标悬停会出 tooltip，用它确认「光标真的落在 UI 上」。
+- **面板从哪来**：写一个**临时探针 mod**（`Documents\...\mod\zz_xxx`，测完删）在 `on_game_start` 里
+  `trigger_event = <mod 的入口事件>`，就能不点菜单直接截图到面板；要目标流程就先
+  `every_courtier = { limit = { is_adult = yes } save_scope_as = <target_scope> }` 再触发。
+- **追加 on_action 只能写列表**（这是本次踩的实坑）：`on_game_start = { effect = { … } }` 会**整块覆盖**原版，
+  实测开局局势 intro 直接变成 `ERROR:[ghibelline_leader…]` 占位；正确写法
+  `on_game_start = { on_actions = { zz_my_action } }` + `zz_my_action = { effect = { … } }`。
+  想确认没覆盖：`has_global_variable = is_game_start_date`（原版 `game_start.txt:13` 会设）。
+- **`debug_log` 不解析数据函数**：`debug_log = "gold=[gold|0]"` 会打印成
+  `TOOLTIP:GAME_CONCEPT,gold 金钱!`；`[This.GetName]` 还会报 `pdx_data_localize.cpp` 的 data error。
+  要数值证据只能**截图**（顶部资源条）或**事件 desc**（loc 里数据函数正常）。
+- **`-play=<title>` 不保证锁定该头衔**：同参数两次启动，统治者与初始数值都不同（实测 k_france）。
+  验收以画面实际统治者为基线，别拿上一次的数字当对照。
+- **加第二个 mod 要重建现场**：`工具-真机现场.mjs --begin --mods free_resources,zz_probe`
+  （`dlc_load.json` 只经工具改）；`ck3mod_headless` 则要求本机副本存在 —— 清场后先 `ck3mod_deploy`。
+- **能自动 / 不能自动**（free 实测）：可 —— 事件面板四入口、一键全给/全扣、单项连点、右键菜单项、
+  目标流程面板、政体门控列表、`error.log` 计数；不可 —— 决议列表这类「要靠图标定位」的入口（本次 F1 SKIP）、
+  任何需要键盘的操作、tooltip 的完整文案（只能看截图里的可见部分）。
+- **证据入库**：1920×1080 PNG 每张 3–4 MB，统一转 JPEG q82（43.8 MB → 3.1 MB）再进 `验证记录\`，
+  每张在 README 里对应「项号 + 结论」。
+
+## [release] 发布与工坊核对（2026-11-18 free v4.0 → v4.1）
+
+- **版本真源只能有一处**：free 的两个 descriptor 现在由 `数据-资源表.mjs` 的 `genInnerDescriptor()` /
+  `genOuterMod()` 生成（内层无 `path`、外层带 `path`），`工具-生成.mjs --check` 把两个都纳入 golden check。
+  快照目录名也从表里导出（`buildDir` / `buildInnerDir` / `buildOuterMod`）——之前硬编码在
+  生成器 / 部署 / 静态校验 / `ck3-modding-tools/configs.mjs` 四处，搬版本必漏。
+- **"要不要全面更新"的机器判据**：静态校验 H 段（引擎 token 对照 `common/`+`events/`）+
+  H2 段（解析 `common/governments/_governments.info` 的 `build_queue_reserve_categories`，
+  与 `CURRENCIES` 一一比对）。1.21 实测：原版 9 种角色货币（gold/prestige/piety/renown/influence/
+  herd/treasury/merit/barter_goods）与 free 表内九种**完全对应** → 只需兼容发布。
+- **启动器会回写两个 descriptor**：点上传时把 `supported_version` 从 `1.21.*` 写成实测的 `1.21.0`，
+  并**吃掉行尾 1 字节** → 工坊 `file_size` 96,075 → **96,074**（free v4.1 实测）。
+  因此静态校验对这两个文件按字段比（允许 `1.21.*` / `1.21.x`），其余文件严格逐字节。
+  **别在校验器里留一遍"全部文件逐字节"的循环**——v4.0 时本机副本被删所以从未触发，上传后立刻误报。
+- **上传前先 deploy**：启动器「Mod 库」只认 `Documents\...\mod\*.mod`；清场（删本机副本）后它会显示
+  「尚未安装任何 Mod」，没有可上传物。deploy → 刷新/重开启动器 → 上传。
+- **工坊条目详情只能走 POST API**：`ISteamRemoteStorage/GetPublishedFileDetails` 用 GET 返回 **405**；
+  `web_fetch` 打不开 steamcommunity。PowerShell：
+  `Invoke-RestMethod -Method Post -Uri https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/ -Body @{itemcount=1;'publishedfileids[0]'='<id>'}`
+  → `file_size` / `time_created` / `time_updated` / `description` / `tags`。
+  `steam_workshop_search` 也能拿到「订阅 / 更新日期 / MiB」但精度只到 0.1 MiB。
+- **自己上传的条目不会出现在** `steamapps/workshop/content/1158310/<id>`（Steam 不下载自己的作品）→
+  核对只信 API，别去工坊副本目录找文件比哈希。
+- **核对四件套**（free v4.1 全过）：`time_created` 未变（没新建条目）· `file_size` 等于本地内层 −1 字节 ·
+  `time_updated` 是刚上传的时间 · `description` 含新版本号与新游戏版本（旧版本号只应留在 changelog 历史行里）。
+  本次结果：条目 3775021095、`time_created` 2026-08-01、`file_size` 96,074、`time_updated` 2026-11-18 16:23:27、
+  描述 4459 字符、订阅 119 → 169。

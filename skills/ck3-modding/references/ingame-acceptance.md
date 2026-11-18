@@ -19,7 +19,7 @@
 ## 1. 三条铁律
 
 1. **人点、机记。** agent 负责准备现场、读日志、出结论；**不代点验收项**（用户 2026-11-18 明确要求）。
-   只有用户当次明确说「你来点」才谈 GUI 自动化，而且要先完成第 2 节。
+   只有用户当次明确说「你来点」才谈 GUI 自动化，而且要先完成第 2 节；具体做法与限制见 **§9**。
 2. **先快照，后开游戏。** 一次 GUI 会话会覆盖 `autosave*.ck3`、`last_save.ck3`、`continue_game.json`
    （2026-11-18 14:44 实测），CK3 没有独立用户目录。开游戏前必须跑 `工具-真机现场.mjs --begin`。
 3. **杀进程收场，绝不走「退出游戏」。** 退出菜单会写 `autosave_exit.ck3` + `last_save.ck3`，
@@ -114,6 +114,12 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 | F7 政体判定 | 换一个非游牧/非共和统治者看 | 面板 | 牧群/国库等不可用项按政体隐藏或禁用 | 截图 |
 | F8 日志 | 全程 | `error.log` | `free_resources` **0 条** | 日志命令 |
 
+> **2026-11-18 机器代点（v4.1 / 1.21.0）结果**：F2–F8 **通过**（截图在
+> `ck3-free-resources\验证记录\10-游戏内验证-v4.1\`）；**F1 决议列表 SKIP** —— 决议按钮靠图标定位、
+> 键盘注入又不通，只能人工确认；决议对象本身由静态校验兜住（`is_shown` + `effect → 0050`）。
+> 数值实测：一键全给 +100（金币 99→199、威望 900→1000、虔诚 100→200、宗族威望 249→349），
+> 一键全扣 −100 原路回到 99/900/100/249，单项资源连点两次 99→299。
+
 ### 4.4 auto（自动传播）
 
 | 项 | 入口 | 操作 | 期望 | 证据 |
@@ -194,3 +200,82 @@ Get-ChildItem "C:\Users\11210\Documents\Paradox Interactive\Crusader Kings III\m
 - 四个 mod 的已知旧结论：curse `测试清单.md` 的 `T-G16` 是 **1.20.0.3** 时期通过的，
   「入口在更多…」这条在 1.21 观察到相反；de-jure README 的「启动器显示 1.20 兼容」同理。
   **验收以本文件的矩阵为准**，旧记录只当历史。
+
+## 9. 机器代点（仅在用户当次明确要求时）
+
+> 2026-11-18 用户说「你替我进行测试」后，free v4.1 的 F2–F8 就是这样跑完的。
+> 结论：**鼠标能打通，键盘不行**；纯图标定位的入口（如决议列表）仍建议留给人工。
+
+### 9.1 前提（三步，缺一不可）
+
+1. **现场**：先 `工具-真机现场.mjs --begin --mods <本 mod>[,<探针 mod>]`（`dlc_load.json` 只经工具改）。
+2. **窗口模式**：把 `pdx_settings.txt` 的 `Graphics.display_mode` 改成 `windowed`（`--end` 会按字节还原）。
+   全屏 + Raw Input 会把 `SendInput` / `mouse_event` 全部吞掉（实测：悬浮无 tooltip、空格不暂停）。
+3. **DPI-aware**：注入脚本启动时先 `SetProcessDPIAware()`。否则 125% 缩放下截图是 1536×864、
+   鼠标坐标被 OS 再缩放一次，点哪都不对；声明后 1920×1080 与物理像素 1:1。
+
+### 9.2 五个动作（PowerShell，user32）
+
+| 动作 | 实现 | 用途 |
+|---|---|---|
+| `shot` | `Graphics.CopyFromScreen` 存 PNG | 每一步的证据；读完再决定下一下点哪 |
+| `click` / `rclick` | `SetCursorPos` + `mouse_event(DOWN/UP)` | 选项、按钮、右键交互菜单 |
+| `hover` | 只移动并等 0.9 s | 验证「光标真的在 UI 上」（会出 tooltip） |
+| `focus` | `ShowWindow(SW_RESTORE)` + `SetForegroundWindow` | 每次注入前都要做（见 9.3 的坑） |
+| `type` | `SendInput` + `KEYEVENTF_UNICODE` | 备用；键盘目前打不通，不要依赖 |
+
+**坐标换算**：`read_image` 的预览常被缩放到 1708 宽（1920/1708 ≈ **1.124**）；从预览量到的坐标要乘回去再点。
+每次点击后重新截图确认，不要连续盲点。
+
+### 9.3 探针 mod 模板（不点菜单就能截到面板）
+
+```
+zz_probe/descriptor.mod                     # version/supported_version/picture，无 BOM
+zz_probe/common/on_action/zz_probe.txt      # 见下
+zz_probe.mod                                # 外层，path 指向 Documents\...\mod\zz_probe
+```
+
+```
+# 追加到原版 on_game_start / on_game_start_after_lobby —— 只能写 on_actions 列表！
+on_game_start = {
+	on_actions = {
+		zz_probe_game_start
+	}
+}
+
+zz_probe_game_start = {
+	effect = {
+		if = {
+			limit = { NOT = { has_global_variable = zz_probe_done } }
+			every_player = {
+				limit = { is_ai = no }
+				set_global_variable = { name = zz_probe_done value = yes }
+				# 目标流程才需要：先给事件里用到的 scope 存一个对象，例如
+				# every_courtier = { limit = { is_adult = yes } save_scope_as = xxx_target }
+				trigger_event = <mod>.<入口事件>
+			}
+		}
+	}
+}
+```
+
+- **绝对不要**写 `on_game_start = { effect = { … } }`：那是**整块覆盖**，原版开局设置全丢
+  （实测：局势 intro 立刻变成 `ERROR:[ghibelline_leader…]` 占位）。
+- 目标流程（需要 `scope:xxx_target`）：先 `every_courtier = { limit = { is_adult = yes } save_scope_as = xxx_target }`
+  再 `trigger_event`，右侧头像与按对方判定的列表才正常。
+- 探针测完就删（`zz_probe\` + `zz_probe.mod`），不要提交进仓库。
+
+### 9.4 能自动 / 不能自动（free v4.1 实测）
+
+| 能 | 不能 |
+|---|---|
+| 事件面板与四入口、一键全给/全扣、单项连点、特殊数值 | 决议列表这类靠图标定位的入口（本次 F1 SKIP） |
+| 右键交互菜单里的条目（分类折叠也看得见） | 任何必须键盘的操作（`~` 控制台、ESC） |
+| 目标流程面板（右侧对方头像） | tooltip 完整文案（只能看截图里可见的部分） |
+| 政体门控后的列表内容、`error.log` 计数 | 数值断言的精确读数（`debug_log` 不解析数据函数，只能截图） |
+
+### 9.5 证据
+
+- 截图命名 `<mod>-<项号>-<说明>.jpg`，放 `验证记录\N-游戏内验证-<版本>\`；README 里给「项号 → 结论 → 文件名」表。
+- 1920×1080 PNG 每张 3–4 MB，**转 JPEG q82** 再入库（43.8 MB → 3.1 MB 实测）。
+- 同一目录附当次 `error.log` / `debug.log`（本 mod 报错计数 + `Loaded [n] events`）。
