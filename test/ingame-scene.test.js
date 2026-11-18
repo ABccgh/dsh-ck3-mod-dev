@@ -3,10 +3,16 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import test from 'node:test';
+import test, { after } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 const SCRIPT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '工具-真机现场.mjs');
+
+/** 本文件建过的临时根目录；跑完统一删，别在 %TEMP% 里留 `ck3-scene-*`。 */
+const created = [];
+after(() => {
+  for (const root of created) fs.rmSync(root, { recursive: true, force: true });
+});
 
 /**
  * 跑一次 CLI。测试统一跳过进程检查，避免依赖「当前没开游戏」。
@@ -24,6 +30,7 @@ function run(args) {
 /** 造一个假用户目录。`presets.txt` 故意不存在，用来测「会话期间新建要删掉」。 */
 function makeUserDir() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ck3-scene-'));
+  created.push(root);
   const userDir = path.join(root, 'user');
   fs.mkdirSync(path.join(userDir, 'save games'), { recursive: true });
   fs.mkdirSync(path.join(userDir, 'mod'), { recursive: true });
