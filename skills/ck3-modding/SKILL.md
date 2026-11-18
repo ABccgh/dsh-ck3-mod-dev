@@ -314,8 +314,10 @@ documented expected count and say so.
    `-run_console_action=scripted_tests` 10 s 退出 0 但**不产生任何 `ScriptedTests` 输出**（应用初始化阶段还没有游戏状态）。
    → **可重复的路径只有「人工控制台 + run 脚本 / `scripted_tests`」**。别给四个 mod 加 `tests/`，除非哪天证明自动入口。
 10. **Do not trust `dlc_load.json` alone for isolation.** 启动器另有一套播放集数据库；另外
-    `Documents\...\player\game_rules\presets.txt` 里的旧 game rule 引用会在每次启动报
-    `Failed to read key reference`（例如 `on_auto_spread_ai`），**那是残留、不是加载错误**，判读基线时要先扣掉。
+    `Documents\...\player\game_rules\presets.txt` 的 `LastAppliedRules` 记着**各 mod 游戏规则的当前取值**
+    （例如 `on_auto_spread_ai`）。播放集里**没有那个 mod 时**，每次启动会报一条
+    `Failed to read key reference: on_auto_spread_ai`——那是找不到规则定义，不是加载错误；
+    **启用该 mod 后就不再出现**。判读基线时先看 `dlc_load.json` 里有没有它，再决定要不要扣掉这一行。
 11. **Wiki 不是语法真相**：抄录列表页会过期；键名/参数一律回层 2（`.info` / `script_docs`）。
     1.21 还多一层：**patch note 的名字也可能对不上**（见 `verified-notes.md` 顶部表）。
 12. **别把 `spline_network.splnet` 留在 Documents**：改 `common/roads` 会生成

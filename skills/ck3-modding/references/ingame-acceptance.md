@@ -32,10 +32,11 @@ $node = "C:\Users\11210\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\
 cd "D:\DSH workspace\ck3-modding-tools"
 & $node .\cli.mjs check --all          # 1) 静态/loc 必须 4/4 PASS，红了别开游戏
 
-# 2) 部署要验收的 mod（auto 没有部署脚本，按它 README 手工拷贝 auto_spread/ + auto_spread.mod）
+# 2) 部署要验收的 mod（auto 自 v2.1 起也有 工具-部署.mjs；之前没有，只能手工拷贝）
 cd "D:\DSH workspace\ck3-curse";           & $node .\工具-部署.mjs
 cd "D:\DSH workspace\ck3-de-jure-conquest"; & $node .\工具-部署.mjs
 cd "D:\DSH workspace\ck3-free-resources";   & $node .\工具-部署.mjs
+cd "D:\DSH workspace\ck3-auto-spread";      & $node .\工具-部署.mjs
 
 # 3) 建现场（快照 + 改写播放集），--mods 只列本次要验的
 cd "D:\DSH workspace\dsh-ck3-mod-dev"
