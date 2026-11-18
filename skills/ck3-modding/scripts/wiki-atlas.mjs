@@ -2,8 +2,9 @@
 /**
  * 生成 ≤CK3 Wiki 索引≥（ck3-modding skill 的导航图）。
  *
- * 为什么要有它：Wiki 有 7964 页，人工抄一遍既贵又会腐坏。这个脚本从 MediaWiki API
- * 拉「Category:Modding 全量 + Category:1.20 校验集 + 补丁链」，渲染成一张带日期的表；
+ * 为什么要有它：Wiki 有 8300+ 页，人工抄一遍既贵又会腐坏。这个脚本从 MediaWiki API
+ * 拉「Category:Modding 全量 + Category:1.21 校验集 + 1.21 新内容 / 机制语义页 + 补丁链」，
+ * 渲染成一张带日期的表；
  * 只存**元数据**（标题/字节/最后编辑/{{version}} 声明）和本文件里手写的一句备注，
  * 不复制 Wiki 正文——正文用 ck3wiki_page 现读，永远跟着 Wiki 走。
  *
@@ -37,7 +38,13 @@ const BODY_MARKER = '<!-- atlas-body -->';
 let timeoutMs = 180_000;
 
 /** 本机游戏版本：CK3 大版本更新后，改这里 + SKILL.md 的 Environment 段。 */
-const GAME_VERSION = '1.20.1.2 (Crozier)';
+const GAME_VERSION = '1.21.0 (Florin)';
+
+/**
+ * 「当前版本口径」分类：Wiki 编辑者会把整页标进 `Category:1.<minor>`。
+ * 大版本更新时只改这一个常量（以及 GAME_VERSION），其余文案跟着走。
+ */
+const VALIDITY_CATEGORY = '1.21';
 
 /** 域分桶：Category:Modding 的 67 页全部在这里有归属，漏了会报错。 */
 const DOMAINS = [
@@ -107,6 +114,54 @@ const DOMAINS = [
     ],
   },
   {
+    key: 'new121',
+    title: '1.21 新内容（Silk & Silver / Florin）',
+    pages: [
+      'Market',
+      'Merchant',
+      'Merchant decisions',
+      'Merchant lifestyle',
+      'Republican',
+      'Trade company',
+      'Districts',
+      'Special districts',
+      'Great project districts',
+      'Education focus',
+      'Adventurer lifestyle',
+    ],
+  },
+  {
+    key: 'mech',
+    title: '机制语义（非 Modding 分类，按 modding 用途挑选）',
+    pages: [
+      'Casus belli',
+      'Titles',
+      'Modifiers',
+      'Traits',
+      'Culture',
+      'Traditions',
+      'Religion',
+      'Doctrines',
+      'Tenet',
+      'Laws',
+      'Government',
+      'Council',
+      'Army',
+      'Hired forces',
+      'Warfare',
+      'Barony',
+      'County',
+      'Building',
+      'Activity',
+      'Schemes',
+      'Situation',
+      'Struggles',
+      'Stories',
+      'Artifacts',
+      'Innovation',
+    ],
+  },
+  {
     key: 'art',
     title: '美术 / 地图 / 音频',
     pages: [
@@ -151,7 +206,7 @@ const NOTES = {
   'Mod compatibility': '整文件覆盖 vs 单对象覆盖、共享变量、探测他人 mod',
   'Mod troubleshooting': '控制台、loc/scope 调试、热载、**run script 自动化**',
   'Modding tools': '社区工具表（ck3-tiger / PMT / meckt…），2026-11 仍在更新',
-  'Console commands': '控制台命令全表（1.20 口径）',
+  'Console commands': '控制台命令全表（1.21 口径；含 scripted_tests / schedule_term_end / SplineNetwork.AppendAssets / replacebuilding）',
   Commands: '旧版命令页；与控制台相关的以 Console commands 为准',
   Scripting: '脚本语言总览：作用域、列表、变量、结构',
   Scopes: '作用域语义与切换规则',
@@ -165,7 +220,7 @@ const NOTES = {
   'Scripted effects': 'scripted_effects 复用',
   'Data types': '数据类型表；2022 年最后实质更新，命名以 .info 为准',
   Defines: '00_defines.txt 键表',
-  'Modifier list': 'modifier 键全表（改数值必查）',
+  'Modifier list': 'modifier 键全表（改数值必查；1.21 新增 trade / road / district 修正，仍以 _modifiers.info 为准）',
   'Weight modifier': 'AI 权重修饰',
   Flavorization: '头衔/文化名号生成',
   Localization: '本地化格式、BOM、颜色码、$变量$',
@@ -173,23 +228,23 @@ const NOTES = {
   Interface: 'GUI 文件、模板、类型、数据绑定',
   'AI modding': 'AI 权重、行为参数',
   'Event modding': '事件结构；2026-10 已按 1.20.1 更新（含触发/选项/动画表）',
-  'Interactions modding': '**仅 1 个示例（1.4 KB）** → 细节看 common/character_interactions 的 .info',
-  'Resources modding': '**0.7 KB 且标题误导**：讲的是虔诚档位；1.20 无 common/resources/ → 资源硬编码',
+  'Interactions modding': '**仅 1 个示例（1.4 KB）** → 细节看 common/character_interactions 的 .info；1.21 可指向贸易市场 / 贸易路线',
+  'Resources modding': '**0.7 KB 且标题误导**：讲的是虔诚档位；1.21 仍无 common/resources/ → 资源硬编码',
   'Trait modding': '特质字段与图标',
-  'Title modding': '头衔层级、历史、法理',
+  'Title modding': '头衔层级、历史、法理；1.21 新增 market_capital 覆盖与静态 title type',
   'Decisions modding': '决策结构（含 major/minor、AI 权重）',
   'Characters modding': '角色历史与属性；2026-10 更新',
   'Religions modding': '信仰/教义/圣地；2026-10 更新',
   'Governments modding': '2021 页，**字段层级已变**（council 等在 government_rules 内）→ 以 .info 为准',
-  'History modding': '历史文件（角色/头衔/省份）',
-  'Holdings modding': '地产与建筑挂点',
+  'History modding': '历史文件（角色/头衔/省份）；**1.21 省份历史改成按王国 k_*.txt**',
+  'Holdings modding': '地产与建筑挂点；1.21 起 district 是独立数据库（common/districts）',
   'Lifestyles modding': '生活方式树与 perk',
   'Artifact modding': '宝物、词条、历史宝物',
   'Bookmarks modding': '书签与开局角色',
-  'Council modding': '职位+任务；**special_council_position / max_amount 在 1.20 已不可用**',
+  'Council modding': '职位+任务；**special_council_position / max_amount 在 1.20 起已不可用**',
   'Culture modding': '文化、传统、革新',
   'Dynasties modding': '2021 年页， dynasty 字段以 common/dynasties 为准',
-  'Regiments modding': '兵种与常备军',
+  'Regiments modding': '兵种与常备军；1.21 起 MAA 可存成 scope，政体有 title_maa_setup',
   'Story cycles modding': '结构对，但**漏了 visible/icon/visualization**（看不到的那一半）',
   'Struggle modding': '2026-09 更新，三域里最靠谱；路径 common/struggle/struggles/，起停在 history/struggles/',
   '3D models': '模型与 .mesh 资产',
@@ -203,16 +258,65 @@ const NOTES = {
   'Sound modding': '音效事件与 bank',
   Lists: '数据列表索引页',
   'List of baronies': '男爵领全表（找 ID 用）',
+
+  // ---- 1.21 新内容（Silk & Silver）——Wiki 目前没有对应的 *modding 页，语义看这里，语法回 .info
+  Market: '1.21 新机制：市场 / 贸易路线 / 商品需求；建贸易站的前置都在这',
+  Merchant: '商业共和国的 Trader 与 Trade Acumen（1.21 新页）',
+  'Merchant decisions': 'Trader 专属决策清单（1.21 新页）',
+  'Merchant lifestyle': 'Merchant 生活方式三条线（1.21 新页）',
+  Republican: '商业共和国玩法（1.21 新页）',
+  'Trade company': '贸易公司（1.21 新页）',
+  Districts: '1.21 新页：地产区划（district）玩家向说明；脚本面看 common/districts/_districts.info',
+  'Special districts': '特殊区划清单（1.21 新页）',
+  'Great project districts': '大型工程区划（1.21 新页）',
+  'Education focus': '教育焦点（1.21 新页）',
+  'Adventurer lifestyle': '冒险者生活方式（1.21 新页）',
+
+  // ---- 机制语义页：Wiki 的「答案层」，脚本字段仍回层 2
+  'Casus belli': 'CB 玩家向语义；脚本字段看 _casus_belli.info 与 [cb]',
+  Titles: '头衔层级 / 法理 / 继承（1.21 口径）',
+  Modifiers: '修正语义与来源；键表仍以 _modifiers.info 为准',
+  Traits: '特质玩家向效果表（找 ID 用）',
+  Culture: '文化 / 传统 / 革新语义',
+  Traditions: '传统清单（1.21 口径）',
+  Religion: '宗教体系语义',
+  Doctrines: '教义清单与互斥',
+  Tenet: '信条',
+  Laws: '法律体系；1.21 起 law 可作 scope（见 [laws]）',
+  Government: '政体玩法；脚本字段看 _governments.info 与 [government]',
+  Council: '议会玩法与任务（脚本面见 [council]）',
+  Army: '军队 / 常备军 / 补给（1.21 口径）',
+  'Hired forces': '雇佣兵与骑士团',
+  Warfare: '战争流程与战争分数',
+  Barony: '男爵领（最低级头衔）',
+  County: '伯爵领：控制力 / 繁荣 / 民意',
+  Building: '建筑清单与效果',
+  Activity: '活动（狩猎 / 宴会 / 朝圣…）框架',
+  Schemes: '阴谋 / 计谋（含 1.21 贸易计谋）',
+  Situation: '局势（Situation）机制',
+  Struggles: '斗争（玩家向；脚本面见 [struggle]）',
+  Stories: '故事循环（玩家向；脚本面见 [story]）',
+  Artifacts: '宝物与词条',
+  Innovation: '革新与时代',
 };
 
 /** 补丁链：只留与 mod 相关的一句话。 */
 const PATCHES = [
   { title: 'Patches', note: '版本总表' },
-  { title: 'Patch 1.20', note: '2026-09-30 与 By God Alone 同日；新机制字段的源头' },
+  { title: 'Patch 1.21', note: '2026-11-17 与 Silk & Silver 同日；trade / districts / roads / laws 的脚本面源头' },
+  { title: 'Patch 1.20', note: '2026-09-30 与 By God Alone 同日；上一个机制大版本' },
   { title: 'Patch 1.20.X', note: '1.20.0.3 / 0.4 / 1.20.1 / 1.20.1.2 修复链' },
   { title: 'Patch 1.19', note: '2026-04-20；1.20 之前的基线' },
   { title: 'Patch 1.19.X', note: '1.19.x 修复链' },
 ];
+
+/**
+ * 不在 `Category:Modding` 里、但 modding 要用到的页面：
+ * `new121`（1.21 新内容）+ `mech`（机制语义）。只取元数据，不拉正文。
+ */
+const EXTRA_PAGES = DOMAINS.filter((domain) => domain.key === 'new121' || domain.key === 'mech')
+  .flatMap((domain) => domain.pages);
+const EXTRA_TITLES = new Set(EXTRA_PAGES);
 
 // ---------------------------------------------------------------- HTTP
 
@@ -356,30 +460,36 @@ async function collect(site) {
     if (cont === null || wanted.size === 0) break;
   }
 
-  // 3) Category:1.20 —— Wiki 自己标注「当前版本口径」的集合。
-  const category120 = new Set();
+  // 3) Category:1.21 —— Wiki 自己标注「当前版本口径」的集合。
+  const validitySet = new Set();
   const catQueries = await paged(site, {
     action: 'query',
     list: 'categorymembers',
-    cmtitle: 'Category:1.20',
+    cmtitle: `Category:${VALIDITY_CATEGORY}`,
     cmlimit: '500',
     cmtype: 'page',
   });
   for (const query of catQueries) {
-    // 只要主命名空间：Category:1.20 里混着 User: 页，对 mod 开发没意义。
+    // 只要主命名空间：分类里混着 User: 页，对 mod 开发没意义。
     for (const member of query.categorymembers ?? []) {
-      if (member.ns === 0) category120.add(member.title);
+      if (member.ns === 0) validitySet.add(member.title);
     }
   }
 
-  // 4) 补丁链元数据（不在 Category:Modding 里，单独按标题取）。
-  const patches = await api(site, {
+  // 4) 补丁链 + 1.21 新内容 / 机制语义页：都不在 Category:Modding 里，按标题单独取。
+  const metadataTitles = [...PATCHES.map((p) => p.title), ...EXTRA_PAGES];
+  const extra = await api(site, {
     action: 'query',
-    titles: PATCHES.map((p) => p.title).join('|'),
+    titles: metadataTitles.join('|'),
     prop: 'info|revisions',
     rvprop: 'timestamp',
   });
-  for (const page of patches.query.pages ?? []) {
+  for (const page of extra.query.pages ?? []) {
+    // 页面被改名 / 删除时 API 会回 missing，跳过并提示，不要让整次生成失败。
+    if (page.missing === true) {
+      console.warn(`⚠ 页面不存在，已跳过：${page.title}`);
+      continue;
+    }
     pages.set(page.title, {
       title: page.title,
       bytes: page.length ?? 0,
@@ -389,10 +499,10 @@ async function collect(site) {
     });
   }
 
-  return { pages, category120, stats: statistics, siteinfo: general, site };
+  return { pages, validitySet, stats: statistics, siteinfo: general, site };
 }
 
-/** 校验 67 页全部落桶，漏一页就抛（避免 Wiki 新增页面被静默丢掉）。 */
+/** 校验 Category:Modding 全部页面落桶，漏一页就抛（避免 Wiki 新增页面被静默丢掉）。 */
 function assertCoverage(pages) {
   const bucketed = new Set(DOMAINS.flatMap((domain) => domain.pages));
   const missing = [...pages.keys()].filter(
@@ -408,15 +518,16 @@ function assertCoverage(pages) {
 // ---------------------------------------------------------------- render
 
 /** 渲染表体（不含头部，`--check` 只比对这一部分）。 */
-function renderBody({ pages, category120 }) {
+function renderBody({ pages, validitySet }) {
   const lines = [];
   lines.push('## 怎么用这张表');
   lines.push('');
   lines.push('1. 先定位：在下表找到话题 → 用 `ck3wiki_sections(title)` 看目录 → 再用 `ck3wiki_page(title, section=N)` 只读那节（整页动辄几十 KB，会吃满上下文）。');
-  lines.push('2. 「最后编辑」与「声明版本」是**新鲜度**判据：超过一年没动、又不在 `Category:1.20` 里的页，先当参考，结论回原版文件复核。');
-  lines.push('3. 「1.20」列 = 该页在 Wiki 的 `Category:1.20` 里，即被编辑者标为当前版本口径；空着不等于错，只是要多一分怀疑。');
+  lines.push(`2. 「最后编辑」与「声明版本」是**新鲜度**判据：超过一年没动、又不在 \`Category:${VALIDITY_CATEGORY}\` 里的页，先当参考，结论回原版文件复核。`);
+  lines.push(`3. 「${VALIDITY_CATEGORY}」列 = 该页在 Wiki 的 \`Category:${VALIDITY_CATEGORY}\` 里，即被编辑者标为当前版本口径；空着不等于错，只是要多一分怀疑。`);
   lines.push('4. `Effects list` / `Triggers list` / `Data types` 是**抄录版**，Wiki 自己都写着 outdated → 只用来找名字，语法事实回 `ck3mod_vanilla`（`.info`）或控制台 `script_docs` 生成的日志。');
   lines.push('5. 表里没有的话题 ≠ Wiki 没有：用 `ck3wiki_search` 全文检索，再用 `ck3wiki_page_info` 看最后编辑日期。');
+  lines.push(`6. **1.21 期间 modding 页整体滞后**：\`Category:${VALIDITY_CATEGORY}\` 里只有 \`Console commands\` 一个 Modding 页。1.21 的结论默认走层 2（\`.info\`），Wiki 只取语义与示例。`);
   lines.push('');
 
   for (const domain of DOMAINS) {
@@ -426,24 +537,32 @@ function renderBody({ pages, category120 }) {
       lines.push('Paradox 自家 mod 的机制文档。只有在研究「官方 mod 怎么组织内容」时才看；我们四个 mod 不依赖其中任何一条。');
       lines.push('');
     }
-    lines.push('| 页面 | 体积 | 最后编辑 | 声明版本 | 1.20 | 备注 |');
+    if (domain.key === 'new121') {
+      lines.push('1.21 / Silk & Silver 新增的玩家向页面。**Wiki 还没有对应的 `*modding` 页**：语义看这里，键名与参数一律回 `common/trade`、`common/districts`、`common/roads` 的 `.info`。');
+      lines.push('');
+    }
+    if (domain.key === 'mech') {
+      lines.push('不在 `Category:Modding` 里、但 modding 常要查语义的机制页。Wiki 只答「是什么」，脚本怎么写仍回层 2。');
+      lines.push('');
+    }
+    lines.push(`| 页面 | 体积 | 最后编辑 | 声明版本 | ${VALIDITY_CATEGORY} | 备注 |`);
     lines.push('|---|---:|---|---|:--:|---|');
     for (const title of [...domain.pages].sort((a, b) => a.localeCompare(b))) {
       const page = pages.get(title);
       const bytes = page === undefined ? '?' : humanBytes(page.bytes);
       const edited = page === undefined ? '?' : day(page.edited);
       const version = page?.version === undefined ? '—' : page.version;
-      const fresh = category120.has(title) ? '✓' : '';
+      const fresh = validitySet.has(title) ? '✓' : '';
       const note = NOTES[title] ?? '—';
       lines.push(`| ${title} | ${bytes} | ${edited} | ${version} | ${fresh} | ${note} |`);
     }
     lines.push('');
   }
 
-  const verified = [...category120].sort((a, b) => a.localeCompare(b));
-  lines.push(`## Category:1.20 校验集（${verified.length} 页）`);
+  const verified = [...validitySet].sort((a, b) => a.localeCompare(b));
+  lines.push(`## Category:${VALIDITY_CATEGORY} 校验集（${verified.length} 页）`);
   lines.push('');
-  lines.push('Wiki 编辑者标注为「1.20 口径」的页面。做 1.20 相关改动时，优先从这批页面起步；不在其中的机制页要交叉验证。');
+  lines.push(`Wiki 编辑者标注为「${VALIDITY_CATEGORY} 口径」的页面。做 ${VALIDITY_CATEGORY} 相关改动时优先从这批起步；**本版里面只有 \`Console commands\` 一个 Modding 页**，其余全是玩家向，modding 结论不能拿它免检。`);
   lines.push('');
   for (let i = 0; i < verified.length; i += 4) {
     lines.push(`- ${verified.slice(i, i + 4).join(' · ')}`);
@@ -467,16 +586,16 @@ function renderBody({ pages, category120 }) {
   lines.push('| 层 | 来源 | 能回答什么 | 什么时候别信 |');
   lines.push('|---|---|---|---|');
   lines.push('| 1 | 本 Wiki | 语义、示例、工作流、补丁说明 | 页面 >1 年未动；`*list` 抄录页 |');
-  lines.push('| 2 | 本机原版 1.20.1.2（`.info` / `common`，经 `ck3mod_vanilla`；或控制台 `script_docs`） | 键名、类型、参数、是否仍存在 | 只有 DLC 新内容时才可能缺 |');
+  lines.push(`| 2 | 本机原版 ${GAME_VERSION}（\`.info\` / \`common\`，经 \`ck3mod_vanilla\`；或控制台 \`script_docs\`） | 键名、类型、参数、是否仍存在 | 只有 DLC 新内容时才可能缺 |`);
   lines.push('| 3 | 四个 mod 自己的 `数据-*.mjs` + 工具-静态校验 + loc 检查 | 我们自己的不变量与契约 | 只覆盖我们写过的规则 |');
   lines.push('');
 
   lines.push('## 范围与排除');
   lines.push('');
-  lines.push('- 本表覆盖 `Category:Modding` 全部页面；`Category:1.20` 只用来判新鲜度，不逐条展开。');
+  lines.push(`- 本表覆盖 \`Category:Modding\` 全部页面 + **1.21 新内容（${DOMAINS.find((d) => d.key === 'new121')?.pages.length ?? 0} 页）** + **机制语义（${DOMAINS.find((d) => d.key === 'mech')?.pages.length ?? 0} 页）** + 补丁链；\`Category:${VALIDITY_CATEGORY}\` 只用来判新鲜度，不逐条展开。`);
   lines.push('- **不收录**：`Category:Mods` 下 9 个第三方 mod 分类（CK3AGOT · LotR:RiE · RICE · Rajas of Asia · The Fallen Eagle · Way of Kings · When the World Stopped Making Sense · WCGOA · Mod images），合计约 115 页。我们只借鉴模式，不抄工坊 mod 的代码与文案（skill 硬规则 8）。');
-  lines.push('- 玩家向的机制页（`Casus belli`、`Warfare`、`Titles`、`Modifiers`…）不在本表，但 `Category:1.20` 那 85 页里有一大半就是它们——查机制语义时直接用 `ck3wiki_page`。');
-  lines.push('- 表是 2026-11-17 的快照；下次 CK3 更新后先跑一次 `node scripts/wiki-atlas.mjs` 再开工。');
+  lines.push('- 机制语义那一桶是**按 modding 用途手挑的**，不是 Category:Modding 的成员；没挑进来的玩家向页面（如 `Achievement`、`Beginner\'s guide`）用 `ck3wiki_search` 现查即可。');
+  lines.push('- 表是生成时的快照（生成时间见文件头）；下次 CK3 更新后先跑一次 `node scripts/wiki-atlas.mjs` 再开工。');
   lines.push('');
   return lines.join('\n');
 }
@@ -559,15 +678,20 @@ async function main() {
       console.error('  刷新：node scripts/wiki-atlas.mjs');
       process.exit(1);
     }
-    console.log(`✓ 索引与线上 Wiki 一致（${data.pages.size} 页元数据，${data.category120.size} 页 1.20 校验集）`);
+    console.log(`✓ 索引与线上 Wiki 一致（${data.pages.size} 页元数据，${data.validitySet.size} 页 ${VALIDITY_CATEGORY} 校验集）`);
     return;
   }
 
   fs.mkdirSync(path.dirname(options.out), { recursive: true });
   fs.writeFileSync(options.out, markdown, 'utf8');
-  const modding = DOMAINS.flatMap((d) => d.pages).length;
+  const modding = DOMAINS.filter((d) => d.key !== 'new121' && d.key !== 'mech')
+    .flatMap((d) => d.pages).length;
   console.log(`✓ 已写入 ${options.out}`);
-  console.log(`  Category:Modding ${modding} 页 · Category:1.20 ${data.category120.size} 页 · 补丁 ${PATCHES.length} 条`);
+  console.log(
+    `  Category:Modding ${modding} 页 · 1.21 新内容 ${DOMAINS.find((d) => d.key === 'new121').pages.length} 页`
+    + ` · 机制语义 ${DOMAINS.find((d) => d.key === 'mech').pages.length} 页`
+    + ` · Category:${VALIDITY_CATEGORY} ${data.validitySet.size} 页 · 补丁 ${PATCHES.length} 条`,
+  );
 }
 
 main().catch((error) => {

@@ -4,8 +4,8 @@
 > 外加 8 个 `ck3mod_*` 工具。工具只做**调用与汇总**——校验规则仍然归四个 mod 自己的
 > `工具-*.mjs` 与 `ck3-modding-tools/cli.mjs`，本插件一份都不复制。
 
-- 包名：`@local/ck3moddev` · 版本 0.2.0 · MIT
-- 作用域：Windows 本机、profile `desktop`、游戏 **CK3 1.20.x "Crozier"**
+- 包名：`@local/ck3moddev` · 版本 0.3.0 · MIT
+- 作用域：Windows 本机、profile `desktop`、游戏 **CK3 1.21.0 "Florin"**
 - 只做新增：不覆盖、不删除、不改动任何现有插件（`@local/ck3wiki`、`@local/steam`、`@local/prts` 等原样保留）
 - 仓库：<https://github.com/ABccgh/dsh-ck3-mod-dev>（MIT）
 
@@ -23,7 +23,7 @@ CK3 mod 的修改闭环是「改脚本/本地化 → 生成/规范化 → 校验
 | 手动把发布快照复制到 `Documents\...\mod` | `ck3mod_deploy`（按 mod 自己的部署脚本，带能力探测） |
 | 手改 `dlc_load.json`、跑 exe、再改回来 | `ck3mod_headless`（备份/还原/哈希核对/日志分诊，一条命令） |
 | 改完忘跑规范化，BOM 缺失刷 `error.log` | `ck3mod_build`（生成 + 规范化，或 `--check` 只比对） |
-| 查 trigger/effect 只能翻 Wiki | `ck3mod_vanilla`（在 1.20 安装目录里真实检索） |
+| 查 trigger/effect 只能翻 Wiki | `ck3mod_vanilla`（在 1.21 安装目录里真实检索） |
 | 工坊描述超 8000 字节，上传才发现 | `ck3mod_workshop`（按「段」预检，发布前拦下） |
 
 ---
@@ -74,8 +74,11 @@ git clone https://github.com/ABccgh/dsh-ck3-mod-dev.git `
 
 ```powershell
 robocopy "D:\DSH workspace\dsh-ck3-mod-dev" "%USERPROFILE%\dsh-bundles\ck3moddev" `
-  /MIR /XD .git test node_modules
+  /MIR /XD .git test node_modules skills /XF 工具-同步技能.mjs
 ```
+
+> `skills/` 与 `工具-同步技能.mjs` 不复制：知识层的源在仓库、部署副本在
+> `%USERPROFILE%\.agents\skills\ck3-modding`（见 §8.3），安装目录里再放一份只会造成「改哪份」的混淆。
 
 然后：
 
@@ -168,14 +171,14 @@ dejure 少 `--prune`，free 只有 `--check`，auto-spread 根本没有部署脚
 
 ### 5.2 `ck3mod_vanilla` 的检索范围
 
-| `scope` | 目录 | 体量（1.20.1.1 实测） |
+| `scope` | 目录 | 体量（1.21.0 实测） |
 |---|---|---|
-| `common`（默认） | `game/common` | 2888 文件 / 66 MB |
-| `events` | `game/events` | 577 文件 / 41 MB |
-| `loc` | `localization/{english,simp_chinese}` | 2501 文件 / 55 MB |
-| `docs` | 全游戏 `*.info`（脚本 API 文档） | 203 文件 / 0.8 MB |
-| `tests` | `game/tests` | 19 文件 |
-| `all` | common + events + tests + 全部 `.info`（**不含** localization） | ~107 MB |
+| `common`（默认） | `game/common` | 3215 文件 / 77 MB |
+| `events` | `game/events` | 611 文件 / 41 MB |
+| `loc` | `localization/{english,simp_chinese}` | 1351 + 1350 文件 / 58 MB |
+| `docs` | 全游戏 `*.info`（脚本 API 文档） | 214 文件 / 1.3 MB |
+| `tests` | `game/tests` | 19 文件（1.21 新增脚本测试库） |
+| `all` | common + events + tests + 全部 `.info`（**不含** localization） | ~119 MB |
 
 预算：最多 20000 文件 / 120 MB / 8 秒；超预算会在结果里标「部分结果」。
 
@@ -225,11 +228,15 @@ Steam 的 8000 字节上限是**每个上传字段**的，所以 `工坊描述-B
   有非本 mod 报错、隔离不干净或日志没更新。
 - `FAIL`：本 mod 有报错、没走到 history、超时/中断、或 `dlc_load.json` 还原失败。
 
-> **本机现实**：1.20.x 的无头运行每次都在 `Start running through history.` 处崩溃
-> （`Instance has not been created!`，并在 `crashes\` 下生成 `ck3_*` 目录），退出码 1。
-> 所以在本机 `ck3mod_headless` 的结论**通常是 WARN**；真正的判据是报告里的
-> 「本 mod 报错 0 + 已到 history + 隔离干净」，工具会单独打一行「判据」把那句话写出来。
-> 不要因为 WARN 就以为 mod 有问题，也不要因为加载期干净就以为功能正确。
+> **本机现实（1.21.0 复测，2026-11-18）**：空播放集的无头基线 **26.5 s 到
+> `Start running through history.` 后自行退出、exit 0**，1.20 那个「到 history 必崩
+> （`Instance has not been created!`，`crashes\` 下生成目录）」的现象**没有复现**。
+> 装 mod 后是否仍干净，以当次报告为准；结论三档里的 WARN 仍保留给「加载期干净但退出异常」的情况。
+>
+> 另有一个**固定噪声**：`Documents\...\player\game_rules\presets.txt` 里残留的旧 mod game rule
+> 引用（例如 `on_auto_spread_ai`）会让每次启动都报一行
+> `Failed to read key reference: on_auto_spread_ai`。它**不是加载错误**，用 `baseline: true`
+> 做基线对照时会被差集扣掉；不做基线时记得手动忽略这一行。
 
 > 无头只验**加载期**：验不了互动点击、UI、tooltip。静态 + 无头全绿 ≠ 功能正确。
 
@@ -255,9 +262,9 @@ Steam 的 8000 字节上限是**每个上传字段**的，所以 `工坊描述-B
 
 | 文件 | 作用 |
 |---|---|
-| `skills/ck3-modding/SKILL.md` | 流水线、硬规则、Wiki 路由表（「要点」列指向实测小节）、覆盖与兼容、手动调试闭环 |
-| `skills/ck3-modding/references/verified-notes.md` | 七组实测要点：interaction / CB / 政体 / Resources / 议会 / 故事循环 / 斗争，每条带 1.20.1.2 的 `.info` 行号，按需只读一节 |
-| `skills/ck3-modding/references/ck3-wiki-atlas.md` | 生成物：Category:Modding 全 67 页 + Category:1.20 校验集 + 补丁链，带最后编辑与 `{{version}}` |
+| `skills/ck3-modding/SKILL.md` | 流水线、硬规则、Wiki 路由表（「要点」列指向实测小节）、1.21 变化、覆盖与兼容、手动调试闭环 |
+| `skills/ck3-modding/references/verified-notes.md` | 11 组实测要点：interaction / CB / 政体 / Resources / 议会 / 故事循环 / 斗争 / district / trade / road / laws，每条带 **1.21.0** 的 `.info` 行号，按需只读一节；顶部另有「1.21 改名与 patch note 落差」表 |
+| `skills/ck3-modding/references/ck3-wiki-atlas.md` | 生成物：Category:Modding 全 67 页 + **1.21 新内容 11 页 + 机制语义 25 页** + Category:1.21 校验集 + 补丁链，带最后编辑与 `{{version}}` |
 | `skills/ck3-modding/scripts/wiki-atlas.mjs` | 索引生成器；`--check` 验鲜，漂移退出码 1 |
 | `工具-同步技能.mjs` | 仓库 `skills/` → 用户 skill 目录；`--check` 只比对，`--dest` 改目标 |
 
@@ -266,18 +273,23 @@ Steam 的 8000 字节上限是**每个上传字段**的，所以 `工坊描述-B
 | 层 | 来源 | 回答什么 |
 |---|---|---|
 | 1 Wiki | `ck3wiki_*`（预设里保留可见） | 语义、示例、工作流、补丁说明 |
-| 2 本机原版 1.20.1.2 | `.info` / `common`（`ck3mod_vanilla`），或控制台 `script_docs` | 键名、参数、现在还存不存在 |
+| 2 本机原版 1.21.0 | `.info` / `common`（`ck3mod_vanilla`），或控制台 `script_docs` | 键名、参数、现在还存不存在 |
 | 3 本仓契约 | `数据-*.mjs` + `工具-静态校验.mjs` + loc 检查 | 我们自己的不变量 |
 
 一句话：**Wiki 用来理解，原版用来确认，静态校验用来兜底**。`Effects list` / `Triggers list`
 是抄录版、页面自己都写着 outdated，只能用来找名字。
+
+**1.21 的特殊纪律**：Wiki 的 modding 层整体没跟上——`Category:1.21`（75 页）里只有
+`Console commands` 一个 Modding 页。所以 1.21 的结论默认先回层 2，Wiki 只取语义；
+连 patch note 的名字都可能对不上（`monthly_tax`、`add_regular_district` 等，详见
+`verified-notes.md` 顶部表），一律以 `grep` 实机结果为准。
 
 ### 8.2 刷新索引
 
 ```powershell
 $node = "C:\Users\11210\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe"
 cd "$env:USERPROFILE\.agents\skills\ck3-modding"
-& $node .\scripts\wiki-atlas.mjs            # 重写 references\ck3-wiki-atlas.md（本机实测约 70 秒）
+& $node .\scripts\wiki-atlas.mjs            # 重写 references\ck3-wiki-atlas.md（本机实测约 6 秒；站点一次吐 ~1.2 MB）
 & $node .\scripts\wiki-atlas.mjs --check    # 只比对，不写文件；漂移退出码 1
 ```
 
@@ -334,6 +346,9 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
   页面本身也会过期（`Effects list` / `Triggers list` 是抄录版），结论仍要回 `.info` 复核。
 - **skill 是两处副本**：仓库 `skills/` 是源，`~\.agents\skills\ck3-modding` 是部署副本；改完必须跑
   `工具-同步技能.mjs`，否则会话里加载的是旧副本。`--check` 可随时验漂移。
+- **没有无人值守的脚本测试入口（1.21 复测）**：`tests/_tests.info` 只给了游戏内控制台命令
+  `scripted_tests [pattern]`；`-automated_test` 会起一局全自动 AI 对局且不自行退出，
+  `-run_console_action=scripted_tests` 10 s 退出 0 但不产生任何测试输出。可重复路径仍需人工开游戏。
 
 ## 11. 怎么改 / 下次 CK3 更新时
 
@@ -341,8 +356,14 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 - 换默认路径：改 `cordis.patch.yml` 的 `ck3mod-tools.config`（重载即可，不必重启）。
 - CK3 更新后：先 `ck3mod_status` 看游戏版本，再 `ck3mod_check mod=all` 跑基线；
   无头命令若因引擎参数变化失败，改 `lib/headless.js` 的 `GAME_ARGS`（唯一一处）。
-- **CK3 大版本更新后**还要刷新知识层：改 `scripts/wiki-atlas.mjs` 的 `GAME_VERSION` 常量与
-  `SKILL.md` 的 Environment 段（游戏版本、四个 mod 版本），再跑 `wiki-atlas.mjs` 重建索引。
+- **CK3 大版本更新后**按这个顺序刷新知识层：
+  1. 改 `scripts/wiki-atlas.mjs` 的 `GAME_VERSION` 与 `VALIDITY_CATEGORY`（如 `'1.21'` → `'1.22'`），
+     补 `PATCHES` 里的新补丁页；跑一次生成，`assertCoverage` 会指出 Wiki 新增的 modding 页。
+  2. 复核 `references/verified-notes.md`：逐条回新版本 `.info`，**失效的删掉**，行号全部更新；
+     新机制页（如 1.21 的 trade / districts / roads）按同一格式加节。
+  3. 改 `SKILL.md` 的 Environment 与「1.2x 变化」段；`metadata.version` 加一。
+  4. 重跑 `cli.mjs check --all`（四个 mod 的 vanilla token 是否还在）；必要时跑无头冒烟。
+  5. `工具-同步技能.mjs` 同步 + `--check`；robocopy + 关开 bundle；更新 README 版本与 §13。
 - 新增 mod：在 `ck3-modding-tools/configs.mjs` 加一项即可，**不要**在插件里另建列表。
 
 ## 12. 注意事项
@@ -353,6 +374,24 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 4. 本机副本与工坊订阅版不要同时启用（会重复定义）；测完 `ck3mod_deploy action=clean` 清场。
 
 ## 13. 更新记录
+
+### 0.3.0（2026-11-18）— 迁移到 CK3 1.21.0 "Florin"
+
+- **触发**：游戏 2026-11-18 升到 **1.21.0 "Florin"**（2026-11-17 与 Silk & Silver 同日发布），
+  整个知识层与 persona 还停在 1.20.1.2。
+- **勘察**：Wiki 8306 页 / 494 条目；Category:Modding 67 页、Category:1.21 75 页（其中只有
+  `Console commands` 一个 Modding 页）、新增 Patch 1.21；1.21 新机制页 11 个（Market / Districts / Merchant…）。
+- **atlas 生成器**：`GAME_VERSION` → 1.21.0、新增 `VALIDITY_CATEGORY`、新增 `new121`（11 页）与
+  `mech`（25 页）两桶、补丁链加 Patch 1.21、缺失页面跳过并告警；`--check` 契约不变。
+- **verified-notes**：7 节按 1.21 逐条复核并更新行号，新增 `[district]` `[trade]` `[road]` `[laws]`
+  四节（共 11 节），顶部加「1.21 改名与 patch note 落差」表（`monthly_tax` 0 处、`add_regular_district`
+  0 调用、`scheme_discovery_chance_mult` 仍在等）。
+- **SKILL.md 0.3.0**：新增「1.21 变化（大版本迁移必读）」；路由表加 district / trade / road / laws 四行；
+  硬规则 9 改写（`scripted_tests` 仍无无人值守入口，附 1.21 复测证据）、新增 12（spline 副本坑）。
+- **persona**：版本、四个 mod 的 `supported_version` 事实、1.21 六条要命改动、层 2 优先纪律。
+- **实测**：`check --all` 4/4 PASS（loc 94/122/84/36）；空播放集无头 26.5 s 到 history 后自行退出、
+  1.20 的「到 history 必崩」未复现；`-automated_test` / `-run_console_action` 复测结论见 §10。
+- **未改 `lib/`**，不需要重启 DSH；只改了值 + 知识层，关开 bundle 即可生效。
 
 ### 仓库整理（2026-11-17）— 知识层入库
 
