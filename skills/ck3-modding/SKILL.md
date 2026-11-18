@@ -9,7 +9,7 @@ description: |
   the four published mods, the shared toolchain, or the wiki atlas.
 metadata:
   author: "local workspace"
-  version: "0.7.1"
+  version: "0.7.2"
 ---
 
 # CK3 Modding — Workspace Playbook
@@ -196,7 +196,14 @@ cd "D:\DSH workspace\ck3-curse"
 & $node .\工具-检查.mjs check
 & $node .\工具-检查.mjs loc
 & $node .\工具-检查.mjs reverse
+
+# 反例样本：--root 只对单个 mod 的 check 生效（相对路径按调用方 cwd 解析）
+& $node .\工具-检查.mjs check --root "..\ck3-de-jure-conquest\cn_dejure_conquest-v1.0"
 ```
+
+`--root` 由 `cli.mjs` 原样转给该 mod 的静态校验器；`--all` / `loc` / `reverse` 配 `--root`、
+以及任何**未知参数都会报错退出 2**——2026-11-18 之前它们被静默忽略，`check --root <目录>`
+会照常跑发布快照并 PASS，等于「以为验了反例、其实没验」。
 
 Baseline at 2026-11-18 (1.21.0): curse loc 122 / de-jure 28（v2.3，移除战后报告后 36→28）/ free 84 / auto 94, all 0 errors,
 `check --all` 4/4 PASS、`reverse --all` 4/4 PASS。`auto` 与 `dejure` 的静态校验都支持 `--root`；
@@ -348,8 +355,9 @@ documented expected count and say so.
     `on_game_start = { on_actions = { my_action } }` + `my_action = { effect = { … } }`。
 16. **工坊流程的两个顺序**：① **上传前先 `ck3mod_deploy`** —— 启动器 Mod 库只认
     `Documents\...\mod\*.mod`，清场后它会显示空库、没有可上传物；② **两个 descriptor 归启动器管** ——
-    点上传时它会把 `supported_version` 从通配回写成实测版本（`1.21.*`→`1.21.0`）并吃掉行尾 1 字节，
-    所以静态校验对这两个文件按字段比，`file_size` 比本地少 1 字节是正常现象。
+    点上传只把 `supported_version` 从通配回写成实测版本（`1.21.*`→`1.21.0`）；快照末字节是 `"`、
+    没有行尾换行时**长度不变**（de-jure v2.3 实测 257 / 163 B 原样），所以静态校验对这两个文件按字段比。
+    「`file_size` 少 1」只出现在**快照带行尾换行**的旧形状里（free v4.1 实测 96,075 → 96,074），不是常态。
     它读的是外层 `.mod`，但**内层 `descriptor.mod` 也会被一起回写** → 按字段比必须覆盖内外两份
     （容差 `1.21.*` / `1.21.x`）。
 17. **前提先于功能**：现象是「功能没生效」时，先逐条确认前置条件真的成立——目标对象还活着
@@ -366,8 +374,11 @@ documented expected count and say so.
 20. **写进清单的问题只有变成机器检查才算处理**：候选清单/复盘里记下的问题，没有落成脚本断言就等于
     没发现；收进实现前先问「这条会不会被 `工具-检查.mjs` / golden check 拦住」。
     **知识层自己也有兜底**：`工具-知识层检查.mjs` 断言硬规则编号（1–N 连续）、三份文件的必需节、
-    复盘映射锚点（11-18 的 A1…H7 + 11-18b 的 P1–P16）、版本口径与部署副本哈希——删了规则、断了映射、
+    复盘映射锚点（11-18 的 A1…H7 + 11-18b 的 P1–P16 + 11-18c 的 Q1–Q12）、**锚点总数与逐编号覆盖**、
+    人格层（`cordis.patch.yml`）必备词/禁词、版本口径与部署副本哈希——删了规则、断了映射、少了锚点、
     忘了同步，它都会报红；**文档索引**由 `.admin\工具-文档链接检查.mjs` 兜底，收尾必跑。
+    **判据自己也防削弱**：以前删一条锚点只是「少查几项、照样绿」，现在直接报 `ANCHORS/count` 或
+    `ANCHORS/coverage`。
 21. **知识层只改仓库副本**。skill 的源在 `dsh-ck3-mod-dev\skills\ck3-modding\`，DSH 实际加载的是
     `~\.agents\skills\ck3-modding`（部署副本）；`工具-同步技能.mjs` 方向固定为**仓库 → 部署副本**。
     直接改部署副本会被下一次同步覆盖（2026-11-18 实测）。改完必须同步 + `--check` + `工具-知识层检查.mjs`。
@@ -439,7 +450,10 @@ Never claim a layer passed if it was skipped; say **SKIP** and why.
 - 真机验收 runbook（含 §9 机器代点与 §9.6 点击纪律）：`references/ingame-acceptance.md`
 - 踩坑总账（2026-11-18 项目收尾）：`D:\DSH workspace\.admin\retro-2026-11-18-ck3mod.md`
 - 踩坑续篇（2026-11-18b auto v2.1）：`D:\DSH workspace\.admin\retro-2026-11-18b-ck3mod-auto-v2.1.md`
-  —— 16 条新坑（P1–P16），§八 的 5 处补丁已于插件 0.5.0 / skill 0.7.0 落地
+  —— 16 条新坑（P1–P16），落点见硬规则 21–26（插件 0.5.0 / skill 0.7.0 落地）
+- 踩坑续篇（2026-11-18c 法理征服 v2.3）：`D:\DSH workspace\.admin\retro-2026-11-18c-ck3mod-dejure-v2.3.md`
+  —— Q1–Q12（判定 / 校验器 / 发布 / 真机 / 收尾），落点见硬规则 19、26、27–29 与
+  `[cb]` / `[verify]` / `[release]` / `[ingame]`；人格层同样吃这套事实（`cordis.patch.yml`）
 - 文档索引兜底：`D:\DSH workspace\.admin\工具-文档链接检查.mjs`（收尾必跑；`--all` 扫整个 `.admin`）
 - auto 的 L 段与回滚：`D:\DSH workspace\ck3-auto-spread\README.md`、`发布说明.md`
 - 索引生成器：`scripts/wiki-atlas.mjs`（`--check` 验鲜，`--out` 改输出位置）

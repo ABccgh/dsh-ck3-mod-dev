@@ -7,19 +7,24 @@
  * 「写进清单的问题只有变成机器检查才算处理」。这个脚本把 A1…H7、P1–P16、Q1–Q12 的落点、硬规则编号、
  * 各节标题、版本口径、部署副本哈希都变成断言，跑一次即知映射是否断裂。
  *
- * 检查分五组：
+ * 检查分六组：
  *   1. SKILL.md 硬规则：编号必须是 1..N 连续、无缺号无重号（N 与 EXPECTED_RULE_COUNT 一致）；
  *   2. 三份知识层文件的必需节（SKILL / verified-notes / ingame-acceptance）；
  *   3. 复盘映射锚点：每条编号对应的关键句必须还在原文件里（删了 = 复盘落地断链）；
- *      锚点集 = 11-18 的 A1…H7（28 条）+ 11-18b 的 P1–P16（23 条）+ 11-18c 的 Q1–Q12（13 条）；
- *   4. 版本口径：package.json / README 顶部 / README §13 最新条目 / SKILL metadata 互相一致；
- *   5. 部署副本：仓库 vs `~/.agents/skills/ck3-modding` vs `~/dsh-bundles/ck3moddev` 的哈希。
+ *      锚点集 = 11-18 的 A1…H7（28 条）+ 11-18b 的 P1–P16（23 条）+ 11-18c 的 Q1–Q12（13 条）
+ *      + 人格层与 cli 的 8 条 = 72 条；另外断言**锚点总数**与**每个复盘编号至少 1 条**
+ *      （删锚点 = 少查几项，不能让它悄悄变绿——这正是复盘 Q2「判据自己变弱也是 bug」）；
+ *   4. 人格层 `cordis.patch.yml`：必备判断句在、会漂的旧话（dejure 2.2 / 吃掉行尾 / 少 1 属正常 /
+ *      七层 / 版本枚举）不在；SKILL 的 References 必须点到三份复盘；
+ *   5. 版本口径：package.json / README 顶部 / README §13 最新条目 / SKILL metadata 互相一致；
+ *   6. 部署副本：仓库 vs `~/.agents/skills/ck3-modding` vs `~/dsh-bundles/ck3moddev` 的哈希。
  *
  * 用法：
  *   $node = "C:\Users\11210\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe"
  *   & $node .\工具-知识层检查.mjs              # 全部检查；部署副本缺失只给提示，不算失败
  *   & $node .\工具-知识层检查.mjs --no-deploy  # 只查知识层内容（没装 bundle 时用）
  *   & $node .\工具-知识层检查.mjs --repo D:\tmp\fixture   # 换仓库根（测试用）
+ *   & $node .\工具-知识层检查.mjs --list-anchors         # 打印锚点总数与逐编号条数
  *
  * 退出码：0 = 全过；1 = 有失败项（提示项不算）。
  *
@@ -39,6 +44,15 @@ const BUNDLE_DEFAULT = path.join(os.homedir(), 'dsh-bundles', 'ck3moddev');
 
 /** 硬规则的期望条数。新增规则时**先改这里**，让「改了数字」成为一次有意识的动作。 */
 const EXPECTED_RULE_COUNT = 29;
+
+/**
+ * 锚点总数的期望值。删/改锚点时**先改这里**：它是「判据自己变弱也是 bug」的兜底——
+ * 以前删一条锚点只是通过项少一个，照样打印「✓ 通过」。
+ */
+const EXPECTED_ANCHOR_COUNT = 72;
+
+/** 人格层（预设的 system prompt）文件；它是最先被模型读到的一层，最容易漂。 */
+const PATCH_FILE = 'cordis.patch.yml';
 
 /** bundle 安装副本里参与比对的关键文件（其余是运行时无关文件）。 */
 const BUNDLE_FILES = [
@@ -114,6 +128,46 @@ const RUNBOOK_SECTIONS = [
 ];
 
 /**
+ * 每一轮复盘用掉的编号段。每个编号**至少要有一条锚点**——缺了说明那一条的落点被删了。
+ * 编号来源：11-18 的 A–E/H（H2/H3 已并入 H1）、11-18b 的 P1–P16 + P24、11-18c 的 Q1–Q12。
+ */
+const RETRO_IDS = [
+  'A1', 'A2',
+  'B1', 'B2', 'B3', 'B4',
+  'C1', 'C2', 'C3', 'C4',
+  'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9',
+  'E1', 'E2', 'E3',
+  'H1', 'H4', 'H5', 'H7',
+  'P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10',
+  'P11', 'P12', 'P13', 'P14', 'P15', 'P16', 'P24',
+  'Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8', 'Q9', 'Q10', 'Q11', 'Q12',
+];
+
+/** 人格层必须出现的判断句/关键词（都是 11-18c 的结论，缺了就等于人格又漂回去了）。 */
+const PERSONA_REQUIRED = [
+  '别在这里背版本号',
+  '清理 / 重构',
+  '这一局观测不到',
+  '功能移除也要机器可证',
+  '末字节',
+  '--root',
+  '删本机副本前',
+];
+
+/** 人格层禁词：被推翻的旧结论 / 已知会漂的写法。 */
+const PERSONA_FORBIDDEN = ['dejure 2.2', '吃掉行尾', '少 1 属正常', '七层'];
+
+/** 人格层禁止出现的 mod 版本枚举（版本以 工作区索引 / META 为准，写死在 prompt 里必漂）。 */
+const PERSONA_VERSION_ENUM = /(?:free|auto|dejure|de-jure)\s+\d+\.\d+/;
+
+/** SKILL 的 References 必须点到的复盘文件（否则下一个会话按 References 找不到证据）。 */
+const SKILL_REQUIRED_REFS = [
+  'retro-2026-11-18-ck3mod.md',
+  'retro-2026-11-18b-ck3mod-auto-v2.1.md',
+  'retro-2026-11-18c-ck3mod-dejure-v2.3.md',
+];
+
+/**
  * 复盘映射锚点：`id` 就是复盘里的编号，`needle` 必须原样出现在 `file` 里。
  * 删掉任何一条 = 复盘落地断链；改文档时要么保留句子，要么连锚点一起改。
  * @type {Array<{ id: string, file: string, needle: string, label: string }>}
@@ -185,6 +239,16 @@ const ANCHORS = [
   { id: 'Q10', file: NOTES_FILE, needle: '上传动作会改播放集', label: '上传会写 dlc_load.json' },
   { id: 'Q11', file: RUNBOOK_FILE, needle: '删之前先把上传后的 descriptor', label: '删副本前留证据' },
   { id: 'Q12', file: NOTES_FILE, needle: 'api.steampowered.com', label: '断网时三信号降级 SKIP' },
+  // 人格层（cordis.patch.yml）：预设最先读到的摘要，最容易和知识层脱节。
+  { id: 'Q1', file: PATCH_FILE, needle: '清理 / 重构', label: '人格层：清理/重构 = 语义变更' },
+  { id: 'Q3', file: PATCH_FILE, needle: '--root', label: '人格层：判据与部署解耦' },
+  { id: 'Q5', file: PATCH_FILE, needle: '末字节', label: '人格层：descriptor 字节形状' },
+  { id: 'Q7', file: PATCH_FILE, needle: '这一局观测不到', label: '人格层：验收场景可观测性' },
+  { id: 'Q8', file: PATCH_FILE, needle: '功能移除也要机器可证', label: '人格层：功能移除机器可证' },
+  { id: 'Q11', file: PATCH_FILE, needle: '删本机副本前', label: '人格层：删副本前先留证据' },
+  { id: 'Q12', file: PATCH_FILE, needle: '断网时三信号', label: '人格层：断网降级 SKIP' },
+  // 工具链：--root 会转发、未知参数会报错（SKILL 的 Shared checker 段）。
+  { id: 'CLI', file: SKILL_FILE, needle: '未知参数都会报错退出 2', label: 'cli：参数不再静默忽略' },
 ];
 
 /**
@@ -223,12 +287,22 @@ function listFiles(root) {
   return out.sort();
 }
 
+/** 打印锚点总数与逐编号条数（供单测断言「每个复盘编号都有落点」）。 */
+function printAnchors() {
+  /** @type {Map<string, number>} */
+  const counts = new Map();
+  for (const anchor of ANCHORS) counts.set(anchor.id, (counts.get(anchor.id) ?? 0) + 1);
+  console.log(`锚点：${ANCHORS.length} 条 / ${counts.size} 个编号（期望 ${EXPECTED_ANCHOR_COUNT}）`);
+  for (const [id, count] of counts) console.log(`  ${id} ${count}`);
+}
+
 function parseArgs(argv) {
   const options = {
     repo: SELF,
     deploy: DEPLOY_DEFAULT,
     bundle: BUNDLE_DEFAULT,
     checkDeploy: true,
+    listAnchors: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -236,8 +310,9 @@ function parseArgs(argv) {
     else if (arg === '--deploy') options.deploy = path.resolve(argv[(i += 1)]);
     else if (arg === '--bundle') options.bundle = path.resolve(argv[(i += 1)]);
     else if (arg === '--no-deploy') options.checkDeploy = false;
+    else if (arg === '--list-anchors') options.listAnchors = true;
     else if (arg === '--help' || arg === '-h') {
-      console.log('用法: node 工具-知识层检查.mjs [--repo <dir>] [--deploy <dir>] [--bundle <dir>] [--no-deploy]');
+      console.log('用法: node 工具-知识层检查.mjs [--repo <dir>] [--deploy <dir>] [--bundle <dir>] [--no-deploy] [--list-anchors]');
       console.log(`默认仓库：${SELF}`);
       console.log(`默认部署副本：${DEPLOY_DEFAULT}`);
       console.log(`默认 bundle 副本：${BUNDLE_DEFAULT}`);
@@ -293,6 +368,82 @@ function checkAnchor(report, repo, anchor) {
     return;
   }
   pass(report);
+}
+
+/**
+ * 锚点总数：少了 = 判据变弱。复盘 Q2 的教训用在 lint 自己身上——
+ * 以前删一条锚点只是通过项少一个，输出照样「✓ 通过」。
+ * @param {ReturnType<typeof createReport>} report 报告。
+ * @param {Array<{ id: string }>} anchors 锚点。
+ * @returns {void}
+ */
+function checkAnchorCount(report, anchors) {
+  if (anchors.length === EXPECTED_ANCHOR_COUNT) {
+    pass(report);
+    return;
+  }
+  fail(
+    report,
+    'ANCHORS/count',
+    `锚点数应为 ${EXPECTED_ANCHOR_COUNT}，实际 ${anchors.length}——删锚点等于少查，先同步 EXPECTED_ANCHOR_COUNT 并说明原因`,
+  );
+}
+
+/**
+ * 逐编号覆盖：每个复盘编号至少一条锚点，缺了就是那一条的落点没了。
+ * @param {ReturnType<typeof createReport>} report 报告。
+ * @param {Array<{ id: string }>} anchors 锚点。
+ * @returns {void}
+ */
+function checkAnchorCoverage(report, anchors) {
+  const covered = new Set(anchors.map((anchor) => anchor.id));
+  const missing = RETRO_IDS.filter((id) => !covered.has(id));
+  if (missing.length === 0) {
+    pass(report);
+    return;
+  }
+  fail(report, 'ANCHORS/coverage', `${missing.length} 个复盘编号没有锚点：${missing.join(', ')}——落点丢了`);
+}
+
+/**
+ * 人格层：必备判断句在不在、旧话还在不在、有没有写死会漂的版本号。
+ * @param {ReturnType<typeof createReport>} report 报告。
+ * @param {string} repo 仓库根。
+ * @returns {void}
+ */
+function checkPersona(report, repo) {
+  const text = readText(repo, PATCH_FILE);
+  if (text === null) {
+    fail(report, 'PERSONA', `缺 ${PATCH_FILE}`);
+    return;
+  }
+  const missing = PERSONA_REQUIRED.filter((needle) => !text.includes(needle));
+  if (missing.length === 0) pass(report);
+  else fail(report, 'PERSONA', `${PATCH_FILE} 缺 ${missing.length} 句：${missing.join(' / ')}`);
+
+  const stale = PERSONA_FORBIDDEN.filter((needle) => text.includes(needle));
+  const enumerated = PERSONA_VERSION_ENUM.exec(text);
+  const details = [...stale];
+  if (enumerated !== null) details.push(`版本枚举「${enumerated[0]}」`);
+  if (details.length === 0) pass(report);
+  else fail(report, 'PERSONA', `${PATCH_FILE} 还留着会漂的旧话：${details.join(' / ')}（版本以 工作区索引 / META 为准）`);
+}
+
+/**
+ * SKILL 的 References 必须点到三份复盘，否则下一个会话按 References 找不到证据。
+ * @param {ReturnType<typeof createReport>} report 报告。
+ * @param {string} repo 仓库根。
+ * @returns {void}
+ */
+function checkSkillRefs(report, repo) {
+  const text = readText(repo, SKILL_FILE);
+  if (text === null) {
+    fail(report, 'REFS', `缺 ${SKILL_FILE}`);
+    return;
+  }
+  const missing = SKILL_REQUIRED_REFS.filter((name) => !text.includes(name));
+  if (missing.length === 0) pass(report);
+  else fail(report, 'REFS', `References 少 ${missing.length} 份复盘：${missing.join(', ')}`);
 }
 
 /**
@@ -450,6 +601,10 @@ function checkDeploy(report, repo, options) {
 
 function main() {
   const options = parseArgs(process.argv.slice(2));
+  if (options.listAnchors) {
+    printAnchors();
+    return;
+  }
   const report = createReport();
   const repo = options.repo;
 
@@ -462,7 +617,11 @@ function main() {
   checkHeadings(report, repo, SKILL_FILE, SKILL_SECTIONS, 'SKILL/sections');
   checkHeadings(report, repo, NOTES_FILE, NOTES_SECTIONS, 'NOTES/sections');
   checkHeadings(report, repo, RUNBOOK_FILE, RUNBOOK_SECTIONS, 'RUNBOOK/sections');
+  checkAnchorCount(report, ANCHORS);
+  checkAnchorCoverage(report, ANCHORS);
   for (const anchor of ANCHORS) checkAnchor(report, repo, anchor);
+  checkPersona(report, repo);
+  checkSkillRefs(report, repo);
   checkVersions(report, repo);
   if (options.checkDeploy) checkDeploy(report, repo, options);
 

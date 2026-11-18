@@ -11,6 +11,7 @@ const SCRIPT = path.join(REPO, '工具-知识层检查.mjs');
 const SKILL_REL = path.join('skills', 'ck3-modding', 'SKILL.md');
 const NOTES_REL = path.join('skills', 'ck3-modding', 'references', 'verified-notes.md');
 const RUNBOOK_REL = path.join('skills', 'ck3-modding', 'references', 'ingame-acceptance.md');
+const PATCH_REL = 'cordis.patch.yml';
 
 /** 本文件建过的临时根目录；跑完统一删，别在 %TEMP% 里留 `ck3-lint-*`。 */
 const created = [];
@@ -26,7 +27,7 @@ after(() => {
 function makeRepo() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ck3-lint-'));
   created.push(root);
-  for (const rel of ['package.json', 'README.md', 'skills']) {
+  for (const rel of ['package.json', 'README.md', PATCH_REL, 'skills']) {
     fs.cpSync(path.join(REPO, rel), path.join(root, rel), { recursive: true });
   }
   return root;
@@ -78,6 +79,43 @@ test('改掉 Q5 的锚点句时报 Q5', () => {
   const { code, out } = run(['--repo', root, '--no-deploy']);
   assert.equal(code, 1, out);
   assert.match(out, /\[Q5\]/);
+});
+
+test('人格层缺判断句时报 PERSONA', () => {
+  const root = makeRepo();
+  write(root, PATCH_REL, read(root, PATCH_REL).replaceAll('功能移除也要机器可证', '随便'));
+  const { code, out } = run(['--repo', root, '--no-deploy']);
+  assert.equal(code, 1, out);
+  assert.match(out, /\[PERSONA\]/);
+  assert.match(out, /缺 1 句/);
+});
+
+test('人格层写回版本枚举时报 PERSONA', () => {
+  const root = makeRepo();
+  write(root, PATCH_REL, read(root, PATCH_REL).replace('别在这里背版本号', '版本记牢：free 4.1'));
+  const { code, out } = run(['--repo', root, '--no-deploy']);
+  assert.equal(code, 1, out);
+  assert.match(out, /\[PERSONA\]/);
+  assert.match(out, /版本枚举/);
+});
+
+test('References 漏掉 11-18c 时报 REFS', () => {
+  const root = makeRepo();
+  write(root, SKILL_REL, read(root, SKILL_REL).replaceAll('retro-2026-11-18c-ck3mod-dejure-v2.3.md', 'retro-x.md'));
+  const { code, out } = run(['--repo', root, '--no-deploy']);
+  assert.equal(code, 1, out);
+  assert.match(out, /\[REFS\]/);
+});
+
+test('--list-anchors 总数与期望一致、复盘编号有落点', () => {
+  const { code, out } = run(['--list-anchors']);
+  assert.equal(code, 0, out);
+  const matched = /锚点：(\d+) 条 \/ \d+ 个编号（期望 (\d+)）/.exec(out);
+  assert.ok(matched, out);
+  assert.equal(Number(matched[1]), Number(matched[2]), out);
+  for (const id of ['Q1', 'Q12', 'P1', 'P24', 'H7', 'CLI']) {
+    assert.match(out, new RegExp(`^  ${id} \\d+$`, 'm'), `缺少 ${id} 的锚点`);
+  }
 });
 
 test('package.json 与 README 版本不一致报 VERSION', () => {

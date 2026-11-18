@@ -4,7 +4,7 @@
 > 外加 8 个 `ck3mod_*` 工具。工具只做**调用与汇总**——校验规则仍然归四个 mod 自己的
 > `工具-*.mjs` 与 `ck3-modding-tools/cli.mjs`，本插件一份都不复制。
 
-- 包名：`@local/ck3moddev` · 版本 0.5.1 · MIT
+- 包名：`@local/ck3moddev` · 版本 0.5.2 · MIT
 - 作用域：Windows 本机、profile `desktop`、游戏 **CK3 1.21.0 "Florin"**
 - 只做新增：不覆盖、不删除、不改动任何现有插件（`@local/ck3wiki`、`@local/steam`、`@local/prts` 等原样保留）
 - 仓库：<https://github.com/ABccgh/dsh-ck3-mod-dev>（MIT）
@@ -371,6 +371,11 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
   条目 ID 未变），精确字节数记 **SKIP** 并写原因（2026-11-18 auto v2.1 实例）。
 - **跨年/跑时间类真机项不可自动**：原版事件会自动暂停游戏，「跑一年」必须有人；代点只覆盖
   面板 / 开关 / 规则可见性这一层（配方见 runbook §9.6）。
+- **`ck3mod_check` 不暴露 `--root`**：工具只拼 `task` / `mod`，不能把目录转给静态校验器；要跑反例样本
+  用 pwsh 的 `工具-检查.mjs check --root <目录>`（2026-11-18 起 `cli.mjs` 会真的转发；未知参数报错退出 2）。
+- **人格层与知识层是两份文本**：`cordis.patch.yml` 的 persona 是摘要、`skills/ck3-modding/` 是全文，
+  改一处忘另一处就会自相矛盾（2026-11-18c 的 Q5/Q1 都在人格层漂过）。`工具-知识层检查.mjs` 会用
+  必备词/禁词/版本枚举卡住人格层，但「新事实要不要进摘要」仍需人工判断。
 
 ## 11. 怎么改 / 下次 CK3 更新时
 
@@ -387,8 +392,10 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
      入口与期望、证据命令；`[ingame]` 一节同步更新。
   4. 改 `SKILL.md` 的 Environment 与「1.2x 变化」段；`metadata.version` 加一。
   5. 重跑 `cli.mjs check --all`（四个 mod 的 vanilla token 是否还在）；必要时跑无头冒烟与真机验收。
-  6. `工具-同步技能.mjs` 同步 + `--check`；`工具-知识层检查.mjs` 必须绿（规则/节/映射/版本/部署副本）；
-     `.admin\工具-文档链接检查.mjs` 必须 0 缺失；robocopy + 关开 bundle；更新 README 版本与 §13。
+  6. `cordis.patch.yml` 的人格层与 SKILL 一起改（它是最先读到的摘要；别在里面枚举 mod 版本号，会漂）。
+  7. `工具-同步技能.mjs` 同步 + `--check`；`工具-知识层检查.mjs` 必须绿（规则/节/映射/**锚点总数与逐编号覆盖**/
+     人格必备词与禁词/References/版本/部署副本）；`.admin\工具-文档链接检查.mjs` 必须 0 缺失；
+     robocopy + 关开 bundle；更新 README 版本与 §13。
 - 新增 mod：在 `ck3-modding-tools/configs.mjs` 加一项即可，**不要**在插件里另建列表。
 
 ## 12. 注意事项
@@ -400,6 +407,31 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 5. **开游戏前先 `--begin`，收场用杀进程 + `--end`**；游戏内「退出游戏」会覆盖 `autosave_exit` / `last_save`。
 
 ## 13. 更新记录
+
+### 0.5.2（2026-11-18）— 人格层对齐 11-18c + 判据自证（锚点总数 / 编号覆盖 / 人格 / References）
+
+- **触发**：11-18c 的 Q1–Q12 在 0.5.1 已落进知识层（规则 27–29、64 条锚点、89 单测），但**智能体整体没对齐**：
+  `cordis.patch.yml` 的人格层仍写 `dejure 2.2` 与「吃掉行尾 1 字节、少 1 属正常」，判断层只到 H1–H7、
+  Q1/Q2/Q7/Q8 不在；SKILL 的 References 没点 11-18c；规则 16 与规则 26 自相矛盾（一个说少 1 字节正常，
+  一个说形状对了就不再 −1）；另外实测到 `工具-检查.mjs check --root <目录>` **会静默忽略 `--root`**、
+  照常跑发布快照并 PASS。
+- **人格层 `cordis.patch.yml`**：版本段改为「不背版本号，以 工作区索引 / 各 mod `数据-*.mjs` META 为准」；
+  descriptor 段按 Q5 改写（末字节 `"`、无行尾换行 → 长度不变；−1 只发生在带 `\n` 的旧形状）；
+  判断层扩到 H1–H7 + Q1–Q2；新增「验收与变更 Q7–Q8」；发布段补 Q3–Q6 / Q12；新增收尾 Q11；
+  「验证分七层」改为与 skill 的 Verification layers 表一致的分层清单；知识层那条补 lint 新断言。
+- **SKILL.md 0.7.2**：References 补 `retro-2026-11-18c`；Shared checker 补 `--root` 用法与「未知参数报错退出 2」；
+  规则 16 与 `[release]` 首条按 Q5 调和（−1 字节只发生在快照带行尾换行时）；规则 20 补「判据自己也防削弱」。
+- **工具链 `ck3-modding-tools/cli.mjs`**：`--root <目录>` 现在转给该 mod 的静态校验器（只对单 mod 的 `check`；
+  `--all` / `loc` / `reverse` 配 `--root` 直接报错），未知参数报错退出 2。修前
+  `工具-检查.mjs check --root Z:\nope` 静默跑发布快照并 PASS；修后
+  `cli.mjs check dejure --root …\cn_dejure_conquest-v1.0` 报 **20 个问题**。
+- **工具-知识层检查.mjs**：锚点 64 → **72**（+7 人格层 / +1 cli）；新增 `EXPECTED_ANCHOR_COUNT` 总数断言、
+  逐编号覆盖（`ANCHORS/coverage`）、人格层必备词/禁词/版本枚举（`PERSONA`）、References 三份复盘（`REFS`）、
+  `--list-anchors`；检查项 74 → **87**。
+- **单测**：89 → **93 pass**（人格必备词、人格版本枚举漏检、References 漏 11-18c、`--list-anchors` 覆盖）。
+- 验证：`工具-知识层检查.mjs` **87 项**全过；`npm test` **93 pass**；`cli.mjs check --all` 4/4、
+  `reverse --all` 4/4；de-jure `--root` v1.0 = 20 个问题；`工具-同步技能.mjs --check` 一致；
+  `.admin\工具-文档链接检查.mjs` 0 缺失；bundle 三文件哈希一致。
 
 ### 0.5.1（2026-11-18）— 复盘 11-18c 落地：硬规则 27–29 + Q1–Q12 锚点（法理征服 v2.3）
 

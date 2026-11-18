@@ -388,8 +388,9 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   H2 段（解析 `common/governments/_governments.info` 的 `build_queue_reserve_categories`，
   与 `CURRENCIES` 一一比对）。1.21 实测：原版 9 种角色货币（gold/prestige/piety/renown/influence/
   herd/treasury/merit/barter_goods）与 free 表内九种**完全对应** → 只需兼容发布。
-- **启动器会回写两个 descriptor**：点上传时把 `supported_version` 从 `1.21.*` 写成实测的 `1.21.0`，
-  并**吃掉行尾 1 字节** → 工坊 `file_size` 96,075 → **96,074**（free v4.1 实测）。
+- **启动器会回写两个 descriptor**：点上传时把 `supported_version` 从 `1.21.*` 写成实测的 `1.21.0`；
+  快照**带行尾换行**时还会吃掉行尾 1 字节 → 工坊 `file_size` 96,075 → **96,074**（free v4.1 实测）。
+  **形状对了就不再 −1**（见本节末），别把「少 1 字节」当固定行为。
   因此静态校验对这两个文件按字段比（允许 `1.21.*` / `1.21.x`），其余文件严格逐字节。
   **别在校验器里留一遍"全部文件逐字节"的循环**——v4.0 时本机副本被删所以从未触发，上传后立刻误报。
 - **上传前先 deploy**：启动器「Mod 库」只认 `Documents\...\mod\*.mod`；清场（删本机副本）后它会显示
