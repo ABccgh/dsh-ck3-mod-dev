@@ -5,11 +5,11 @@ description: |
   mechanics on the CK3 Wiki, editing scripts, events, interactions, decisions,
   casus belli, localization, descriptors, thumbnails; running static validation,
   shared loc checks, reverse verification, headless smoke tests, local deployment,
-  and Steam Workshop updates. Load this before touching any of the four published
-  mods, the shared toolchain, or the wiki atlas.
+  in-game acceptance, and Steam Workshop updates. Load this before touching any of
+  the four published mods, the shared toolchain, or the wiki atlas.
 metadata:
   author: "local workspace"
-  version: "0.3.0"
+  version: "0.4.0"
 ---
 
 # CK3 Modding — Workspace Playbook
@@ -35,8 +35,9 @@ Do **not** load it for playing the game or for unrelated projects.
    Wiki 全量导航：67 个 modding 页 + 1.21 新内容 11 页 + 机制语义 25 页，含最后编辑、`{{version}}`、是否 1.21 口径。
 4. `references/verified-notes.md` — **动手前**按路由表的「要点」列读对应小节（`[interaction]` / `[cb]` /
    `[district]` …）：1.21.0 实测结论，每条带 `.info` 行号，只读需要的那节。
-5. `D:\DSH workspace\ck3-modding-survey\06-落地候选.md` — if the task is "what should we do next".
-6. `D:\DSH workspace\ck3-modding-survey\03-工具链与测试.md` — if the task involves tests/tooling.
+5. `references/ingame-acceptance.md` — **要进游戏验收时**读它：准备/启动/四 mod 矩阵/证据/收尾。
+6. `D:\DSH workspace\ck3-modding-survey\06-落地候选.md` — if the task is "what should we do next".
+7. `D:\DSH workspace\ck3-modding-survey\03-工具链与测试.md` — if the task involves tests/tooling.
 
 Never infer a path or a command from memory; read the mod README first.
 
@@ -155,6 +156,7 @@ patch note 也不可信到名字级别（见 `verified-notes.md` 顶部「改名
 | GUI | `Interface` | `gui/**/*.gui`、`interface.info` | — |
 | 地图 / 地形 | `Map modding`、`Terrain modding` | `map_data/` | — |
 | 控制台与调试 | `Mod troubleshooting`、`Console commands`（1.21） | `_commandline_options.info` | — |
+| 真机验收 / 启动参数 / 存档保护 | —（`_commandline_options.info` 就是文档） | `_commandline_options.info`、`pdx_settings.txt`、`game/tests/` | `[ingame]` |
 | 打包 / descriptor | `Mod structure`（2023 页，键表仍准） | 各 mod 的 `.mod` / `descriptor.mod` | — |
 | 兼容 / 覆盖 | `Mod compatibility`、`Modding` 的 Override rules | — | — |
 
@@ -252,32 +254,42 @@ documented expected count and say so.
 - **`.mod` 键**：`name` / `version` / `supported_version` / `path` / `tags` / `remote_file_id` /
   `picture` / `replace_path`；`remote_file_id` 为空 = 上传会另建条目（不可撤销）。
 
-## 手动调试闭环（Wiki 教的最省时间的一段）
+## 真机验收（in-game acceptance）
 
-无头只验加载期；交互、UI、tooltip、条件链只能进游戏。先把闭环搭好，再谈测试：
+无头只验加载期；互动、UI、tooltip、决策面板只有进游戏才知道。完整 runbook（准备 → 启动 → 四 mod 矩阵 →
+证据 → 收尾）在 `references/ingame-acceptance.md`；这里只留铁律和闭环工具。
 
-1. **启动参数**：Steam → 属性 → 启动选项加 `-debug_mode -develop`（或在快捷方式末尾加）。
-   `-develop` 让大部分脚本/本地化**改完即热载**，不必重启游戏。
-2. **控制台**：debug_mode 下打开调试 UI；`event <namespace>.<id>` 触发事件，
-   `effect add_gold = 100` / `trigger is_adult = yes` 直接试效果/触发器。
-3. **生成文档**：控制台跑 `script_docs`（triggers/effects 等日志落到 `logs/`）与 `dump_data_types`。
-   这是层 2 的**最新**来源，比 Wiki 抄录页和安装目录里的 `.info` 都新。
-4. **错误计数**：`release_mode` 打开 Errorhoof 计数器；`log_viewer` 看游戏内日志。
-5. **脚本埋点**：效果 `debug_log` / `error_log` 往日志打点，确认分支真的走到了。
-6. **Explorer**：Ctrl+click 切角色、Alt+click 杀角色、Ctrl+Alt+click 在 Explorer 打开对象，
-   可以直接在游戏里跑 effect/trigger。
-7. **run 脚本（可重复测试）**：把搭条件的 effect 链写成
-   `Documents\Paradox Interactive\Crusader Kings III\run\<name>.txt`（等价事件的 `immediate` 块），
-   控制台 `run <name>.txt` 执行。**这是目前唯一被证实的「半自动」测试路径**。
-8. **脚本测试（1.21 新增，仍手动）**：游戏/原版自带 `game/tests/*.txt`（20 个），
-   `tests/_tests.info` 写明用控制台 `scripted_tests [pattern]` 跑，按 `assert` / `effect` / `expect` 顺序执行。
-   需要先载入存档、有游戏状态；**没有打通无人值守入口**（见硬规则 9）。
+**三条铁律**
+
+1. **人点、机记**：agent 只准备现场、读日志、出结论，**不代点验收项**（用户 2026-11-18 明确要求）。
+   只有用户当次明确同意才谈 GUI 自动化，且要先建现场（`input_*` 在 ck3mod 预设里被屏蔽，只在标准会话可见）。
+2. **先快照，后开游戏**：`工具-真机现场.mjs --begin` 会快照 `dlc_load.json` / `pdx_settings.txt` /
+   `last_save.ck3` / `continue_game.json` / 全部 `*.ck3`，并可同时改写播放集。一次 GUI 会话会覆盖这些文件——
+   2026-11-18 实测（14:44 三个文件同时被改，两个滚动自动存档不可恢复）。
+3. **杀进程收场**：`Stop-Process -Name ck3 -Force` → `--end`。**绝不点游戏内「退出游戏」**，
+   它会写 `autosave_exit.ck3` / `last_save.ck3`，冲掉用户上一次的退出存档。
+
+**启动**：`ck3.exe -debug_mode -suppress_error_log -skip -play=<title_key>`（路线 A，已文档化）或走主菜单
+（路线 B，已验证）。**`-develop` 不存在**：`_commandline_options.info` 无此项，exe 里也搜不到；
+热载用 `-debug_mode` + 控制台 `reload`。
+
+**闭环工具**（细节在 runbook）
+
+- 控制台：debug_mode 下 `event <ns>.<id>` 触发事件，`effect add_gold = 100` / `trigger is_adult = yes` 试效果与触发器。
+- 生成文档：`script_docs` + `dump_data_types` → `logs/`，这是层 2 的最新来源。
+- 错误计数：`release_mode` 开 Errorhoof；`log_viewer` 看游戏内日志；`debug_log` / `error_log` 埋点。
+- Explorer：Ctrl+click 切角色、Alt+click 杀角色、Ctrl+Alt+click 在 Explorer 打开对象。
+- `run` 脚本：`Documents\...\run\<name>.txt` + 控制台 `run <name>.txt`，可重复的半自动路径。
+- `scripted_tests`（1.21）：`game/tests/*.txt`，控制台 `scripted_tests [pattern]` 跑；需已载入存档，
+  **没有无人值守入口**（见硬规则 9）。
 
 ## Hard rules
 
 1. **Never edit the game install directory.** All work is in the mod repo, then deploy a copy.
-2. **`dlc_load.json` belongs to the launcher.** Before any headless run: copy it, record SHA256,
-   use only the test mod, then restore byte-for-byte and verify the hash.
+2. **播放集与存档都归用户。** 任何会改 `dlc_load.json` 或产生存档的会话都要先快照：真机用
+   `工具-真机现场.mjs --begin/--end`，无头用 `ck3mod_headless`；结束按字节还原并核对 SHA256。
+   CK3 没有独立用户目录，一次 GUI 会话会覆盖 `autosave*.ck3` / `last_save.ck3` / `continue_game.json`
+   （2026-11-18 实测）。
 3. **BOM + LF** for CK3 `.txt`/`.yml`/`.mod` text files, unless the specific file is proven otherwise.
    `工具-规范化.mjs` is the normalizer; the loc checker treats a missing BOM as an error.
 4. **Do not use `Start-Process -Wait` on `ck3.exe`.** Poll "process appears → process disappears";
@@ -304,6 +316,10 @@ documented expected count and say so.
 12. **别把 `spline_network.splnet` 留在 Documents**：改 `common/roads` 会生成
     `Documents\...\gfx\map\spline_network\spline_network.splnet`，它**永久覆盖**原版（游戏更新后仍在）。
     要随 mod 发布就挪进 mod 的 `gfx/map/spline_network/`，并删掉 Documents 副本。
+13. **真机收场用杀进程**（`Stop-Process -Name ck3 -Force`），不走游戏内「退出游戏」。
+    `-develop` **不存在**，别写进任何文档；热载用 `-debug_mode` + 控制台 `reload`。
+14. **真机默认不代点**：agent 只准备现场、读日志、出结论；用户当次明确同意才谈 GUI 自动化
+    （`input_*` 在 ck3mod 预设里被屏蔽，只在标准会话可见）。
 
 ## Verification layers
 
@@ -315,7 +331,7 @@ documented expected count and say so.
 | Headless | `ck3.exe -debug_mode -nographics -shutdown_after_history` | load-time errors only; not interactions/on_game_start |
 | Console run-script（手动） | `run/` + 控制台 `run x.txt` | 条件搭建与效果链，可重复；仍需人开游戏 |
 | Console `scripted_tests`（1.21，手动） | 游戏内控制台 `scripted_tests [pattern]` | 原版自带 20 个测试文件；需要已载入存档；无人值守入口未打通 |
-| In-game | manual test list | behavior, tooltips, UI, interaction clicks |
+| In-game（人点、机记） | `工具-真机现场.mjs` + 人点击 + 截图 + `error.log` token 计数 | 互动 / UI / tooltip / 决策 / 宣战界面；不能证明数值平衡与长期运行 |
 | Workshop | launcher upload + page check | packaging/size/ID, not logic |
 
 Never claim a layer passed if it was skipped; say **SKIP** and why.

@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "CK3 Mod Dev",
-    "description": "CK3 mod development agent preset (1.21.0 Florin) plus 8 ck3mod_* tools: validation, build, deploy, headless smoke test, log triage, vanilla lookup and workshop preflight; ships 1.21 migration notes and a three-tier fact model backed by a generated CK3 Wiki atlas."
+    "description": "CK3 mod development agent preset (1.21.0 Florin) plus 8 ck3mod_* tools: validation, build, deploy, headless smoke test, log triage, vanilla lookup and workshop preflight; ships 1.21 migration notes, a three-tier fact model backed by a generated CK3 Wiki atlas, and in-game acceptance scene protection."
   }
 }

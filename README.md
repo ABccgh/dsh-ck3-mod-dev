@@ -4,7 +4,7 @@
 > 外加 8 个 `ck3mod_*` 工具。工具只做**调用与汇总**——校验规则仍然归四个 mod 自己的
 > `工具-*.mjs` 与 `ck3-modding-tools/cli.mjs`，本插件一份都不复制。
 
-- 包名：`@local/ck3moddev` · 版本 0.3.0 · MIT
+- 包名：`@local/ck3moddev` · 版本 0.3.1 · MIT
 - 作用域：Windows 本机、profile `desktop`、游戏 **CK3 1.21.0 "Florin"**
 - 只做新增：不覆盖、不删除、不改动任何现有插件（`@local/ck3wiki`、`@local/steam`、`@local/prts` 等原样保留）
 - 仓库：<https://github.com/ABccgh/dsh-ck3-mod-dev>（MIT）
@@ -74,7 +74,7 @@ git clone https://github.com/ABccgh/dsh-ck3-mod-dev.git `
 
 ```powershell
 robocopy "D:\DSH workspace\dsh-ck3-mod-dev" "%USERPROFILE%\dsh-bundles\ck3moddev" `
-  /MIR /XD .git test node_modules skills /XF 工具-同步技能.mjs
+  /MIR /XD .git test node_modules skills /XF 工具-同步技能.mjs 工具-真机现场.mjs
 ```
 
 > `skills/` 与 `工具-同步技能.mjs` 不复制：知识层的源在仓库、部署副本在
@@ -262,11 +262,13 @@ Steam 的 8000 字节上限是**每个上传字段**的，所以 `工坊描述-B
 
 | 文件 | 作用 |
 |---|---|
-| `skills/ck3-modding/SKILL.md` | 流水线、硬规则、Wiki 路由表（「要点」列指向实测小节）、1.21 变化、覆盖与兼容、手动调试闭环 |
-| `skills/ck3-modding/references/verified-notes.md` | 11 组实测要点：interaction / CB / 政体 / Resources / 议会 / 故事循环 / 斗争 / district / trade / road / laws，每条带 **1.21.0** 的 `.info` 行号，按需只读一节；顶部另有「1.21 改名与 patch note 落差」表 |
+| `skills/ck3-modding/SKILL.md` | 流水线、硬规则、Wiki 路由表（「要点」列指向实测小节）、1.21 变化、覆盖与兼容、真机验收铁律 |
+| `skills/ck3-modding/references/verified-notes.md` | 12 组实测要点：interaction / CB / 政体 / Resources / 议会 / 故事循环 / 斗争 / district / trade / road / laws / ingame，每条带 **1.21.0** 的 `.info` 行号，按需只读一节；顶部另有「1.21 改名与 patch note 落差」表 |
 | `skills/ck3-modding/references/ck3-wiki-atlas.md` | 生成物：Category:Modding 全 67 页 + **1.21 新内容 11 页 + 机制语义 25 页** + Category:1.21 校验集 + 补丁链，带最后编辑与 `{{version}}` |
 | `skills/ck3-modding/scripts/wiki-atlas.mjs` | 索引生成器；`--check` 验鲜，漂移退出码 1 |
+| `skills/ck3-modding/references/ingame-acceptance.md` | 真机验收 runbook：准备 / 启动（`-skip -play=`）/ 四 mod 矩阵 / 证据规范 / 收尾 |
 | `工具-同步技能.mjs` | 仓库 `skills/` → 用户 skill 目录；`--check` 只比对，`--dest` 改目标 |
+| `工具-真机现场.mjs` | 真机验收现场保护：`--begin` 快照存档/设置/播放集，`--end` 按字节还原并核对 SHA256 |
 
 ### 8.1 三层真相
 
@@ -349,6 +351,10 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 - **没有无人值守的脚本测试入口（1.21 复测）**：`tests/_tests.info` 只给了游戏内控制台命令
   `scripted_tests [pattern]`；`-automated_test` 会起一局全自动 AI 对局且不自行退出，
   `-run_console_action=scripted_tests` 10 s 退出 0 但不产生任何测试输出。可重复路径仍需人工开游戏。
+- **真机验收默认人点**：这个预设里 `input_*`（键鼠注入）被全局屏蔽，agent 不能代点；验收由人操作、
+  agent 负责现场（`工具-真机现场.mjs`）、日志与结论。只有用户当次明确同意才谈 GUI 自动化，且要先建现场。
+- **真机会写用户存档**：CK3 没有独立用户目录，`autosave*.ck3` / `last_save.ck3` / `continue_game.json`
+  都会被覆盖（2026-11-18 实测）。没有 `--begin` 的现场就不许开游戏——这是硬规则，不是建议。
 
 ## 11. 怎么改 / 下次 CK3 更新时
 
@@ -361,19 +367,37 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
      补 `PATCHES` 里的新补丁页；跑一次生成，`assertCoverage` 会指出 Wiki 新增的 modding 页。
   2. 复核 `references/verified-notes.md`：逐条回新版本 `.info`，**失效的删掉**，行号全部更新；
      新机制页（如 1.21 的 trade / districts / roads）按同一格式加节。
-  3. 改 `SKILL.md` 的 Environment 与「1.2x 变化」段；`metadata.version` 加一。
-  4. 重跑 `cli.mjs check --all`（四个 mod 的 vanilla token 是否还在）；必要时跑无头冒烟。
-  5. `工具-同步技能.mjs` 同步 + `--check`；robocopy + 关开 bundle；更新 README 版本与 §13。
+  3. 复核 `references/ingame-acceptance.md`：启动参数表（`_commandline_options.info`）、四 mod 矩阵的
+     入口与期望、证据命令；`[ingame]` 一节同步更新。
+  4. 改 `SKILL.md` 的 Environment 与「1.2x 变化」段；`metadata.version` 加一。
+  5. 重跑 `cli.mjs check --all`（四个 mod 的 vanilla token 是否还在）；必要时跑无头冒烟与真机验收。
+  6. `工具-同步技能.mjs` 同步 + `--check`；robocopy + 关开 bundle；更新 README 版本与 §13。
 - 新增 mod：在 `ck3-modding-tools/configs.mjs` 加一项即可，**不要**在插件里另建列表。
 
 ## 12. 注意事项
 
 1. 本目录是**活体安装目标**（见 `DO-NOT-DELETE.txt`）：删除或移动它会让预设与 8 个工具一起消失。
 2. 改代码必须重启 DSH；只改配置值重载一次即可。
-3. `dlc_load.json` 归启动器所有：不要手写，用 `ck3mod_headless`。
+3. `dlc_load.json` 归启动器所有：不要手写，用 `ck3mod_headless`（无头）或 `工具-真机现场.mjs --begin`（真机）。
 4. 本机副本与工坊订阅版不要同时启用（会重复定义）；测完 `ck3mod_deploy action=clean` 清场。
+5. **开游戏前先 `--begin`，收场用杀进程 + `--end`**；游戏内「退出游戏」会覆盖 `autosave_exit` / `last_save`。
 
 ## 13. 更新记录
+
+### 0.3.1（2026-11-18）— 真机验收步骤重写 + 现场保护
+
+- **触发**：1.21 真机尝试暴露六个缺口——`-develop` 根本不存在、GUI 会话覆盖了用户 `autosave*.ck3` /
+  `last_save.ck3` / `continue_game.json`、验收项散在四个 mod 仓库且停在 1.20、没有证据规范、没有说明谁点。
+- **新增 `工具-真机现场.mjs`**：`--begin` 快照（播放集/设置/规则预设/`last_save`/`continue_game`/全部存档）
+  并可改写播放集；`--end` 按字节还原 + 隔离会话期新存档 + 核对 SHA256；`--check` 中途体检；`--clean` 清场。
+  8 个单测（临时目录，不碰真实用户目录）。
+- **新增 `references/ingame-acceptance.md`**：准备五步 / 两条启动路线 / 四 mod 验收矩阵（curse 7 项、
+  de-jure 6 项、free 8 项、auto 5 项）/ 证据规范 / 收尾六步 / 判定边界。
+- **SKILL.md 0.4.0**：把「手动调试闭环」重写为「真机验收」；路由表加一行、验证层改写 In-game 行；
+  硬规则 2 改写（播放集与存档都归用户）、新增 13（杀进程 + `-develop` 不存在）与 14（默认不代点）。
+- **verified-notes 新增 `[ingame]`**（12 节）：`-develop` 不存在、热载真路径、文档化开局参数、
+  存档会被覆盖的清单与 `pdx_settings` 实际值、右键菜单 1.21 观察、规则面板过滤器、校验码用途。
+- **未改 `lib/`**，关开 bundle 即可；四个 mod 仓库本轮不动。
 
 ### 0.3.0（2026-11-18）— 迁移到 CK3 1.21.0 "Florin"
 

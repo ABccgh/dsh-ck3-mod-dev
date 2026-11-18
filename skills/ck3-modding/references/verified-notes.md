@@ -4,7 +4,7 @@
 > 游戏版本：**1.21.0 "Florin"**（2026-11-17 发布，本机 2026-11-18 更新）；核对日期：2026-11-18。
 > 用法：只在要动某个域时读对应一节（`[slug]`），不要整篇读。
 > 维护：写进来的必须能指认（`.info` 行号 / vanilla 实例）；大版本更新后逐条复核，**失效的删掉**，不要留在里面。
-> 收录：`[interaction]` `[cb]` `[government]` `[resources]` `[council]` `[story]` `[struggle]` `[district]` `[trade]` `[road]` `[laws]`
+> 收录：`[interaction]` `[cb]` `[government]` `[resources]` `[council]` `[story]` `[struggle]` `[district]` `[trade]` `[road]` `[laws]` `[ingame]`
 
 ---
 
@@ -263,3 +263,29 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
 - **坑**：① 默认法初始化时 `can_pass` 被完全忽略、`on_pass` 不执行 → 靠 `on_pass` 清 modifier 的写法开局不会跑；
   ② 继承来的 law 完全不校验条件；③ `.info` 把 `allow_same_successor` 缩进到 `ai_approval` 下（实际在 `succession` 块里），
   `manual_law_change` / `voting_session` 标 bool 却写成 `{ … }` —— 以 vanilla 实例为准（L359-380、L407-416）。
+
+## [ingame] 真机验收（启动参数 / 存档 / 1.21 UI）
+
+`game/_commandline_options.info`（170 行）是启动参数的唯一文档；UI 事实来自 2026-11-18 的 1.21 实机观察。
+
+- **`-develop` 不存在**：`_commandline_options.info` 全文无此项，`ck3.exe` 字节扫描里 `-develop` 0 命中。
+  热载只有两条路：`-debug_mode` 下控制台 `reload`（loc `core_l_english.yml:39`），或引擎串里提到的
+  `-filewatcher`（未文档化、未实测）。
+- **文档化的开局参数**（L9-22）：`-skip` 跳过启动画面、`-play=<title_key>` 指定统治者、`-bookmark=<bm>`、
+  `-loadsave=<name>`、`-continuelastsave`；配 `-debug_mode`（L47）+ `-suppress_error_log`（L59）就是验收启动线。
+  本机示例：1066 威尼斯 `Internal Key: k_venice`（debug.log 实证）。
+- **会写用户数据的会话**：`pdx_settings.txt` 里 `autosave="YEARLY"`（L16-19）、`debug_saves=3`（L20-23）、
+  `save_on_exit enabled=yes`（L64-67）、`cloud_save enabled=no`（L72-75）。一次 GUI 会话实测改了
+  `autosave*.ck3`、`last_save.ck3`、`continue_game.json`（14:44:12 三者同秒）——必须先快照。
+- **退出菜单是陷阱**：游戏内「退出游戏」会写 `autosave_exit.ck3`（`00_defines.txt:1448` 的 `EXIT_SAVE_NAME`）
+  与 `last_save.ck3`；收场必须杀进程。
+- **版本/校验码在 UI 里**：主菜单右下与暂停菜单左下显示 `Florin（1.21.0），校验码: <hex>（有修改）`；
+  装载 mod 后校验码变化，可用来确认挂载（`-skip_checksum` 会跳过计算，验收别加）。
+- **右键互动菜单（1.21 实测）**：右键角色 → 分类菜单（外交 / 私人 / 敌对 / …）；`common_interaction = no` 的
+  curse 四项**直接展开在「敌对」下**（1.20 记录是收进「更多…」），同分类另有「其他 N 项……」折叠 →
+  入口判定按实际位置记录，不按旧文档。
+- **互动选项窗**：勾选式复选框 + 底部确认；单项悬停给效果 tooltip（实测：肺炎 = 健康 −1、生育 −20%、恐惧 −10）。
+- **游戏规则面板**：主菜单右下「游戏规则」→ 右侧「游戏规则过滤器」；mod 规则按 `categories` 归类
+  （auto 的 `ai` → 过滤器选 AI 就能翻到），规则名/描述/取值全部走 loc。
+- **debug_mode 地图 hover**：左上显示 `ID / 名称 / 最低人口 / X,Y`（实测 `ID: 12763 sea_indian_ocean`），
+  报 bug 时用它定位省份。

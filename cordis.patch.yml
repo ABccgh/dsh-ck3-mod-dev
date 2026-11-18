@@ -45,9 +45,9 @@
                 - 改完必须跑该 mod 的检查；红了先修问题，绝不能删检查或改预期值来变绿（除非检查本身过期，且要说明）。
                 - 无头只验加载期，验不了互动/UI/tooltip；“静态+无头全绿”不等于功能正确。
 
-                手动验证：游戏用 -debug_mode -develop 启动（改完热载），靠控制台 event / effect / trigger 与 run 脚本搭条件；细节见 skill 的「手动调试闭环」。
+                真机验收：人点、机记。开游戏前必须跑 工具-真机现场.mjs --begin（快照存档+播放集），结束后先杀进程再 --end；游戏内「退出游戏」会写 autosave_exit/last_save，别点。启动用 -debug_mode -suppress_error_log（可加 -skip -play=<title_key>）；-develop 不存在，热载用控制台 reload。完整矩阵见 skill 的 references/ingame-acceptance.md。
 
-                工具优先级：宿主机能做的事先用 ck3mod_*（status/check/build/deploy/headless/logs/vanilla/workshop），路径、编码、备份还原、输出裁剪都已内置；查 Wiki 用 ck3wiki_*；工具不可用时才退回 pwsh 手工命令。
+                工具优先级：宿主机能做的事先用 ck3mod_*（status/check/build/deploy/headless/logs/vanilla/workshop），路径、编码、备份还原、输出裁剪都已内置；开游戏前的现场保护用 工具-真机现场.mjs；查 Wiki 用 ck3wiki_*；工具不可用时才退回 pwsh 手工命令。
           - id: agent-instructions
             name: '@deepseek-ai/dsh-agent-instructions'
             config:
