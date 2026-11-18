@@ -73,10 +73,15 @@ Wiki 没有 CB 专页，只有玩家向的 `Casus belli`。规格在 `common/cas
   三个入口在 `common/scripted_effects/00_war_effects.txt`：
   `on_victory_aggressive_war_effect`(L3170) / `on_white_peace_effect`(L3178) / `on_defeat_aggressive_war_effect`(L3243)；
   底座是 `general_on_war_end_effect`(L3143，POW 消息 + EP3 佣兵结算)、`on_victory_effect`(L3150)、`on_defeat_effect`(L3222)。
-  相对 1.20 内联版**多出来**的东西：`add_influence_attacker_victory/defeat_effect`（只对
-  `government_has_flag = government_has_influence` 的行政政体生效，`07_dlc_ep3_scripted_effects.txt:4221-4237`）、
-  防御方 `ep3_war_loss_adventurer_tt_effect`（同文件 L10746，自包含，只用 `target_titles` + `scope:war_loser`）、
-  白和的双方压力结算；另有 `scope:special_truce` / `scope:no_penalty_for_defeat` 两个闸门
+  相对 1.20 内联版**多出来**的东西（决定性证据在 wrapper 的底座里）：
+  - `add_influence_attacker_victory/defeat_effect`：`on_victory_effect`（L3150）的 **L3155** 就是
+    `add_influence_attacker_victory_effect = yes`（L3154 是 `# Influence`）；defeat 侧在 `on_defeat_effect`（L3222）
+    的 **L3228** 是 `add_influence_attacker_defeat_effect = yes`。这两个调用只对
+    `government_has_flag = government_has_influence` 的行政政体生效（实现见 `07_dlc_ep3_scripted_effects.txt:4221-4237`）——
+    1.20 的内联写法直接调叶子效果就绕过了它们，而日志与静态校验都不会报。
+  - 防御方 `ep3_war_loss_adventurer_tt_effect`（同文件 L10746，自包含，只用 `target_titles` + `scope:war_loser`）。
+  - 白和的双方压力结算。
+  另有 `scope:special_truce` / `scope:no_penalty_for_defeat` 两个闸门
   （只由 religious_war / tributarize / ep3_wars / mpo_wars / tgp_china_wars 设置，普通 mod CB 恒放行）。
   → **用 wrapper 就必须删掉被它覆盖的内联调用**，否则 POW/停战/石碑/声望各来两遍（数值翻倍，真机上很隐蔽）。
 - 原版 `individual_duchy_de_jure_cb`（`00_dejure_war.txt:546`）现在三个块各只有一行 wrapper
