@@ -10,7 +10,7 @@
  *
  * 用法：
  *   $node = "C:\Users\11210\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe"
- *   & $node .\工具-真机现场.mjs --begin --mods cn_curse,cn_dejure_conquest,free_resources,auto_spread
+ *   & $node .\工具-真机现场.mjs --begin --mods cn_dejure_conquest,free_resources,auto_spread,cn_scheme_mastery
  *   & $node .\工具-真机现场.mjs --check      # 会话中途体检：哪些文件被改、新增了哪些存档
  *   & $node .\工具-真机现场.mjs --end        # 先杀进程再跑；按字节还原 + 隔离新存档 + 核对哈希
  *   & $node .\工具-真机现场.mjs --clean      # 删除已结束会话的快照（默认保留供审计）
