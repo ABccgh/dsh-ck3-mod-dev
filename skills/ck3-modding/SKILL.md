@@ -9,7 +9,7 @@ description: |
   the four published mods, the shared toolchain, or the wiki atlas.
 metadata:
   author: "local workspace"
-  version: "0.8.0"
+  version: "0.9.0"
 ---
 
 # CK3 Modding — Workspace Playbook
@@ -18,8 +18,8 @@ metadata:
 
 Load this skill when the task concerns:
 
-- any of the four published mods: `ck3-auto-spread`, `ck3-curse`,
-  `ck3-de-jure-conquest`, `ck3-free-resources`;
+- any of the four in-service mods（在营 4 个）: `ck3-auto-spread`, `ck3-de-jure-conquest`,
+  `ck3-free-resources`, `ck3-scheme-mastery`;
 - the shared checker in `D:\DSH workspace\ck3-modding-tools`;
 - **查 CK3 Wiki**：某个 trigger/effect/字段现在到底怎么写、1.21 改了什么；
 - localization, script validation, headless checks, deployment, or Workshop uploads;
@@ -57,15 +57,18 @@ Never infer a path or a command from memory; read the mod README first.
   **版本串没变**：`titus_branch.txt` 仍 `release/1.21.0`、`ck3.exe` 仍嵌 `1.21.0`/`Florin`、
   `launcher-settings.json` 停在前一天（启动器下次启动才回写）→ **判「吃没吃热修」看 buildid + 文件 mtime**，
   `ck3mod_status` 的「游戏构建」行已报；热修后第一件事仍是 `check --all`。详见 `[hotfix]`。
-- 四个 mod 的当前发布快照：`ck3-auto-spread` **2.1** · `ck3-curse` **1.0** ·
-  `ck3-de-jure-conquest` **2.3** · `ck3-free-resources` **4.1**。
-  **free / auto / de-jure 都已按 1.21 发布**（free 2026-11-18 16:23；auto 同日 20:21；de-jure 同日 22:41。
-  仓库快照 `supported_version="1.21.*"`、工坊侧被启动器回写为 `1.21.0`；free 工坊 `file_size` 96,074 B，
-  auto 内层 75,393 B、精确 `file_size` 记 **SKIP**——shell 拿不到 Steam API key；de-jure 的页面信号本轮断网 SKIP，
-  只核到 descriptor 回写 + 双层字节形状 257/163 B 未变）。
-  **仍声明 `1.20.*` 的只有 curse**，1.21 下静态/loc + 无头都 PASS，
-  但**没重发工坊就别说"已支持 1.21"**。
-- **free / auto / dejure 的本机副本都已删**（改用工坊订阅，避免重复定义）；要本地测先跑各自 `工具-部署.mjs` 重建。
+- 在营 4 个 mod 的当前发布快照（**四个都已按 1.21 发布**）：`ck3-auto-spread` **2.1** ·
+  `ck3-de-jure-conquest` **2.3** · `ck3-free-resources` **4.1** · `ck3-scheme-mastery` **1.0**。
+  free 2026-11-18 16:23、auto 同日 20:21、de-jure 同日 22:41、mastery 2026-11-19（工坊 **3842327113**、
+  tag `Gameplay`）。仓库快照 `supported_version="1.21.*"`、工坊侧被启动器回写为 `1.21.0`；free 工坊
+  `file_size` 96,074 B，auto 内层 75,393 B、精确 `file_size` 记 **SKIP**——shell 拿不到 Steam API key；
+  de-jure 的页面信号某轮断网 SKIP，只核到 descriptor 回写 + 双层字节形状 257/163 B 未变。
+  mastery **首次**上传后两份 descriptor 是「回写 `1.21.0` **+ 新增一行 `remote_file_id`**」：235 / 142 B、
+  末字节 `"`（回填前 207 / 114 B）。见 `[release]`。
+- **降祸 mod（curse）已于 2026-11-19 彻底删除**：工坊下架、仓库整目录移除、`ck3-modding-tools/configs.mjs`
+  条目摘除。历史只留在 `.admin` 与 `工作区索引.md`；**别再按它写命令、验收项或检查项**。
+- **四个 mod 的本机副本都已删**（改用工坊订阅，避免重复定义）；要本地测先跑各自 `工具-部署.mjs` 重建
+  （mastery / de-jure / auto 支持 `--clean`，free 只有 `--check`）。
 - **新版本上手第一件事**：跑该 mod 的 `工具-静态校验.mjs`。H 段（引擎 token）与 H2 段（原版角色货币覆盖）
   会回答「只发兼容版，还是要功能更新」——free 的 H2 就是 2026-11-18 为此加的。
   **判完若只是兼容发布，再用 L 段（`v_prev` ↔ `v_new` 差异断言）把「兼容发布 = 内容零改动」变成机器事实**，
@@ -100,7 +103,7 @@ Never infer a path or a command from memory; read the mod README first.
   `scripted_tests [pattern]` 运行。但**自动入口仍未打通**（见硬规则 9）。
 - **1.21 hotfix（2026-11-18，Wiki 新页 `Patch 1.21.X`）**：纯平衡（867/1066 起始军队、Norse/Varangian
   入侵规模、MAA 招募与维护折扣、Yangzhou 改产丝绸）+ 崩溃修复 + 贸易/选举若干 bugfix，**没有 Modding 段**；
-  Wiki 页**没有版本号**，别编 `1.21.1`。本机 11-19 才收到；四个 mod `check --all` 仍 4/4 → 与我们的脚本面不相交。见 `[hotfix]`。
+  Wiki 页**没有版本号**，别编 `1.21.1`。本机 11-19 才收到；在营 4 个 `check --all` 仍 4/4 → 与我们的脚本面不相交。见 `[hotfix]`。
 
 ## 查资料：三层真相
 
@@ -110,7 +113,7 @@ Never infer a path or a command from memory; read the mod README first.
 |---|---|---|---|
 | 1 | CK3 Wiki（`ck3wiki_*` 工具） | 语义、示例、工作流、补丁说明 | 页面 >1 年没动；`Effects list` / `Triggers list` 这类抄录页 |
 | 2 | 本机原版 1.21.0：`.info` 文档与 `common/`（`ck3mod_vanilla`） | 键名、类型、参数、这个键现在还在不在 | 只有 DLC 新内容才可能缺 |
-| 3 | 四个 mod 自己的 `数据-*.mjs` + `工具-静态校验.mjs` + loc 检查 | 我们自己的不变量与契约 | 只覆盖我们写过的规则 |
+| 3 | 在营 4 个 mod 自己的 `数据-*.mjs` + `工具-静态校验.mjs` + loc 检查 | 我们自己的不变量与契约 | 只覆盖我们写过的规则 |
 
 **1.21 期间的额外纪律**：Wiki 的 modding 层整体没跟上——`Category:1.21` 76 页里只有 `Console commands`
 一个 Modding 页。所以 **1.21 的结论默认先走层 2（`.info` + 现行脚本），Wiki 只取语义与示例**；
@@ -163,7 +166,7 @@ patch note 也不可信到名字级别（见 `verified-notes.md` 顶部「改名
 | 故事循环 | `Story cycles modding`；`Stories` | `common/story_cycles/` + `create_story` | `[story]` |
 | 斗争 | `Struggle modding`（2026-09，质量较好） | `common/struggle/struggles/`、`history/struggles/` | `[struggle]` |
 | 局势 / 活动 | `Situation`、`Activity` | `common/situation/`、`common/activities/` | — |
-| 计谋 | `Schemes` | `common/schemes/` | — |
+| 计谋 | `Schemes`（玩家向机制页，**无 modding 页**） | `common/schemes/scheme_types/` + `_schemes.info`；成功率键在 `modifier_definition_formats/00_definitions.txt` | `[scheme]` |
 | AI 权重 | `AI modding`、`Weight modifier` | `common/scripted_*`、`ai_*.info` | — |
 | 变量 / 脚本值 | `Variables`、`Script values` | `.info` | — |
 | 资源 / 成本档位 | `Resources modding`（**标题误导**：实为虔诚档位） | `common/script_values/00_basic_values.txt` | `[resources]` |
@@ -200,7 +203,7 @@ $py = "C:\Users\11210\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\
 Per-mod wrapper (same semantics):
 
 ```powershell
-cd "D:\DSH workspace\ck3-curse"
+cd "D:\DSH workspace\ck3-scheme-mastery"
 & $node .\工具-检查.mjs check
 & $node .\工具-检查.mjs loc
 & $node .\工具-检查.mjs reverse
@@ -213,8 +216,9 @@ cd "D:\DSH workspace\ck3-curse"
 以及任何**未知参数都会报错退出 2**——2026-11-18 之前它们被静默忽略，`check --root <目录>`
 会照常跑发布快照并 PASS，等于「以为验了反例、其实没验」。
 
-Baseline at 2026-11-18 (1.21.0): curse loc 122 / de-jure 28（v2.3，移除战后报告后 36→28）/ free 84 / auto 94, all 0 errors,
-`check --all` 4/4 PASS、`reverse --all` 4/4 PASS。`auto` 与 `dejure` 的静态校验都支持 `--root`；
+Baseline at 2026-11-19 (1.21.0 + hotfix): mastery loc 34 / de-jure 28（v2.3，移除战后报告后 36→28）/ free 84 / auto 94, all 0 errors,
+`check --all` 4/4 PASS、`reverse --all` 4/4 PASS（mastery 13 例、auto 7 例，其余按各自脚本）。
+`auto` / `dejure` / `mastery` 的静态校验都支持 `--root`；
 `check` runs against the release snapshot and passes. Passing `--root` is preferred over deploying a local copy.
 Spelling: `ck3spell` is blocked by hosts; `spellcheck.py` (pyspellchecker + game English corpus)
 found 0 real typos in the four mods; only the `behaviour`/`behavior` style variant.
@@ -226,7 +230,7 @@ checker and each mod's own `工具-*.mjs`; prefer them over hand-written PowerSh
 
 | Tool | Use it for | Writes |
 |---|---|---|
-| `ck3mod_status` | env + four-mod overview before starting: snapshot / local copy / capabilities / git / game version + **Steam buildid 与安装时间**（判热修用） | — |
+| `ck3mod_status` | env + 在营 4 个 overview before starting: snapshot / local copy / capabilities / git / game version + **Steam buildid 与安装时间**（判热修用） | — |
 | `ck3mod_check` | `check` / `loc` / `reverse` / `selftest` (structured PASS/FAIL + loc counts) | — |
 | `ck3mod_build` | `generate` / `normalize` (write), or `*-check` to compare only | release snapshot |
 | `ck3mod_deploy` | `deploy` / `check` / `clean` through the mod's own 部署 script | `Documents\...\mod` |
@@ -257,7 +261,7 @@ Common order: **edit source → generate (if table-driven) → normalize → che
 
 | Mod | Source of truth | Generate/normalize | Check | Notes |
 |---|---|---|---|---|
-| `ck3-curse` | `数据-mod表.mjs` + hand-written script/loc | `工具-生成.mjs`, `工具-规范化.mjs`, `工具-缩略图.py` | `工具-检查.mjs` (`A–O` via `工具-静态校验.mjs`; reverse via `工具-反向验证.mjs`) | 4 interactions, 24 traits, no Vanilla overrides |
+| `ck3-scheme-mastery` | `数据-设计.mjs`（三档数值 / 5 个类别 / loc 键）+ hand-written modifiers / decisions / events / loc | `工具-生成.mjs`（**只生成两份 descriptor**）、`工具-规范化.mjs`、`工具-缩略图.py` | `工具-检查.mjs`（静态 **A–N**，核心 **L0 类别覆盖率**：扫安装目录 `scheme_types` 反查类别；反向 **13**；`--root` 可验任意目录） | 决议「豢养刺客」+ 3 档角色修正 + 1 个面板事件；成功率上限 95%（contract 100%）；「所有计谋」靠 L0 机器证明，见 `[scheme]` |
 | `ck3-de-jure-conquest` | `数据-mod表.mjs` + CB script/loc | `工具-生成.mjs`, `工具-规范化.mjs` | `工具-检查.mjs`（静态 **A–O**：L 结构含 1.21 wrapper + 内联残留；M 决策锚点 + wrapper 契约 + 战后报告已移除；N v2.2↔v2.3 差异；O configs↔快照；`--root` v1.0 must report **20**） | CB is hand-written; v2.3 = 1.21 兼容 + 结算对齐 + 移除战后报告；v2.0 settlement checklist 在 `发布说明.md` |
 | `ck3-free-resources` | `数据-资源表.mjs` | `工具-生成.mjs` (golden check), `工具-部署.mjs` | `工具-检查.mjs` | generated events/loc; never hand-edit products |
 | `ck3-auto-spread` | `数据-元数据.mjs`（META / 快照路径）+ hand-written script/loc | `工具-生成.mjs`（**只生成两份 descriptor**，`--check` golden） | `工具-检查.mjs`（静态 A–M，含 L 段差异；loc 94；reverse 7） | settings via global variables + game rules；v2.1 起有 `工具-部署.mjs`（`--check` / `--clean`），**没有内容生成器** |
@@ -272,7 +276,7 @@ documented expected count and say so.
 
 - **整文件覆盖**：mod 里放 `同路径同名` 文件 → 原版整个文件被替换。危险：原版后续补的内容全丢。
 - **单对象覆盖**：同一 ID 重新定义（defines / on_actions / 本地化 / UI types 各有各的规则），
-  只替换那个对象。我们的四个 mod 一律走这条，能加就不改。
+  只替换那个对象。在营 4 个一律走这条，能加就不改。
 - **`replace_path`**：让原版某个目录完全不加载，只给总转换用——我们不用，别在四个 mod 里加。
 - **加载顺序**：多人游戏要求所有人同一套 mod、同一顺序；发布说明里要写清依赖。
 - **探测别的 mod**：共享全局变量 + `scripted_trigger`（`Mod compatibility` 的 pattern），
@@ -297,10 +301,16 @@ documented expected count and say so.
 3. **杀进程收场**：`Stop-Process -Name ck3 -Force` → `--end`。**绝不点游戏内「退出游戏」**，
    它会写 `autosave_exit.ck3` / `last_save.ck3`，冲掉用户上一次的退出存档。
 
+**任何数值承诺，先找到它天花板的来源**（mastery：成功率显示上限 = **潜力**，由同谋/技能决定，
+define 的 95 只是硬顶、contract 是 100——别把「没到 100%」当成 mod 没生效；见 `[scheme]`）。
+
 **代点两步（仅用户当次明确同意时）**：① 探针 mod **两个开局钩子都要挂**——`on_game_start` +
 `on_game_start_after_lobby`（单人新开局常走后者；只挂前者时面板不出现、日志却无报错），
 用全局变量去重；② **凡「必须连续跑时间」的项一开始就划给人**（原版事件会自动暂停游戏），
-点击纪律（全尺寸截图量坐标、行高 36 px、间隔 ≥1.2–1.5 s、选角色先 hover）见 runbook §9.6。
+点击纪律（全尺寸截图量坐标、行高 36 px、间隔 ≥1.2–1.5 s、选角色先 hover）见 runbook §9.6；
+③ **事件面板选项每点一次都可能整体位移**——每次点击前重新 hover、读 tooltip 核对**选项名**，别沿用上一次的像素
+（2026-11-19 实测把「收敛锋芒」当「先这样」点到）；debug 顶栏的调试开关会把文案变成原始 loc 串，取证前先确认文案正常；
+HUD 入口靠 hover 读快捷键（F4 内阁 / F5 贸易 / F6 廷臣 / F7 谋略 / **F9 决议**）。
 
 **启动**：`ck3.exe -debug_mode -suppress_error_log -skip -play=<title_key>`（路线 A，已文档化）或走主菜单
 （路线 B，已验证）。**`-develop` 不存在**：`_commandline_options.info` 无此项，exe 里也搜不到；
@@ -390,7 +400,7 @@ documented expected count and say so.
 21. **知识层只改仓库副本**。skill 的源在 `dsh-ck3-mod-dev\skills\ck3-modding\`，DSH 实际加载的是
     `~\.agents\skills\ck3-modding`（部署副本）；`工具-同步技能.mjs` 方向固定为**仓库 → 部署副本**。
     直接改部署副本会被下一次同步覆盖（2026-11-18 实测）。改完必须同步 + `--check` + `工具-知识层检查.mjs`。
-22. **校验器的结论行不许硬编码样本数**。各 mod 的反向样本数不同（curse 32、auto 7），显示必须从脚本
+22. **校验器的结论行不许硬编码样本数**。各 mod 的反向样本数不同（历史：curse 32；现在 mastery 13、auto 7），显示必须从脚本
     输出解析（`反向验证：N / N 项如期报错`）；期望值只写在 `configs.mjs` 的 `expect` 里，
     断言的是「显示等于实际」，不是断言常量。
 23. **探针两个开局钩子都要挂**。单人新开局常走 `on_game_start_after_lobby`（`game_start.txt:2806`），
@@ -432,8 +442,23 @@ documented expected count and say so.
     可能落后于实际安装；`ck3.exe` 也可能仍嵌旧版本串（2026-11-19 实测：buildid `26622941 → 26757580`、
     81 个文件被替换，而 exe 仍写 `1.21.0`/`Florin`）。判据用 `ck3mod_status` 的「游戏构建」行
     （`appmanifest_1158310.acf` 的 buildid + 安装时间 + exe mtime）。**热修后第一件事仍是 `check --all`**，
-    绿了才能说「与四个 mod 的脚本面不相交」；Wiki 的 `Patch 1.x.X` 页只写「hotfix」、没给版本号时，
+    绿了才能说「与在营 4 个的脚本面不相交」；Wiki 的 `Patch 1.x.X` 页只写「hotfix」、没给版本号时，
     **别编 `1.21.1`**——按「1.21 hotfix + buildid」记。
+31. **需求先分类再出计划**：一句话问自己「用户要的是**新内容**（scheme / 事件 / CB / 决策 / 互动）
+    还是**开关或数值**（修正 / 游戏规则 / 面板）？」主题词（谋杀、计谋、海战…）只影响文案与选材，
+    **不决定交付形态**。分类不清就先问一个问题确认，别先画三份计划——2026-11-19 mastery 需求改了 4 次、
+    前三份计划都是「内容型」，最后要的是「数值开关」。
+32. **「所有 X」先找通用键；没有就按枚举写满，并加一条从安装目录反查枚举集合的断言**。引擎经常没有跨类别键
+    （计谋的成功率/成长/上限/阶段时长/栏位就是 5 类各一套，`00_definitions.txt:2168-2353`）。
+    做法：枚举写进 `数据-*.mjs`，断言每次从安装目录解析实际出现的集合（缺一类就红）——将来原版新增类别
+    会自动报警，而不是靠人记得补（mastery 的 L0 段，当前 5 类）。
+33. **结构性判据一律跑在剥离注释的文本上；反向样本必须证明「真的改到了」**。注释里出现的示例片段不算数：
+    mastery 的 L5 被决策文件注释里的 `is_shown = { is_ai = no }` 满足，「删掉闸门」的坏样本照样 PASS；
+    括号配平还要先剥字符串。反向样本改完必须断言 `next !== src`（`if (next === src) throw`）——
+    样本没生效会被误判成「判据没开火」，白跑一轮。
+34. **探针一次只回答一个问题**。一条 on_action 里塞两件互相覆盖的事（两次 `start_scheme`）时，第一个失败
+    会被第二个掩盖：mastery G7 个人侧 `sway` 没起来，两次都只有 1 张卡，既证不了基线也证不了 +1，只能交回人工。
+    多步实验拆成多次启动，或让每一步都有**独立可观测的产物**。
 
 ## Verification layers
 
@@ -460,7 +485,8 @@ Never claim a layer passed if it was skipped; say **SKIP** and why.
 
 - Wiki 索引（本次勘察生成）：`references/ck3-wiki-atlas.md`
 - 实测要点（按域，带 `.info` 行号）：`references/verified-notes.md`（含 `[hotfix]` 热修与版本口径、
-  `[release]` 发布/工坊核对、`[automation]` 真机自动化、`[verify]` 无头/A5/反向判据）
+  `[scheme]` 计谋类别与成功率天花板、`[release]` 发布/工坊核对、`[automation]` 真机自动化、
+  `[verify]` 无头/A5/反向判据）
 - 真机验收 runbook（含 §9 机器代点与 §9.6 点击纪律）：`references/ingame-acceptance.md`
 - 踩坑总账（2026-11-18 项目收尾）：`D:\DSH workspace\.admin\retro-2026-11-18-ck3mod.md`
 - 踩坑续篇（2026-11-18b auto v2.1）：`D:\DSH workspace\.admin\retro-2026-11-18b-ck3mod-auto-v2.1.md`
@@ -470,6 +496,10 @@ Never claim a layer passed if it was skipped; say **SKIP** and why.
   `[cb]` / `[verify]` / `[release]` / `[ingame]`；人格层同样吃这套事实（`cordis.patch.yml`）
 - 热修复盘（2026-11-19 全站复核）：`D:\DSH workspace\.admin\retro-2026-11-19-ck3mod-hotfix.md`
   —— R1–R3（版本串不是热修信号 / 不编版本号 / 影响面取证），落点见硬规则 30 与 `[hotfix]`
+- 复盘续篇（2026-11-19 谋略 Scheme Mastery v1.0）：`D:\DSH workspace\.admin\retro-2026-11-19-ck3mod-mastery.md`
+  —— M1–M12（需求先分类 / 「所有 X」→ 枚举 + 反查 / 潜力天花板 / `SCHEMES_PER_TYPE` / 注释喂饱判据 /
+  死工坊 ID / 面板行位漂移 / 调试 UI 陷阱 / HUD 快捷盘 / 探针一事一件 / 首次上传形状 / 预检有意差异），
+  落点见硬规则 31–34 与 `[scheme]` / `[release]` / `[verify]` / `[automation]` 及 runbook §4.1、§9.6
 - 文档索引兜底：`D:\DSH workspace\.admin\工具-文档链接检查.mjs`（收尾必跑；`--all` 扫整个 `.admin`）
 - auto 的 L 段与回滚：`D:\DSH workspace\ck3-auto-spread\README.md`、`发布说明.md`
 - 索引生成器：`scripts/wiki-atlas.mjs`（`--check` 验鲜，`--out` 改输出位置；补丁链与页面改名都有

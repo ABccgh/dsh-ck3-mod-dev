@@ -4,7 +4,7 @@
 > 外加 8 个 `ck3mod_*` 工具。工具只做**调用与汇总**——校验规则仍然归四个 mod 自己的
 > `工具-*.mjs` 与 `ck3-modding-tools/cli.mjs`，本插件一份都不复制。
 
-- 包名：`@local/ck3moddev` · 版本 0.6.0 · MIT
+- 包名：`@local/ck3moddev` · 版本 0.7.0 · MIT
 - 作用域：Windows 本机、profile `desktop`、游戏 **CK3 1.21.0 "Florin"**
 - 只做新增：不覆盖、不删除、不改动任何现有插件（`@local/ck3wiki`、`@local/steam`、`@local/prts` 等原样保留）
 - 仓库：<https://github.com/ABccgh/dsh-ck3-mod-dev>（MIT）
@@ -166,8 +166,9 @@ plugin_manager  action: install_bundle  target: %USERPROFILE%\dsh-bundles\ck3mod
 
 ### 5.1 能力探测（不硬编码）
 
-四个 mod 的脚本并不统一：curse 的部署支持 `--check --clean --prune --allow-launcher-rewrite`，
-dejure 少 `--prune`，free 只有 `--check`，auto-spread **v2.1 起**有 `--check` / `--clean`（此前根本没有部署脚本）。
+在营 4 个（dejure / free / auto / mastery）的脚本并不统一：dejure 的部署支持
+`--check --clean --allow-launcher-rewrite`，mastery 支持 `--check --clean`，free 只有 `--check`，
+auto-spread **v2.1 起**有 `--check` / `--clean`（此前根本没有部署脚本）。
 插件在运行时读脚本文本里出现过的 `'--xxx'` 字面量，据此决定允许哪些参数；
 请求了不支持的开关会直接拒绝并列出该 mod 实际支持的项——**不会**把参数硬塞给脚本。
 
@@ -336,8 +337,8 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 - `plugin.test.js`：mock ctx，断言 8 个工具注册、`restrict` 的 deny 列表、apply 不返回值。
 - `tools-a.test.js` / `tools-b.test.js`：各工具的参数拼装与渲染边界。
 - `knowledge-lint.test.js`：复制真实知识层到临时目录后做变异（删硬规则 26、改版本、改锚点、删 `[verify]` 节、
-  空部署副本），断言 `工具-知识层检查.mjs` 能分别报 `SKILL/rules` / `VERSION` / `C1` / `P9` /
-  `NOTES/sections` / `DEPLOY/skill`。
+  空部署副本、改 `SCHEMES_PER_TYPE`、人格层/SKILL 写回退役 mod），断言 `工具-知识层检查.mjs` 能分别报
+  `SKILL/rules` / `VERSION` / `C1` / `P9` / `NOTES/sections` / `DEPLOY/skill` / `M4` / `PERSONA` / `RETIRED`。
 
 测试**不启动真实游戏**、不写真实播放集。
 
@@ -349,7 +350,7 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 - **无头 ≠ 真机**：互动、UI、tooltip、本地化显示仍然只能进游戏点。
 - **全局屏蔽是 best-effort**：Host 插件晚于 2 秒注册的工具不会被隐藏；`restrict` 语义变化时静默降级。
 - **不自动上传工坊**：只做发布前检查；上传仍由启动器手动完成。
-- **不生成缩略图**：`工具-缩略图.py` 仍需手工跑（仅 curse 有）。
+- **不生成缩略图**：`工具-缩略图.py` 仍需手工跑（当前只有 mastery 有）。
 - **强杀 DSH 的极端情况**：`pending.json` 会在下次调用时自愈，但那次 `dlc_load.json` 可能短暂处于测试状态。
 - **`cordis.patch.yml` 含本机绝对路径**：`file:` URL 是预设子插件的唯一稳定引用方式（见 §3.3），
   所以部署 patch 天然是「本机配置」，换机或换目录要照 §3.1 改；`lib/config.js` 的默认值则是机器中立的。
@@ -412,6 +413,33 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 5. **开游戏前先 `--begin`，收场用杀进程 + `--end`**；游戏内「退出游戏」会覆盖 `autosave_exit` / `last_save`。
 
 ## 13. 更新记录
+
+### 0.7.0（2026-11-19）— 复盘 11-19 mastery 落地（M1–M12：规则 31–34 / `[scheme]` / runbook §4.1 换 mastery + §9.6 三条）
+
+- **触发**：用户「更新智能体」——11-19 谋略 Scheme Mastery v1.0 的复盘已写成施工图
+  （`.admin/retro-2026-11-19-ck3mod-mastery.md`，M1–M12），知识层与插件代码留着本轮做。
+- **SKILL.md 0.9.0**：在营 4 个 = auto 2.1 / dejure 2.3 / free 4.1 / **mastery 1.0（工坊 3842327113）**，
+  降祸 mod 彻底删除（只留一句 tombstone，历史归 `.admin`）；**硬规则 31–34**（需求先分类 /
+  「所有 X」→ 按枚举写满 + 从安装目录反查 / 结构性判据先剥注释且反向样本必须证明真的改到 /
+  探针一次只回答一个问题）；路由表「计谋」指向 `[scheme]`；基线改 mastery loc 34、reverse 13；
+  pipeline 表把降祸行换成 mastery 行；References 加 11-19 mastery 复盘。
+- **verified-notes.md**：新增 `## [scheme]`（五类键族行号、`category` 默认 personal 且 `.info` 枚举漏 `trade`、
+  136 类型 / 5 类、显示上限=潜力 54/34/77/95、`SCHEMES_PER_TYPE=1`）；`[release]` 补「首次上传多一行
+  `remote_file_id`（235 / 142 B）」「死 ID 保留不置空」「预检 `1.21.0` vs `1.21.*` 属预期差异」；
+  `[verify]` 补 `stripComments` 与反向样本自证；`[automation]` 补探针一事一件、面板行位漂移、F9 更正。
+- **ingame-acceptance.md**：§4.1 换 mastery 矩阵 G1–G9（含「同谋填满才到 95%」的判读口径）；
+  §4.3 F1 入口更正为 **F9 决议**；§5/§6/§8 去降祸；§9.4 补「HUD 入口可自动」；
+  **§9.6 加三条**（行位漂移 / 调试 UI 陷阱 / F4–F9 快捷盘与决议分组）。
+- **人格层**：在营 4 个 + 判断层四句（需求先分类 / 按枚举写满 / 剥注释 / 探针一事一件）+ 代点段三条；
+  删掉降祸与版本枚举（lint 现在禁 `curse`）。`?v=4 → 5`（改 lib 后免重启重新 import）。
+- **lib**：11 个文件的 tool description 与注释把 `curse / dejure / free / auto` 换成
+  `dejure / free / auto / mastery`，部署能力描述按实测校正。
+- **lint**：规则 30 → **34**、锚点 79 → **102**（M1–M12 共 21 条 + 在营 4 个不变量 2 条）、
+  `[scheme]` 变必需节、人格必备词 +4 / 禁词 + `curse`、References 五份复盘、
+  新增 `RETIRED` 断言（SKILL 不许再出现 `ck3-curse`）。
+- **单测**：96 → **99**（新增 M4 / 人格层退役 mod / SKILL 退役 mod 三条变异）。
+- 验证：`工具-知识层检查.mjs` **118 项全过**；`npm test` **99 pass**；`cli.mjs check --all` **4/4**、
+  `reverse --all` **4/4**；同步 `--check` 一致；文档链接 0 缺失；bundle 关开后 **0.7.0**。
 
 ### 0.6.0（2026-11-19）— 全站 Wiki 复核 + 1.21 hotfix 口径（buildid 判据 + `[hotfix]` 节 + status 报构建）
 

@@ -5,7 +5,7 @@
 > buildid `26757580`）；核对日期：2026-11-19。
 > 用法：只在要动某个域时读对应一节（`[slug]`），不要整篇读。
 > 维护：写进来的必须能指认（`.info` 行号 / vanilla 实例）；大版本更新后逐条复核，**失效的删掉**，不要留在里面。
-> 收录：`[hotfix]` `[interaction]` `[cb]` `[government]` `[resources]` `[council]` `[story]` `[struggle]` `[district]` `[trade]` `[road]` `[laws]` `[ingame]` `[automation]` `[release]` `[verify]`
+> 收录：`[hotfix]` `[interaction]` `[cb]` `[government]` `[resources]` `[council]` `[story]` `[struggle]` `[district]` `[trade]` `[road]` `[laws]` `[scheme]` `[ingame]` `[automation]` `[release]` `[verify]`
 > 分工：本文件只放**实测事实**；怎么点、怎么跑在 `ingame-acceptance.md`；规则与红线在 `SKILL.md` 的 Hard rules。
 
 ---
@@ -49,7 +49,7 @@ buildid + Steam 安装时间 + exe mtime，并在 launcher-settings 落后时提
 `modifiers/*`、`scripted_effects/*`、`situation/*`、`trade/county_potential_trade_goods/*`）、`localization` 27、
 `history` 11（`characters/*` 起始军队 + `provinces/k_huainan.txt` Yangzhou 改产丝绸）、`events` 3、`gui` 3。
 **de-jure 依赖的 `scripted_effects/00_war_effects.txt` 没动**（mtime 仍 11-18），wrapper 契约不变；
-热修后 `cli.mjs check --all` **4/4 PASS**（loc 122 / 28 / 84 / 94、0 error）——这才是「与四个 mod 的脚本面
+热修后 `cli.mjs check --all` **4/4 PASS**（loc 34 / 28 / 84 / 94、0 error）——这才是「与在营 4 个的脚本面
 不相交」的证据。无头冒烟本轮 **SKIP**：只更新知识层与工具层、没部署任何 mod，跑无头会改播放集与存档。
 
 **用法**：以后每次「CK3 更新了」先看 buildid / mtime（`ck3mod_status`），再跑 `check --all`，最后才决定
@@ -321,6 +321,38 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   ② 继承来的 law 完全不校验条件；③ `.info` 把 `allow_same_successor` 缩进到 `ai_approval` 下（实际在 `succession` 块里），
   `manual_law_change` / `voting_session` 标 bool 却写成 `{ … }` —— 以 vanilla 实例为准（L359-380、L407-416）。
 
+## [scheme] 计谋（scheme）
+
+规格在 `common/schemes/scheme_types/_schemes.info`（211 行）；Wiki 只有玩家向的 `Schemes`，**没有 modding 页**。
+成功率/成长这族修正键**不在 `.info` 里**，在 `modifier_definition_formats/00_definitions.txt`。
+
+- **类别是枚举，没有「全部计谋」键**：`category` = `personal` / `contract` / `hostile` / `political` / `trade`，
+  **不写默认 `personal`**（`_schemes.info:15-17`）。注意 L17 的枚举只列了前四个、**漏了 `trade`**——
+  实测 `gdp_trade_schemes.txt` 有三个 `category = trade`。→ 类别集合一律从 `scheme_types/*.txt` 扫，
+  别照 `.info` 抄。
+- **五类各一套键**（`00_definitions.txt`）：`owned_<cat>_scheme_success_chance_add` L2189/2195/2201/2207/2213、
+  `owned_<cat>_scheme_success_chance_growth_add` L2256/2263/2270/2277/2283、
+  `owned_<cat>_scheme_success_chance_max_add` L2329/2335/2341/2347/2353、
+  `<cat>_scheme_phase_duration_add` L1971/1998/2007/2016/2025、`max_<cat>_schemes_add` L2168/2172/2176/2180/2184；
+  跨类别的只有 `owned_scheme_secrecy_add`（L2396）。→ 要「支持所有计谋」就按类别写满 + 反查断言（硬规则 32）。
+- **安装目录实况**（1.21.0 + 2026-11-19 hotfix，扫 65 个 `scheme_types/*.txt`）：**136 个类型 / 5 类** ——
+  contract 53 · hostile 18 · personal 34（**其中 8 个省略 `category`**，按默认归 personal）· political 28 · trade 3。
+- **显示的成功率上限是「潜力」，不是 define 的 95**：`_schemes.info:69` 是
+  `base_maximum_success = 100 # Default 100`，实际的「最大 X%」由同谋槽位/技能决定；define 只是绝对硬顶：
+  `00_defines.txt:767-771` 的 `HOSTILE/PERSONAL/POLITICAL/TRADE_SCHEME_MAX_SUCCESS_CHANCE = 95`、
+  **`CONTRACT = 100`**。实测同一场谋杀（mastery v1.0）：同谋 0/5 挂「一手遮天」（起步 +300%）→
+  **54.0%（最大 54%）**；点「收敛锋芒」撤档 → **34.0%（最大 34%）**（差 20 = 该档 `max_add`）；
+  同谋 4/5 挂档 → **95.0%（最大 95%）**；同谋 4/5 不挂档 → 77%。
+  → 判读必须带「当时同谋填了几个」，否则「没到 95」会被误当成 mod 没生效。
+- **`SCHEMES_PER_TYPE = 1`**（`00_defines.txt:760`）：同一种计谋同时只能有一个 → 验「并发栏位 +1」必须用
+  **不同类型**的样本（谋杀 + 绑架，同属 hostile）：不挂档 1 张卡、挂档 2 张卡（mastery G7）。
+- 其余可用字段（同一份 `.info`）：`target_type`（character/title/culture/faith/nothing，**必填**，L19）、
+  `illustration`（必填，L23）、`base_success_chance` L67、`minimum_success` L70、`maximum_secrecy` L71、
+  `success_chance_growth_per_skill_point` L134、`is_basic` L37；脚本里读成功率/保密用 `scheme_success_chance` /
+  `scheme_secrecy`（L9）。
+- 工作范例：`ck3-scheme-mastery`（3 档角色修正 × 5 类 × 4 键 + 保密 + 顶档栏位；静态校验 **L0** 就是类别覆盖率
+  反查，`--root` 可验任意目录；反向 13 例）。
+
 ## [ingame] 真机验收（启动参数 / 存档 / 1.21 UI）
 
 `game/_commandline_options.info`（170 行）是启动参数的唯一文档；UI 事实来自 2026-11-18 的 1.21 实机观察。
@@ -338,9 +370,10 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   与 `last_save.ck3`；收场必须杀进程。
 - **版本/校验码在 UI 里**：主菜单右下与暂停菜单左下显示 `Florin（1.21.0），校验码: <hex>（有修改）`；
   装载 mod 后校验码变化，可用来确认挂载（`-skip_checksum` 会跳过计算，验收别加）。
-- **右键互动菜单（1.21 实测）**：右键角色 → 分类菜单（外交 / 私人 / 敌对 / …）；`common_interaction = no` 的
-  curse 四项**直接展开在「敌对」下**（1.20 记录是收进「更多…」），同分类另有「其他 N 项……」折叠 →
-  入口判定按实际位置记录，不按旧文档。
+- **右键互动菜单（1.21 实测，证据来自已下架的降祸 mod）**：右键角色 → 分类菜单（外交 / 私人 / 敌对 / …）；
+  `common_interaction = no` 的互动**直接展开在「敌对」下**（1.20 记录是收进「更多…」），同分类另有
+  「其他 N 项……」折叠 → 入口判定按实际位置记录，不按旧文档。该 mod 已于 2026-11-19 删除，这条只当
+  1.21 菜单结构的历史证据；在营 4 个里没有「敌对」分类互动，判入口时按当次菜单实测。
 - **互动选项窗**：勾选式复选框 + 底部确认；单项悬停给效果 tooltip（实测：肺炎 = 健康 −1、生育 −20%、恐惧 −10）。
 - **游戏规则面板**：主菜单右下「游戏规则」→ 右侧「游戏规则过滤器」；mod 规则按 `categories` 归类
   （auto 的 `ai` → 过滤器选 AI 就能翻到），规则名/描述/取值全部走 loc。
@@ -405,8 +438,16 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
 - **加第二个 mod 要重建现场**：`工具-真机现场.mjs --begin --mods free_resources,zz_probe`
   （`dlc_load.json` 只经工具改）；`ck3mod_headless` 则要求本机副本存在 —— 清场后先 `ck3mod_deploy`。
 - **能自动 / 不能自动**（free 实测）：可 —— 事件面板四入口、一键全给/全扣、单项连点、右键菜单项、
-  目标流程面板、政体门控列表、`error.log` 计数；不可 —— 决议列表这类「要靠图标定位」的入口（本次 F1 SKIP）、
-  任何需要键盘的操作、tooltip 的完整文案（只能看截图里的可见部分）。
+  目标流程面板、政体门控列表、`error.log` 计数；不可 —— 任何需要键盘的操作、tooltip 的完整文案
+  （只能看截图里的可见部分）。**决议列表能自动了（2026-11-19 更正）**：右侧 HUD 图标列逐个 hover 读 tooltip
+  可定位「**F9 决议**」，再滚到「决议（N）」组（mastery G2 实测）；同列还有 F4 内阁 / F5 贸易 / F6 廷臣 / F7 谋略。
+- **探针一次只回答一个问题**：mastery G7 个人侧把 `sway` + `befriend` 两次 `start_scheme` 塞进同一条 on_action，
+  两次都只有 1 张卡（`sway` 没起来），既证不了基线也证不了 +1 —— 多步实验拆成多次启动，或让每一步都有
+  独立可观测的产物。一条 effect 链里连着两次 `start_scheme` 时，**第一个失败会被第二个掩盖**。
+- **事件面板行位会漂 / debug 顶栏有雷**：选项数变化、tooltip 出现都会整体重排，2026-11-19 实测因此把
+  「收敛锋芒」当「先这样」点到、把刚生效的档位撤了；每次点击前重新 hover 读 tooltip 核对**选项名**，
+  点击后截图核对状态。debug 面板顶栏的「切换数据系统」「事件 scope 查看器」会把文案变成
+  `[success_chance|E]` 这类原始串——取证前先确认文案正常，别把调试态当成品证据。细则见 runbook §9.6。
 - **证据入库**：1920×1080 PNG 每张 3–4 MB，统一转 JPEG q82（43.8 MB → 3.1 MB）再进 `验证记录\`，
   每张在 README 里对应「项号 + 结论」。
 
@@ -464,6 +505,18 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   被回写成 `1.21.0`（mtime 变了）；② `steam_workshop_search` 显示「更新于 <日期> / 0.1 MiB / 订阅数」；
   ③ 条目 ID 未变。**精确 `file_size` 拿不到就记 SKIP 并写原因**，别猜。
   auto v2.1 实测：条目 3779621287、0.1 MiB、订阅 1770、内层 75,393 B（精确值 SKIP）。
+- **首次上传的 descriptor 变化是「回写版本 + 新增一行 `remote_file_id`」**：mastery v1.0 首次上传后两份本机
+  descriptor 从 207 / 114 B 变成 **235 / 142 B**（+28 B），`supported_version` 被写成 `1.21.0`，并新增
+  `remote_file_id="3842327113"`；**末字节仍是 `"`、无行尾换行**。所以删本机副本前先记**字节数 / 末字节 / SHA256**
+  （本轮 `513BE13D…0C4B4` / `3C0DA9C8…269A6`）并回填编号；三信号第 3 条对**首次**上传是
+  「拿到的新编号与 descriptor 一致」，不是「ID 未变」。
+- **退役 mod 的判据依赖某个已失效的外部标识（死 ID / 旧路径）时，保留原值 + 注释，别顺手置空**：
+  降祸 mod 下架后把 `remoteFileId` 置空 → 它的反向验证从 32/32 掉到 31/32（K1 样本靠「改本机副本的
+  `remote_file_id`」构造，表里为空就构造不出样本）。删一个判据依赖的输入 = 让一条判据永久失效；
+  置空只在「重发前」那一刻做。
+- **工坊预检的「三份 descriptor 字段一致」在本机副本还在时会有意报不一致**：mastery 回填后快照是 `1.21.*`、
+  本机副本被启动器回写成 `1.21.0` → 预检报 1 项不一致；删掉本机副本、只剩快照两份（都是 `1.21.*`）→ PASS。
+  这是**预期差异**、不是故障；`工具-部署.mjs --check` 对 `1.21.x` 本就按字段容忍。
 
 ## [verify] 验证判据（无头 / A5 / 反向显示）
 
@@ -475,10 +528,15 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
 - **A5 / 日志判据两条**：① 本 mod token（`auto_spread` / 中文名）**0 条**；② **没有任何 `Script location`
   指向本 mod 的文件**。只数 token 会漏掉「引擎报错但不带脚本对象名」的情况；反过来原版噪声会淹没日志
   （1.21 基线 8,094 条 [E]，见 `[ingame]`），所以先按 `Script location` 分组。
-- **反向验证的结论行不许硬编码样本数**：各 mod 样本数不同（curse 32、auto 7），共享 `lib/reverse.mjs`
+- **反向验证的结论行不许硬编码样本数**：各 mod 样本数不同（历史：curse 32；现在 mastery 13、auto 7），共享 `lib/reverse.mjs`
   曾把结论写死成 `32/32`，auto 只有 7 条也显示 `32/32`（2026-11-18 修复）。显示必须从脚本输出解析
   （`反向验证：N / N 项如期报错`）；`configs.mjs` 的 `expect` 按 mod 写期望值——断言的是「显示等于实际」，
   不是断言常量。
+- **结构性判据先剥注释（`stripComments`）再匹配**：mastery 的 L5 检查决策里的 `is_shown = { is_ai = no }`，
+  而决策文件注释里正写着这句示例 → 「删掉闸门」的坏样本照样 PASS（本轮唯一的真 bug）。
+  所有结构性判据一律先剥注释（括号配平还要 `stripStrings`）再跑；注释里的示例片段不算数。
+- **反向样本必须断言「确实改到了目标」**：样本改完与原文相等就直接抛错（`if (next === src) throw`），
+  否则「样本没生效」会被读成「判据没开火」，白跑一轮。
 - **`--root` 模式跳过部署比对**：拿 v1.0 反例跑 `--root` 时，K 段原本会去比「当前本机副本」——
   部署的是新版，反例就凭空多出 3 条「不一致」（de-jure 实测 20 → 23）。判据必须与部署状态解耦：
   在 `--root` 模式下 K 段只提示跳过。同理，任何「拿样本比当前环境」的检查都要先问「这个环境变量该不该参与」。

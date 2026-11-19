@@ -70,7 +70,7 @@ test('删掉硬规则 26 报 SKILL/rules', () => {
   const { code, out } = run(['--repo', root, '--no-deploy']);
   assert.equal(code, 1, out);
   assert.match(out, /\[SKILL\/rules\]/);
-  assert.match(out, /应为 1–30/);
+  assert.match(out, /应为 1–34/);
 });
 
 test('改掉 R1 的 buildid 锚点时报 R1', () => {
@@ -121,7 +121,7 @@ test('--list-anchors 总数与期望一致、复盘编号有落点', () => {
   const matched = /锚点：(\d+) 条 \/ \d+ 个编号（期望 (\d+)）/.exec(out);
   assert.ok(matched, out);
   assert.equal(Number(matched[1]), Number(matched[2]), out);
-  for (const id of ['Q1', 'Q12', 'P1', 'P24', 'H7', 'R1', 'CLI']) {
+  for (const id of ['Q1', 'Q12', 'P1', 'P24', 'H7', 'R1', 'M1', 'M10', 'M12', 'INV', 'CLI']) {
     assert.match(out, new RegExp(`^  ${id} \\d+$`, 'm'), `缺少 ${id} 的锚点`);
   }
 });
@@ -152,6 +152,31 @@ test('runbook 的坐标系数被改掉时报 P9', () => {
   const { code, out } = run(['--repo', root, '--no-deploy']);
   assert.equal(code, 1, out);
   assert.match(out, /\[P9\]/);
+});
+
+test('改掉 [scheme] 的 SCHEMES_PER_TYPE 时报 M4', () => {
+  const root = makeRepo();
+  write(root, NOTES_REL, read(root, NOTES_REL).replaceAll('SCHEMES_PER_TYPE', 'SCHEMES_PER_KIND'));
+  const { code, out } = run(['--repo', root, '--no-deploy']);
+  assert.equal(code, 1, out);
+  assert.match(out, /\[M4\]/);
+});
+
+test('人格层写回退役 mod 时报 PERSONA 与 RETIRED', () => {
+  const root = makeRepo();
+  write(root, PATCH_REL, read(root, PATCH_REL).replace('降祸 mod 已于', 'curse 已于'));
+  const { code, out } = run(['--repo', root, '--no-deploy']);
+  assert.equal(code, 1, out);
+  assert.match(out, /\[PERSONA\]/);
+  assert.match(out, /\[RETIRED\]/);
+});
+
+test('SKILL 里写回退役 mod 的仓库名时报 RETIRED', () => {
+  const root = makeRepo();
+  write(root, SKILL_REL, read(root, SKILL_REL).replace('降祸 mod（curse）已于', '`ck3-curse` 已于'));
+  const { code, out } = run(['--repo', root, '--no-deploy']);
+  assert.equal(code, 1, out);
+  assert.match(out, /\[RETIRED\]/);
 });
 
 test('删掉 [verify] 节报 NOTES/sections', () => {

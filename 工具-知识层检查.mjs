@@ -1,21 +1,24 @@
 #!/usr/bin/env node
 /**
- * 知识层 lint：把复盘（`.admin/retro-2026-11-18-ck3mod.md`、续篇 `retro-2026-11-18b-ck3mod-auto-v2.1.md`
- * 与 `retro-2026-11-18c-ck3mod-dejure-v2.3.md`）的映射表变成**可执行断言**。
+ * 知识层 lint：把复盘（`.admin/retro-2026-11-18-ck3mod.md`、续篇 `retro-2026-11-18b-ck3mod-auto-v2.1.md`、
+ * `retro-2026-11-18c-ck3mod-dejure-v2.3.md`、`retro-2026-11-19-ck3mod-hotfix.md` 与
+ * `retro-2026-11-19-ck3mod-mastery.md`）的映射表变成**可执行断言**。
  *
  * 为什么需要：复盘里的教训如果只写成规则，下一次改文档时删掉一条也没人知道——这正是 H7
- * 「写进清单的问题只有变成机器检查才算处理」。这个脚本把 A1…H7、P1–P16、Q1–Q12 的落点、硬规则编号、
- * 各节标题、版本口径、部署副本哈希都变成断言，跑一次即知映射是否断裂。
+ * 「写进清单的问题只有变成机器检查才算处理」。这个脚本把 A1…H7、P1–P16、Q1–Q12、R1–R3、M1–M12 的落点、
+ * 硬规则编号、各节标题、版本口径、部署副本哈希都变成断言，跑一次即知映射是否断裂。
  *
  * 检查分六组：
  *   1. SKILL.md 硬规则：编号必须是 1..N 连续、无缺号无重号（N 与 EXPECTED_RULE_COUNT 一致）；
  *   2. 三份知识层文件的必需节（SKILL / verified-notes / ingame-acceptance）；
  *   3. 复盘映射锚点：每条编号对应的关键句必须还在原文件里（删了 = 复盘落地断链）；
  *      锚点集 = 11-18 的 A1…H7（28 条）+ 11-18b 的 P1–P16（23 条）+ 11-18c 的 Q1–Q12（13 条）
- *      + 11-19 hotfix 的 R1–R3（7 条）+ 人格层与 cli 的 8 条 = 79 条；另外断言**锚点总数**与
+ *      + 11-19 hotfix 的 R1–R3（7 条）+ 11-19 mastery 的 M1–M12（21 条）+ 一个在营 4 个不变量（2 条）
+ *      + 人格层与 cli 的 8 条 = 102 条；另外断言**锚点总数**与
  *      **每个复盘编号至少 1 条**（删锚点 = 少查几项，不能让它悄悄变绿——这正是复盘 Q2「判据自己变弱也是 bug」）；
  *   4. 人格层 `cordis.patch.yml`：必备判断句在、会漂的旧话（dejure 2.2 / 吃掉行尾 / 少 1 属正常 /
- *      七层 / 版本枚举）不在；SKILL 的 References 必须点到四份复盘；
+ *      七层 / 版本枚举 / 退役 mod）不在；SKILL 的 References 必须点到五份复盘；
+ *      另断言 SKILL 与人格层都不再出现退役 mod 的仓库名（历史只许留在 `.admin` 与 工作区索引）；
  *   5. 版本口径：package.json / README 顶部 / README §13 最新条目 / SKILL metadata 互相一致；
  *   6. 部署副本：仓库 vs `~/.agents/skills/ck3-modding` vs `~/dsh-bundles/ck3moddev` 的哈希。
  *
@@ -43,13 +46,13 @@ const DEPLOY_DEFAULT = path.join(os.homedir(), '.agents', 'skills', 'ck3-modding
 const BUNDLE_DEFAULT = path.join(os.homedir(), 'dsh-bundles', 'ck3moddev');
 
 /** 硬规则的期望条数。新增规则时**先改这里**，让「改了数字」成为一次有意识的动作。 */
-const EXPECTED_RULE_COUNT = 30;
+const EXPECTED_RULE_COUNT = 34;
 
 /**
  * 锚点总数的期望值。删/改锚点时**先改这里**：它是「判据自己变弱也是 bug」的兜底——
  * 以前删一条锚点只是通过项少一个，照样打印「✓ 通过」。
  */
-const EXPECTED_ANCHOR_COUNT = 79;
+const EXPECTED_ANCHOR_COUNT = 102;
 
 /** 人格层（预设的 system prompt）文件；它是最先被模型读到的一层，最容易漂。 */
 const PATCH_FILE = 'cordis.patch.yml';
@@ -100,6 +103,7 @@ const NOTES_SECTIONS = [
   '## [trade] 贸易 / 市场 / 商业共和国',
   '## [road] 道路（road）',
   '## [laws] 法律（law）',
+  '## [scheme] 计谋（scheme）',
   '## [ingame] 真机验收（启动参数 / 存档 / 1.21 UI）',
   '## [automation] 真机自动化（agent 代点，2026-11-18 实跑 free v4.1）',
   '## [release] 发布与工坊核对（2026-11-18 free v4.0 → v4.1）',
@@ -113,7 +117,7 @@ const RUNBOOK_SECTIONS = [
   '## 2. 准备（五步，全部在开游戏之前）',
   '## 3. 启动',
   '## 4. 四个 mod 的验收矩阵',
-  '### 4.1 curse（降祸）',
+  '### 4.1 mastery（谋略）',
   '### 4.4 auto（自动传播）',
   '## 5. 证据规范',
   '## 6. 收尾（六步，顺序不能换）',
@@ -123,15 +127,15 @@ const RUNBOOK_SECTIONS = [
   '### 9.1 前提（三步，缺一不可）',
   '### 9.2 五个动作（PowerShell，user32）',
   '### 9.3 探针 mod 模板（不点菜单就能截到面板）',
-  '### 9.4 能自动 / 不能自动（free v4.1 实测）',
+  '### 9.4 能自动 / 不能自动（free v4.1 + mastery v1.0 实测）',
   '### 9.5 证据',
-  '### 9.6 点击纪律与人机分工（2026-11-18b 实测）',
+  '### 9.6 点击纪律与人机分工（2026-11-18b / 2026-11-19 实测）',
 ];
 
 /**
  * 每一轮复盘用掉的编号段。每个编号**至少要有一条锚点**——缺了说明那一条的落点被删了。
  * 编号来源：11-18 的 A–E/H（H2/H3 已并入 H1）、11-18b 的 P1–P16 + P24、11-18c 的 Q1–Q12、
- * 11-19 hotfix 的 R1–R3。
+ * 11-19 hotfix 的 R1–R3、11-19 mastery 的 M1–M12。
  */
 const RETRO_IDS = [
   'A1', 'A2',
@@ -144,9 +148,10 @@ const RETRO_IDS = [
   'P11', 'P12', 'P13', 'P14', 'P15', 'P16', 'P24',
   'Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8', 'Q9', 'Q10', 'Q11', 'Q12',
   'R1', 'R2', 'R3',
+  'M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12',
 ];
 
-/** 人格层必须出现的判断句/关键词（都是 11-18c 的结论，缺了就等于人格又漂回去了）。 */
+/** 人格层必须出现的判断句/关键词（11-18c 与 11-19 mastery 的结论，缺了就等于人格又漂回去了）。 */
 const PERSONA_REQUIRED = [
   '别在这里背版本号',
   '清理 / 重构',
@@ -155,13 +160,25 @@ const PERSONA_REQUIRED = [
   '末字节',
   '--root',
   '删本机副本前',
+  '需求先分类',
+  '按枚举写满',
+  '剥注释',
+  '一次只回答一个问题',
 ];
 
-/** 人格层禁词：被推翻的旧结论 / 已知会漂的写法。 */
-const PERSONA_FORBIDDEN = ['dejure 2.2', '吃掉行尾', '少 1 属正常', '七层'];
+/** 人格层禁词：被推翻的旧结论 / 已知会漂的写法 / 已删除的 mod。 */
+const PERSONA_FORBIDDEN = ['dejure 2.2', '吃掉行尾', '少 1 属正常', '七层', 'curse'];
 
 /** 人格层禁止出现的 mod 版本枚举（版本以 工作区索引 / META 为准，写死在 prompt 里必漂）。 */
-const PERSONA_VERSION_ENUM = /(?:free|auto|dejure|de-jure)\s+\d+\.\d+/;
+const PERSONA_VERSION_ENUM = /(?:free|auto|dejure|de-jure|mastery)\s+\d+\.\d+/;
+
+/**
+ * 退役 mod 的标识：知识层与人格层里不许再出现（历史只许留在 `.admin` 与 工作区索引）。
+ * SKILL 只禁仓库名（`ck3-curse`），人格层连 `curse` 这个词一起禁——那是预设最先读到的摘要，
+ * 留着就会让下一个会话去找一个已经不存在的 mod。
+ */
+const RETIRED_IN_SKILL = ['ck3-curse'];
+const RETIRED_IN_PERSONA = ['ck3-curse', 'curse'];
 
 /** SKILL 的 References 必须点到的复盘文件（否则下一个会话按 References 找不到证据）。 */
 const SKILL_REQUIRED_REFS = [
@@ -169,6 +186,7 @@ const SKILL_REQUIRED_REFS = [
   'retro-2026-11-18b-ck3mod-auto-v2.1.md',
   'retro-2026-11-18c-ck3mod-dejure-v2.3.md',
   'retro-2026-11-19-ck3mod-hotfix.md',
+  'retro-2026-11-19-ck3mod-mastery.md',
 ];
 
 /**
@@ -261,6 +279,30 @@ const ANCHORS = [
   { id: 'R2', file: SKILL_FILE, needle: '没有版本号', label: '规则 30：Wiki 页未给版本号' },
   { id: 'R3', file: NOTES_FILE, needle: '81 个文件', label: 'hotfix 节：影响面文件清单' },
   { id: 'R3', file: SKILL_FILE, needle: '热修后第一件事', label: '规则 30：热修后先跑 check' },
+  // 2026-11-19 · 谋略 Scheme Mastery v1.0（M1–M12）：21 条映射 + 在营 4 个不变量 2 条。
+  { id: 'M1', file: SKILL_FILE, needle: '需求先分类', label: '规则 31：需求先分类再出计划' },
+  { id: 'M1', file: PATCH_FILE, needle: '需求先分类', label: '人格层：需求先分类' },
+  { id: 'M2', file: SKILL_FILE, needle: '从安装目录反查枚举', label: '规则 32：「所有 X」按枚举写满 + 反查' },
+  { id: 'M2', file: NOTES_FILE, needle: '136 个类型', label: '[scheme]：安装目录实况 136 / 5 类' },
+  { id: 'M3', file: NOTES_FILE, needle: 'base_maximum_success', label: '[scheme]：显示上限 = 潜力' },
+  { id: 'M3', file: NOTES_FILE, needle: '54.0%', label: '[scheme]：54 / 34 / 95 实测口径' },
+  { id: 'M4', file: NOTES_FILE, needle: 'SCHEMES_PER_TYPE', label: '[scheme]：同类型只能同时一个' },
+  { id: 'M4', file: RUNBOOK_FILE, needle: '不同类型', label: 'G7：验栏位要换类型' },
+  { id: 'M5', file: SKILL_FILE, needle: '剥离注释', label: '规则 33：结构性判据先剥注释' },
+  { id: 'M5', file: NOTES_FILE, needle: 'stripComments', label: '[verify]：注释喂饱判据' },
+  { id: 'M6', file: NOTES_FILE, needle: '死 ID', label: '[release]：死标识保留原值' },
+  { id: 'M7', file: RUNBOOK_FILE, needle: '行位会漂', label: '§9.6：事件面板重排' },
+  { id: 'M8', file: RUNBOOK_FILE, needle: '切换数据系统', label: '§9.6：调试 UI 陷阱' },
+  { id: 'M9', file: RUNBOOK_FILE, needle: 'F9 决议', label: '§9.6：HUD 快捷盘' },
+  { id: 'M9', file: RUNBOOK_FILE, needle: '决议（7）', label: '§9.6：决议分组要滚动' },
+  { id: 'M10', file: SKILL_FILE, needle: '一次只回答一个问题', label: '规则 34：探针一事一件' },
+  { id: 'M10', file: NOTES_FILE, needle: '第一个失败会被第二个掩盖', label: '[automation]：探针不可塞两件事' },
+  { id: 'M11', file: NOTES_FILE, needle: '首次上传', label: '[release]：首次上传形状' },
+  { id: 'M11', file: NOTES_FILE, needle: '235 / 142 B', label: '[release]：新增 remote_file_id 行' },
+  { id: 'M12', file: NOTES_FILE, needle: '本机副本还在', label: '[release]：预检有意报不一致' },
+  { id: 'M12', file: NOTES_FILE, needle: '预期差异', label: '[release]：读成预期差异而非故障' },
+  { id: 'INV', file: SKILL_FILE, needle: '在营 4 个', label: '环境段：在营 4 个 mod' },
+  { id: 'INV', file: PATCH_FILE, needle: 'mastery', label: '人格层：在营 4 个含 mastery' },
 ];
 
 /**
@@ -459,6 +501,27 @@ function checkSkillRefs(report, repo) {
 }
 
 /**
+ * 退役 mod 不许再出现在 SKILL 与人格层。历史记录只留在 `.admin` 与 工作区索引——
+ * 知识层里留着它，下一个会话就会照着它写命令、验收项甚至「重发流程」。
+ * @param {ReturnType<typeof createReport>} report 报告。
+ * @param {string} repo 仓库根。
+ * @returns {void}
+ */
+function checkNoRetired(report, repo) {
+  const skill = readText(repo, SKILL_FILE);
+  const persona = readText(repo, PATCH_FILE);
+  if (skill === null || persona === null) {
+    fail(report, 'RETIRED', `缺 ${SKILL_FILE} 或 ${PATCH_FILE}`);
+    return;
+  }
+  const hits = [];
+  for (const needle of RETIRED_IN_SKILL) if (skill.includes(needle)) hits.push(`SKILL.md 里有「${needle}」`);
+  for (const needle of RETIRED_IN_PERSONA) if (persona.includes(needle)) hits.push(`${PATCH_FILE} 里有「${needle}」`);
+  if (hits.length === 0) pass(report);
+  else fail(report, 'RETIRED', `${hits.join(' / ')}——退役 mod 只许留在 .admin 与 工作区索引`);
+}
+
+/**
  * 检查硬规则编号：1..EXPECTED_RULE_COUNT 连续、无缺号无重号。
  * @param {ReturnType<typeof createReport>} report 报告。
  * @param {string} text SKILL.md 文本。
@@ -634,6 +697,7 @@ function main() {
   for (const anchor of ANCHORS) checkAnchor(report, repo, anchor);
   checkPersona(report, repo);
   checkSkillRefs(report, repo);
+  checkNoRetired(report, repo);
   checkVersions(report, repo);
   if (options.checkDeploy) checkDeploy(report, repo, options);
 

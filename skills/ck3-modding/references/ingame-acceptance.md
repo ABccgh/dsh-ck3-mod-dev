@@ -30,6 +30,8 @@
 **0）先确认「本局能观测到本次改动」**（2026-11-18 de-jure v2.3 踩过）：把本次改动需要的政体 / 等级 / 阶段列出来，
 再决定用哪份存档。例：v2.3 补的是「行政政体的 Influence」，而第一轮用户新开的是**部落**局——那一项整局不可见，
 等于没测，只能补第二轮。不可观测的项当场标 SKIP，别等验收完才发现。
+**数值型改动还要写清上限/分母的来源**：mastery 的成功率显示上限是「潜力」（同谋槽位 + 技能），
+define 的 95 只是硬顶——判读时连「当时同谋填了几个」一起记，否则「没到 95%」会被误当成 mod 没生效。
 
 ```powershell
 $node = "C:\Users\11210\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe"
@@ -37,14 +39,14 @@ cd "D:\DSH workspace\ck3-modding-tools"
 & $node .\cli.mjs check --all          # 1) 静态/loc 必须 4/4 PASS，红了别开游戏
 
 # 2) 部署要验收的 mod（auto 自 v2.1 起也有 工具-部署.mjs；之前没有，只能手工拷贝）
-cd "D:\DSH workspace\ck3-curse";           & $node .\工具-部署.mjs
+cd "D:\DSH workspace\ck3-scheme-mastery";   & $node .\工具-部署.mjs
 cd "D:\DSH workspace\ck3-de-jure-conquest"; & $node .\工具-部署.mjs
 cd "D:\DSH workspace\ck3-free-resources";   & $node .\工具-部署.mjs
 cd "D:\DSH workspace\ck3-auto-spread";      & $node .\工具-部署.mjs
 
 # 3) 建现场（快照 + 改写播放集），--mods 只列本次要验的
 cd "D:\DSH workspace\dsh-ck3-mod-dev"
-& $node .\工具-真机现场.mjs --begin --mods cn_curse,cn_dejure_conquest,free_resources,auto_spread
+& $node .\工具-真机现场.mjs --begin --mods cn_scheme_mastery,cn_dejure_conquest,free_resources,auto_spread
 ```
 
 4. **确认 `Documents\...\mod\*.mod` 都在**（`--begin` 会替 `--mods` 校验，缺了直接报错）。
@@ -73,26 +75,31 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 
 > **不存在 `-develop`**：`_commandline_options.info` 没有这一项，exe 里也搜不到。
 > 热载正确做法：`-debug_mode` 下用控制台 `reload`（引擎里另有未文档化的 `-filewatcher`）。
-> 启动器会显示「有此 mod 不兼容」的提示（四个 mod 仍声明 `supported_version="1.20.*"`），
-> 忽略即可——加载期已验证干净。
+> 四个 mod 现在都声明 `supported_version="1.21.*"`；启动器若仍提示「有此 mod 不兼容」，先查
+> `Documents\...\mod\*.mod` 是不是 1.20 时代的老副本（重新部署即可）。
 
 ## 4. 四个 mod 的验收矩阵
 
 每条只做一件事；**期望**写的是「该看到什么」，不是「应该没问题」。
 
-### 4.1 curse（降祸）
+### 4.1 mastery（谋略）
 
 | 项 | 入口 | 操作 | 期望 | 证据 |
 |---|---|---|---|---|
-| C1 入口 | 右键任意角色 | 看互动菜单 | 「敌对」下出现 **降下疫病 / 夺其心智 / 毁其躯体 / 污其血脉**（1.20 记录是在「更多…」；1.21 实测直接展开，**以实测位置记录**） | 菜单截图 |
-| C2 选项数 | 每项点开 | 数复选框 | 疫病 9 / 心智 4 / 躯体 9 / 血脉 2 | 四张选项窗截图 |
-| C3 只勾一个 | 降下疫病 → 勾「患病」→ 确定 | 打开目标角色窗口 | 只多 `患病`（`ill`），没有别的 | 目标特质栏截图 |
-| C4 不勾 | 重开选项窗 → 直接点确定 | 看是否可点/是否生效 | 按钮禁用或点了无效果；目标特质不变 | 截图 + 目标特质栏 |
-| C5 多选 | 勾两个（如患病 + 肺炎）→ 确定 | 看目标 | 两个都在（叠加） | 目标特质栏 |
-| C6 互斥 | 重复施同一项/互斥组合 | 看第二次 | 被挡或不再叠加 | 截图 |
-| C7 副作用 | 全程 | `error.log` | `cn_curse` **0 条** | 第 6 节日志命令 |
+| G1 加载 | 启动器 Mods 页 → 进游戏 | 看卡片 + `logs\debug.log` | 版本 **1.0**、兼容 **1.21**；日志里有 `Enabled` + `Mounted Data` + `Loaded [1] events` | 卡片截图 + 日志 |
+| G2 决议入口 | 右侧 HUD 图标列 → **F9 决议**（hover 读 tooltip）→ 滚到「决议（7）」组 | 点「豢养刺客」 | 确认卡（名称 / 暗红配图 / 正文 / 「让他们进来」）→ 点开面板 | 入口 + 确认卡 + 面板 3 张 |
+| G3 面板 | 面板 | 数选项 | **5 个选项**：爪牙 / 毒药与匕首 / 一手遮天 / 收敛锋芒 / 先这样；正文说明五类计谋与 95% 上限 | 面板截图 |
+| G4 换档与互斥 | 依次点三档 | 看角色窗口的修正列表 | 每次只留一档；tooltip 明写「你失去 X / 你获得 Y」；面板刷新后已选档消失 | 角色窗口 3 张 |
+| G5 敌对成功率（必做） | 右键成年、非囚、非你父母子女的目标 → 谋杀 | 悬停成功率 | 明细里出现「一手遮天 +300.0%」；同谋 **0/5** 时最大约 **54%**、撤档回 **34%**（差 = 该档 `max_add` 20）；同谋 **4/5** 时到 **95%（最大 95%）** | tooltip 3 张 |
+| G6 个人成功率（必做） | 右键 → 倾心 / 勾引 / 结交 | 悬停成功率 | 明细里同样出现本档加成（上限 95%）；注意「自然顶格 95%」看不出增量 | tooltip 截图 |
+| G7 栏位 +1 | 顶档 + 谋**杀** + 绑**架**（**不同类型、同属 hostile**） | 看阴谋区卡片数 | 不挂档 **1 张** → 挂档 **2 张**（`SCHEMES_PER_TYPE=1` 挡住「同类型再开一个」） | 对照 2 张 |
+| G8 撤档回落 | 「收敛锋芒」 | 看修正 + 再开计谋 | 三档修正全部消失；成功率回落到 34% 那一档 | 截图 + tooltip |
+| G9 日志与收场 | 全程 | `error.log` | `cn_scheme_mastery` **0 条**，且无 `Script location` 指向本 mod；杀进程 + `--end` 还原 | 第 6 节日志命令 |
 
-> 施加后目标立刻生效（确定性，无随机）；「有时生效有时不生效」= bug。
+> 2026-11-19 机器代点结果：**G1–G6 / G8 / G9 与 G7 的敌对栏位全部通过**（证据在
+> `ck3-scheme-mastery\验证记录\1-游戏内验证-v1.0\`）；**G7 的个人栏位**探针里 `sway` 没起来，交回用户手验，
+> 同日口述「测试通过」——**口述证据强度低于截图**，复跑时优先补这一条。
+> 政治 / 契约 / 贸易三类的实际成功率需要对应政体，本版不换局就记 **SKIP**（覆盖率已由静态 L0 机器证明）。
 
 ### 4.2 de-jure（法理征服）
 
@@ -116,7 +123,7 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 
 | 项 | 入口 | 操作 | 期望 | 证据 |
 |---|---|---|---|---|
-| F1 决议入口 | 顶部王冠（决议） | 找「天降横财」 | 可见、可点 | 决议列表截图 |
+| F1 决议入口 | 右侧 HUD 图标列 → **F9 决议** → 滚到「决议（N）」组 | 找「天降横财」 | 可见、可点 | 决议列表截图 |
 | F2 主面板 | 点「天降横财」 | 看面板 | 四个入口：**一键全给… / 一键全扣… / 单项资源… / 特殊数值…** | 面板截图 |
 | F3 加 | 一键全给 → 确认 | 看数值 | 九种货币/五项数值都**增加** | 面板 + 数值条 |
 | F4 扣 | 一键全扣 → 确认 | 看数值 | 都**减少**（方向别反） | 面板 + 数值条 |
@@ -126,8 +133,9 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 | F8 日志 | 全程 | `error.log` | `free_resources` **0 条** | 日志命令 |
 
 > **2026-11-18 机器代点（v4.1 / 1.21.0）结果**：F2–F8 **通过**（截图在
-> `ck3-free-resources\验证记录\10-游戏内验证-v4.1\`）；**F1 决议列表 SKIP** —— 决议按钮靠图标定位、
-> 键盘注入又不通，只能人工确认；决议对象本身由静态校验兜住（`is_shown` + `effect → 0050`）。
+> `ck3-free-resources\验证记录\10-游戏内验证-v4.1\`）；**F1 决议列表当时 SKIP** —— 旧记录写「顶部王冠」也不准，
+> 2026-11-19 mastery 的 G2 已证明入口是右侧 HUD 的 **F9 决议**（hover 读 tooltip 即可定位），下次复跑可补 F1；
+> 决议对象本身由静态校验兜住（`is_shown` + `effect → 0050`）。
 > 数值实测：一键全给 +100（金币 99→199、威望 900→1000、虔诚 100→200、宗族威望 249→349），
 > 一键全扣 −100 原路回到 99/900/100/249，单项资源连点两次 99→299。
 
@@ -148,16 +156,16 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 
 ## 5. 证据规范
 
-- **截图**：命名 `<mod>-<项号>-<hhmm>.png`（例 `curse-C3-1452.png`），统一放
+- **截图**：命名 `<mod>-<项号>-<hhmm>.png`（例 `mastery-G3-1452.png`），统一放
   `D:\DSH workspace\.admin\evidence-<YYYYMMDD>-<主题>\`。不要留在 `%TEMP%`（会被清）。
 - **日志**（每条验收结束跑一次）：
 
 ```powershell
 $u = "C:\Users\11210\Documents\Paradox Interactive\Crusader Kings III"
-foreach ($t in 'cn_curse','cn_dejure_conquest','free_resources','auto_spread') {
+foreach ($t in 'cn_scheme_mastery','cn_dejure_conquest','free_resources','auto_spread') {
   "{0,-22} {1}" -f $t, (Select-String -Path "$u\logs\error.log" -Pattern $t -ErrorAction SilentlyContinue).Count
 }
-Select-String -Path "$u\logs\debug.log" -Pattern 'mod/(cn_curse|cn_dejure_conquest|free_resources|auto_spread)\.mod\|Enabled'
+Select-String -Path "$u\logs\debug.log" -Pattern 'mod/(cn_scheme_mastery|cn_dejure_conquest|free_resources|auto_spread)\.mod\|Enabled'
 ```
 
 - **挂载确认**：暂停菜单左下角显示 `Florin（1.21.0），校验码: <hex>（有修改）`；校验码与无 mod 时不同
@@ -167,7 +175,7 @@ Select-String -Path "$u\logs\debug.log" -Pattern 'mod/(cn_curse|cn_dejure_conque
 ```markdown
 | 项 | 结果 | 证据 | 备注 |
 |---|---|---|---|
-| curse C1 | PASS | curse-C1-1452.png | 1.21 直接展开在「敌对」下 |
+| mastery G3 | PASS | mastery-G3-1452.png | 面板 5 选项、正文写明 95% 上限 |
 | de-jure D3 | SKIP | — | 本局没打成胜仗 |
 ```
 
@@ -188,7 +196,7 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 # 4) 清掉本地 mod 副本（free 的部署脚本没有 --clean，手工删）
 #    删之前先把上传后的 descriptor 字节数 / 末字节 / SHA256 记进验证记录 —— 三信号证据就在这两个文件里，
 #    文件一删证据就没了（de-jure v2.3 收尾做法）。
-cd "D:\DSH workspace\ck3-curse";           & $node .\工具-部署.mjs --clean
+cd "D:\DSH workspace\ck3-scheme-mastery";   & $node .\工具-部署.mjs --clean
 cd "D:\DSH workspace\ck3-de-jure-conquest"; & $node .\工具-部署.mjs --clean
 Remove-Item "C:\Users\11210\Documents\Paradox Interactive\Crusader Kings III\mod\free_resources*" -Recurse -Force
 
@@ -218,14 +226,16 @@ Get-ChildItem "C:\Users\11210\Documents\Paradox Interactive\Crusader Kings III\m
 - **热修不改版本串**：本机 2026-11-19 已吃 1.21 hotfix（buildid `26757580`），主菜单仍显示
   `Florin (1.21.0)`，只有校验码会变。开测前用 `ck3mod_status` 的「游戏构建」行确认，别拿启动器
   或主菜单的版本号判「有没有更新」；详见 `[hotfix]`。
-- 四个 mod 的已知旧结论：curse `测试清单.md` 的 `T-G16` 是 **1.20.0.3** 时期通过的，
+- 四个 mod 的已知旧结论：降祸 mod（已删除）的 `测试清单.md` 里 `T-G16` 是 **1.20.0.3** 时期通过的，
   「入口在更多…」这条在 1.21 观察到相反；de-jure README 的「启动器显示 1.20 兼容」同理。
+  mastery 的 G7 个人栏位是**用户口述确认**（无截图），证据强度低于截图，复跑时优先补。
   **验收以本文件的矩阵为准**，旧记录只当历史。
 
 ## 9. 机器代点（仅在用户当次明确要求时）
 
-> 2026-11-18 用户说「你替我进行测试」后，free v4.1 的 F2–F8 就是这样跑完的。
-> 结论：**鼠标能打通，键盘不行**；纯图标定位的入口（如决议列表）仍建议留给人工。
+> 2026-11-18 用户说「你替我进行测试」后，free v4.1 的 F2–F8 就是这样跑完的；2026-11-19 mastery v1.0 的
+> G1–G6/G8/G9 与 G7 敌对栏位也用同一套跑通（五轮新开 1066 拜占庭局）。
+> 结论：**鼠标能打通，键盘不行**；纯图标入口要先 hover 读 tooltip 定位（决议是 **F9**，见 §9.6）。
 
 ### 9.1 前提（三步，缺一不可）
 
@@ -297,15 +307,18 @@ zz_probe_game_start = {
   再 `trigger_event`，右侧头像与按对方判定的列表才正常。
 - 探针测完就删（`zz_probe\` + `zz_probe.mod`），不要提交进仓库。
 
-### 9.4 能自动 / 不能自动（free v4.1 实测）
+### 9.4 能自动 / 不能自动（free v4.1 + mastery v1.0 实测）
 
 | 能 | 不能 |
 |---|---|
-| 事件面板与四入口、一键全给/全扣、单项连点、特殊数值 | 决议列表这类靠图标定位的入口（本次 F1 SKIP） |
-| 右键交互菜单里的条目（分类折叠也看得见） | 任何必须键盘的操作（`~` 控制台、ESC） |
-| 目标流程面板（右侧对方头像） | tooltip 完整文案（只能看截图里可见的部分） |
-| 政体门控后的列表内容、`error.log` 计数 | 数值断言的精确读数（`debug_log` 不解析数据函数，只能截图） |
-| 面板 / 开关 / 规则可见性、右键菜单、选项窗 | 跨年连续运行（原版事件会**自动暂停**游戏；必须跑时间的项一开始就划给人） |
+| 事件面板与四入口、一键全给/全扣、单项连点、特殊数值 | 任何必须键盘的操作（`~` 控制台、ESC） |
+| 右键交互菜单里的条目（分类折叠也看得见） | tooltip 完整文案（只能看截图里可见的部分） |
+| 目标流程面板（右侧对方头像） | 数值断言的精确读数（`debug_log` 不解析数据函数，只能截图） |
+| 政体门控后的列表内容、`error.log` 计数 | 跨年连续运行（原版事件会**自动暂停**游戏；必须跑时间的项一开始就划给人） |
+| **HUD 入口（hover 读 tooltip 定位）**：F9 决议已实测（mastery G2）；事件面板换档 / 互斥 / 撤档 | 需要「同谋填满」这类**多因子自然条件**的读数（只能换局或明确 SKIP） |
+
+> 2026-11-19 更正：**决议列表能自动**——右侧 HUD 图标列逐个 hover 读 tooltip 可定位「决议 F9」，
+> 再滚到「决议（N）」组；free 的 F1 下次可补测。
 
 ### 9.5 证据
 
@@ -313,14 +326,24 @@ zz_probe_game_start = {
 - 1920×1080 PNG 每张 3–4 MB，**转 JPEG q82** 再入库（43.8 MB → 3.1 MB 实测）。
 - 同一目录附当次 `error.log` / `debug.log`（本 mod 报错计数 + `Loaded [n] events`）。
 
-### 9.6 点击纪律与人机分工（2026-11-18b 实测）
+### 9.6 点击纪律与人机分工（2026-11-18b / 2026-11-19 实测）
 
-> 2026-11-18b 的 auto v2.1 代点（A1/A2）就是按这套跑通的；违反任何一条都会得到「点了但没生效」的假象。
+> 2026-11-18b 的 auto v2.1 代点（A1/A2）与 2026-11-19 mastery v1.0（G1–G9）都是按这套跑通的；
+> 违反任何一条都会得到「点了但没生效」的假象。
 
 - **坐标从全尺寸截图量**：`read_image` 的预览常被缩到 1708 宽（实际 1920，系数 **1.1241**）；
   按预览标尺直接点会偏——实测差 20 px 就落到相邻控件。
 - **事件面板每行 client 高约 36 px**：点开关时偏一行就会把**上一个**开关关掉；每次点击后重截确认状态，不要连点。
 - **两次点击间隔 ≥1.2–1.5 s**：选项点击会 `trigger_event` 回自身并重绘事件，间隔太短会丢点击。
+- **选项的行位会漂，别盲点**：选项数变化、tooltip 出现都会让面板整体重排。2026-11-19 实测因此把
+  「收敛锋芒」当成「先这样」点到，把刚生效的档位撤掉了。正确姿势：**每次点击前重新 hover → 截图核对
+  tooltip 里的选项名 → 同一坐标 click → 截图核对状态**，四步之间 1.2–1.5 s。
+- **debug 顶栏有雷**：面板顶部的图标行里有「切换数据系统」「事件 scope 查看器」，误点会把所有文案变成
+  `[success_chance|E]`、`[Scheme.GetSuccessChance|V/1]` 这类原始 loc 串——截图看起来像「loc 全崩」。
+  取证前先截一张确认文案正常；看到原始串就再点一次同位置切回，**别把调试态截图当成品证据**。
+- **找 HUD 入口靠 hover 读快捷键**（比翻 GUI 文件快）：**F4 内阁 · F5 贸易 · F6 廷臣 · F7 谋略 · F9 决议**；
+  入口在**右侧竖排 HUD 图标列**，垂直居中偏上开始、间距约 33–37 px。决议列表按「罗马决议 / 重要决议 /
+  领地决议 / 行政决议 / 宗教决议 / 决议 / 廷臣决议」分组，mod 决议默认落在「**决议（7）**」组，**要滚动**才看得到。
 - **选角色**：先 hover 出 tooltip 再单点；点海面 / 不可通行地形会**清空已选**角色；点男爵领会打开角色档案
   （不是头衔窗口）。
 - **时间项归人**：原版事件会**自动暂停**游戏（本次是拜占庭国库），「跑一年」这类必须连续跑时间的项不可无人值守。
