@@ -1,10 +1,10 @@
 # CK3 Wiki 索引（生成物，勿手改表体）
 
-> 生成时间：2026-11-18T07:22:58Z
+> 生成时间：2026-11-19T05:57:14Z
 > 站点：CK3 Wiki（MediaWiki 1.39.4）· https://ck3.paradoxwikis.com
-> 体量：8307 页 / 494 条目 / 5485 文件
+> 体量：8312 页 / 496 条目 / 5488 文件
 > 本机游戏：1.21.0 (Florin)
-> 内容哈希：1e998d6a6ae053b8
+> 内容哈希：0cdb8ec399006453
 >
 > 这是**导航图，不是知识库**：只存标题、体积、最后编辑、`{{version}}` 声明与一句用法备注，不复制 Wiki 正文。
 > 刷新：`node scripts/wiki-atlas.mjs`；验鲜：加 `--check`（有漂移退出码 1）。
@@ -88,47 +88,49 @@
 
 | 页面 | 体积 | 最后编辑 | 声明版本 | 1.21 | 备注 |
 |---|---:|---|---|:--:|---|
-| Adventurer lifestyle | 28.2 KB | 2026-11-18 | — | ✓ | 冒险者生活方式（1.21 新页） |
-| Districts | 60.0 KB | 2026-11-18 | — | ✓ | 1.21 新页：地产区划（district）玩家向说明；脚本面看 common/districts/_districts.info |
+| Adventurer lifestyle | 26.4 KB | 2026-11-18 | — | ✓ | 冒险者生活方式（1.21 新页） |
+| Districts | 60.0 KB | 2026-11-19 | — | ✓ | 1.21 新页：地产区划（district）玩家向说明；脚本面看 common/districts/_districts.info |
 | Education focus | 2.0 KB | 2026-11-17 | — | ✓ | 教育焦点（1.21 新页） |
 | Great project districts | 9.3 KB | 2026-11-17 | — | ✓ | 大型工程区划（1.21 新页） |
-| Market | 22.9 KB | 2026-11-17 | — | ✓ | 1.21 新机制：市场 / 贸易路线 / 商品需求；建贸易站的前置都在这 |
+| Market | 22.8 KB | 2026-11-18 | — | ✓ | 1.21 新机制：市场 / 贸易路线 / 商品需求；建贸易站的前置都在这 |
 | Merchant | 29.2 KB | 2026-11-17 | — | ✓ | 商业共和国的 Trader 与 Trade Acumen（1.21 新页） |
 | Merchant decisions | 10.9 KB | 2026-11-17 | — | ✓ | Trader 专属决策清单（1.21 新页） |
-| Merchant lifestyle | 26.8 KB | 2026-11-17 | — | ✓ | Merchant 生活方式三条线（1.21 新页） |
+| Merchant lifestyle | 25.0 KB | 2026-11-18 | — | ✓ | Merchant 生活方式三条线（1.21 新页） |
 | Republican | 34.0 KB | 2026-11-17 | — | ✓ | 商业共和国玩法（1.21 新页） |
 | Special districts | 198.9 KB | 2026-11-17 | — | ✓ | 特殊区划清单（1.21 新页） |
 | Trade company | 31.9 KB | 2026-11-17 | — | ✓ | 贸易公司（1.21 新页） |
 
-## 机制语义（非 Modding 分类，按 modding 用途挑选）（25 页）
+## 机制语义（非 Modding 分类，按 modding 用途挑选）（27 页）
 
 不在 `Category:Modding` 里、但 modding 常要查语义的机制页。Wiki 只答「是什么」，脚本怎么写仍回层 2。
 
 | 页面 | 体积 | 最后编辑 | 声明版本 | 1.21 | 备注 |
 |---|---:|---|---|:--:|---|
 | Activity | 87.2 KB | 2026-11-17 | — | ✓ | 活动（狩猎 / 宴会 / 朝圣…）框架 |
-| Army | 94.7 KB | 2026-11-18 | — | ✓ | 军队 / 常备军 / 补给（1.21 口径） |
+| Army | 121.2 KB | 2026-11-18 | — | ✓ | 军队 / 常备军 / 补给（1.21 口径）；2026-11-18 重写：MAA 成本表改由 Base Army Cost 变量页驱动 |
 | Artifacts | 36.4 KB | 2026-11-17 | — | ✓ | 宝物与词条 |
 | Barony | 37.4 KB | 2026-11-17 | — | ✓ | 男爵领（最低级头衔） |
 | Building | 19.3 KB | 2026-09-30 | — |  | 建筑清单与效果 |
 | Casus belli | 49.8 KB | 2026-11-17 | — | ✓ | CB 玩家向语义；脚本字段看 _casus_belli.info 与 [cb] |
 | Council | 39.4 KB | 2026-11-17 | — | ✓ | 议会玩法与任务（脚本面见 [council]） |
 | County | 24.0 KB | 2026-11-17 | — | ✓ | 伯爵领：控制力 / 繁荣 / 民意 |
-| Culture | 146.6 KB | 2026-11-17 | — | ✓ | 文化 / 传统 / 革新语义 |
-| Doctrines | 80.3 KB | 2026-11-17 | — | ✓ | 教义清单与互斥 |
-| Government | 44.7 KB | 2026-11-17 | — | ✓ | 政体玩法；脚本字段看 _governments.info 与 [government] |
+| Culture | 158.0 KB | 2026-11-18 | — | ✓ | 文化 / 传统 / 革新语义；2026-11-18 重排：全部文化并入主表 + 新增 Unique cultural mechanics 节 |
+| Doctrines | 80.3 KB | 2026-11-19 | — | ✓ | 教义清单与互斥 |
+| Government | 44.0 KB | 2026-11-18 | — | ✓ | 政体玩法；**2026-11-18 把 non-dynastic governments 改名 minor governments**；脚本字段看 _governments.info 与 [government] |
 | Hired forces | 12.4 KB | 2026-11-17 | — | ✓ | 雇佣兵与骑士团 |
 | Innovation | 80.1 KB | 2026-11-17 | — | ✓ | 革新与时代 |
 | Laws | 10.6 KB | 2026-11-17 | — | ✓ | 法律体系；1.21 起 law 可作 scope（见 [laws]） |
+| Lifestyle | 3.9 KB | 2026-11-18 | — | ✓ | 生活方式枢纽页（2026-11-18 拆分）：Ruler / Adventurer / Merchant 三套 perk 树 |
 | Modifiers | 84.0 KB | 2026-11-17 | — | ✓ | 修正语义与来源；键表仍以 _modifiers.info 为准 |
 | Religion | 47.3 KB | 2026-11-17 | — | ✓ | 宗教体系语义 |
+| Ruler lifestyle | 38.9 KB | 2026-11-18 | — | ✓ | 6 条统治者生活方式与 perk 树（2026-11-18 从 Lifestyle 拆出） |
 | Schemes | 80.6 KB | 2026-11-17 | — | ✓ | 阴谋 / 计谋（含 1.21 贸易计谋） |
 | Situation | 87.2 KB | 2026-11-17 | — | ✓ | 局势（Situation）机制 |
 | Stories | 29.9 KB | 2026-11-17 | — | ✓ | 故事循环（玩家向；脚本面见 [story]） |
 | Struggles | 45.4 KB | 2026-11-17 | — | ✓ | 斗争（玩家向；脚本面见 [struggle]） |
 | Tenet | 141.6 KB | 2026-11-17 | — | ✓ | 信条 |
 | Titles | 33.1 KB | 2026-11-17 | — | ✓ | 头衔层级 / 法理 / 继承（1.21 口径） |
-| Traditions | 388.8 KB | 2026-11-17 | — |  | 传统清单（1.21 口径） |
+| Traditions | 388.8 KB | 2026-11-18 | — |  | 传统清单（1.21 口径） |
 | Traits | 175.7 KB | 2026-11-17 | — | ✓ | 特质玩家向效果表（找 ID 用） |
 | Warfare | 37.6 KB | 2026-11-17 | — | ✓ | 战争流程与战争分数 |
 
@@ -146,10 +148,13 @@
 | Sound modding | 12.4 KB | 2025-09-03 | — |  | 音效事件与 bank |
 | Terrain modding | 8.0 KB | 2025-10-28 | — |  | 地形类型与贴图 |
 
-## 数据列表（2 页）
+## 数据列表（3 页）
+
+其中 Base Army Cost 不在 `Category:Modding` 里（按 modding 用途收录）。
 
 | 页面 | 体积 | 最后编辑 | 声明版本 | 1.21 | 备注 |
 |---|---:|---|---|:--:|---|
+| Base Army Cost | 4.2 KB | 2026-11-18 | — |  | MAA 基础成本与补给档位变量页（Army 用 LST 引用） |
 | List of baronies | 53.2 KB | 2026-07-18 | — |  | 男爵领全表（找 ID 用） |
 | Lists | 3.3 KB | 2024-07-06 | — |  | 数据列表索引页 |
 
@@ -169,7 +174,7 @@ Paradox 自家 mod 的机制文档。只有在研究「官方 mod 怎么组织�
 | Way of Kings/Knights Radiant | 13.5 KB | 2021-11-19 | — |  | — |
 | Way of Kings/Shardic Victories | 7.6 KB | 2023-09-27 | — |  | — |
 
-## Category:1.21 校验集（75 页）
+## Category:1.21 校验集（76 页）
 
 Wiki 编辑者标注为「1.21 口径」的页面。做 1.21 相关改动时优先从这批起步；**本版里面只有 `Console commands` 一个 Modding 页**，其余全是玩家向，modding 结论不能拿它免检。
 
@@ -188,10 +193,10 @@ Wiki 编辑者标注为「1.21 口径」的页面。做 1.21 相关改动时优�
 - Merchant decisions · Merchant lifestyle · Meritocratic · Modifiers
 - Nomadic capital · Pagan religions · Power sharing · Prisoner
 - Religion · Republican · Resources · Ritsuryō
-- Royal court · Schemes · Sinitic religions · Situation
-- Special districts · Stories · Struggles · Subjects
-- Succession laws · Tenet · Titles · Trade company
-- Traits · Travel · Warfare
+- Royal court · Ruler lifestyle · Schemes · Sinitic religions
+- Situation · Special districts · Stories · Struggles
+- Subjects · Succession laws · Tenet · Titles
+- Trade company · Traits · Travel · Warfare
 
 ## 补丁链
 
@@ -199,6 +204,7 @@ Wiki 编辑者标注为「1.21 口径」的页面。做 1.21 相关改动时优�
 |---|---:|---|---|
 | Patches | 8.1 KB | 2026-11-17 | 版本总表 |
 | Patch 1.21 | 212.0 KB | 2026-11-17 | 2026-11-17 与 Silk & Silver 同日；trade / districts / roads / laws 的脚本面源头 |
+| Patch 1.21.X | 3.1 KB | 2026-11-18 | 1.21 hotfix（2026-11-18）：平衡 + 崩溃修复，**无 Modding 段**；页面未给版本号 |
 | Patch 1.20 | 85.5 KB | 2026-09-30 | 2026-09-30 与 By God Alone 同日；上一个机制大版本 |
 | Patch 1.20.X | 43.9 KB | 2026-11-17 | 1.20.0.3 / 0.4 / 1.20.1 / 1.20.1.2 修复链 |
 | Patch 1.19 | 49.8 KB | 2026-09-30 | 2026-04-20；1.20 之前的基线 |
@@ -214,7 +220,7 @@ Wiki 编辑者标注为「1.21 口径」的页面。做 1.21 相关改动时优�
 
 ## 范围与排除
 
-- 本表覆盖 `Category:Modding` 全部页面 + **1.21 新内容（11 页）** + **机制语义（25 页）** + 补丁链；`Category:1.21` 只用来判新鲜度，不逐条展开。
+- 本表覆盖 `Category:Modding` 全部 67 页，外加 **1.21 新内容（11 页）**、**机制语义（27 页）**、少量非分类数据页与补丁链；`Category:1.21` 只用来判新鲜度，不逐条展开。
 - **不收录**：`Category:Mods` 下 9 个第三方 mod 分类（CK3AGOT · LotR:RiE · RICE · Rajas of Asia · The Fallen Eagle · Way of Kings · When the World Stopped Making Sense · WCGOA · Mod images），合计约 115 页。我们只借鉴模式，不抄工坊 mod 的代码与文案（skill 硬规则 8）。
 - 机制语义那一桶是**按 modding 用途手挑的**，不是 Category:Modding 的成员；没挑进来的玩家向页面（如 `Achievement`、`Beginner's guide`）用 `ck3wiki_search` 现查即可。
 - 表是生成时的快照（生成时间见文件头）；下次 CK3 更新后先跑一次 `node scripts/wiki-atlas.mjs` 再开工。

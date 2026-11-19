@@ -5,6 +5,12 @@
  * 为什么要有它：Wiki 有 8300+ 页，人工抄一遍既贵又会腐坏。这个脚本从 MediaWiki API
  * 拉「Category:Modding 全量 + Category:1.21 校验集 + 1.21 新内容 / 机制语义页 + 补丁链」，
  * 渲染成一张带日期的表；
+ *
+ * 两个**机器兜底**（2026-11-19 加，起因是 Wiki 新建了 `Patch 1.21.X` 而表里没有）：
+ * - `assertCoverage`：Category:Modding 有页面没归桶 → 报错；表里点名的页面不存在（改名/删除）→ 报错；
+ * - `assertPatchCoverage`：`Category:Patches` 里属于当前 / 上一个大版本的 `Patch 1.x(.X)` 页
+ *   必须全部在 `PATCHES` 里，否则报错并点名。
+ * 以前这两种情况只会「静默少几行」，判据自己变弱了也不会有人知道。
  * 只存**元数据**（标题/字节/最后编辑/{{version}} 声明）和本文件里手写的一句备注，
  * 不复制 Wiki 正文——正文用 ck3wiki_page 现读，永远跟着 Wiki 走。
  *
@@ -45,6 +51,13 @@ const GAME_VERSION = '1.21.0 (Florin)';
  * 大版本更新时只改这一个常量（以及 GAME_VERSION），其余文案跟着走。
  */
 const VALIDITY_CATEGORY = '1.21';
+
+/**
+ * 上一个机制大版本。补丁链自动核对用它组成「当前 / 上一版本家族」，
+ * 保证 Wiki 新开的热修页（如 `Patch 1.21.X`）不会因为没人记得而漏进表。
+ * 大版本更新时与 VALIDITY_CATEGORY 一起改。
+ */
+const PREVIOUS_MINOR = '1.20';
 
 /** 域分桶：Category:Modding 的 67 页全部在这里有归属，漏了会报错。 */
 const DOMAINS = [
@@ -144,6 +157,8 @@ const DOMAINS = [
       'Doctrines',
       'Tenet',
       'Laws',
+      'Lifestyle',
+      'Ruler lifestyle',
       'Government',
       'Council',
       'Army',
@@ -179,7 +194,7 @@ const DOMAINS = [
   {
     key: 'data',
     title: '数据列表',
-    pages: ['Lists', 'List of baronies'],
+    pages: ['Lists', 'List of baronies', 'Base Army Cost'],
   },
   {
     key: 'other',
@@ -258,6 +273,7 @@ const NOTES = {
   'Sound modding': '音效事件与 bank',
   Lists: '数据列表索引页',
   'List of baronies': '男爵领全表（找 ID 用）',
+  'Base Army Cost': 'MAA 基础成本与补给档位变量页（Army 用 LST 引用）',
 
   // ---- 1.21 新内容（Silk & Silver）——Wiki 目前没有对应的 *modding 页，语义看这里，语法回 .info
   Market: '1.21 新机制：市场 / 贸易路线 / 商品需求；建贸易站的前置都在这',
@@ -277,15 +293,17 @@ const NOTES = {
   Titles: '头衔层级 / 法理 / 继承（1.21 口径）',
   Modifiers: '修正语义与来源；键表仍以 _modifiers.info 为准',
   Traits: '特质玩家向效果表（找 ID 用）',
-  Culture: '文化 / 传统 / 革新语义',
+  Culture: '文化 / 传统 / 革新语义；2026-11-18 重排：全部文化并入主表 + 新增 Unique cultural mechanics 节',
   Traditions: '传统清单（1.21 口径）',
   Religion: '宗教体系语义',
   Doctrines: '教义清单与互斥',
   Tenet: '信条',
   Laws: '法律体系；1.21 起 law 可作 scope（见 [laws]）',
-  Government: '政体玩法；脚本字段看 _governments.info 与 [government]',
+  Lifestyle: '生活方式枢纽页（2026-11-18 拆分）：Ruler / Adventurer / Merchant 三套 perk 树',
+  'Ruler lifestyle': '6 条统治者生活方式与 perk 树（2026-11-18 从 Lifestyle 拆出）',
+  Government: '政体玩法；**2026-11-18 把 non-dynastic governments 改名 minor governments**；脚本字段看 _governments.info 与 [government]',
   Council: '议会玩法与任务（脚本面见 [council]）',
-  Army: '军队 / 常备军 / 补给（1.21 口径）',
+  Army: '军队 / 常备军 / 补给（1.21 口径）；2026-11-18 重写：MAA 成本表改由 Base Army Cost 变量页驱动',
   'Hired forces': '雇佣兵与骑士团',
   Warfare: '战争流程与战争分数',
   Barony: '男爵领（最低级头衔）',
@@ -304,19 +322,12 @@ const NOTES = {
 const PATCHES = [
   { title: 'Patches', note: '版本总表' },
   { title: 'Patch 1.21', note: '2026-11-17 与 Silk & Silver 同日；trade / districts / roads / laws 的脚本面源头' },
+  { title: 'Patch 1.21.X', note: '1.21 hotfix（2026-11-18）：平衡 + 崩溃修复，**无 Modding 段**；页面未给版本号' },
   { title: 'Patch 1.20', note: '2026-09-30 与 By God Alone 同日；上一个机制大版本' },
   { title: 'Patch 1.20.X', note: '1.20.0.3 / 0.4 / 1.20.1 / 1.20.1.2 修复链' },
   { title: 'Patch 1.19', note: '2026-04-20；1.20 之前的基线' },
   { title: 'Patch 1.19.X', note: '1.19.x 修复链' },
 ];
-
-/**
- * 不在 `Category:Modding` 里、但 modding 要用到的页面：
- * `new121`（1.21 新内容）+ `mech`（机制语义）。只取元数据，不拉正文。
- */
-const EXTRA_PAGES = DOMAINS.filter((domain) => domain.key === 'new121' || domain.key === 'mech')
-  .flatMap((domain) => domain.pages);
-const EXTRA_TITLES = new Set(EXTRA_PAGES);
 
 // ---------------------------------------------------------------- HTTP
 
@@ -401,7 +412,8 @@ function day(iso) {
 /**
  * 拉全量数据。
  * @param {string} site 站点根。
- * @returns {Promise<{ pages: Map<string, any>, category120: Set<string>, stats: any, siteinfo: any }>}
+ * @returns {Promise<{ pages: Map<string, any>, validitySet: Set<string>, patchTitles: Set<string>,
+ *   missing: string[], moddingTitles: Set<string>, stats: any, siteinfo: any, site: string }>}
  */
 async function collect(site) {
   const meta = await api(site, { action: 'query', meta: 'siteinfo', siprop: 'statistics|general' });
@@ -432,6 +444,8 @@ async function collect(site) {
       });
     }
   }
+  // Category:Modding 的真实成员（后面会往 pages 里并入非分类页，统计口径要单独留一份）。
+  const moddingTitles = new Set(pages.keys());
 
   // 2) 正文：只为抽 {{version|…}} 横幅。整批一次约 1.2 MB / 80 秒，
   //    所以拿齐所有标题就停，不跟着 rvcontinue 去把 166 KB 的 Triggers list 读完。
@@ -476,49 +490,106 @@ async function collect(site) {
     }
   }
 
-  // 4) 补丁链 + 1.21 新内容 / 机制语义页：都不在 Category:Modding 里，按标题单独取。
-  const metadataTitles = [...PATCHES.map((p) => p.title), ...EXTRA_PAGES];
-  const extra = await api(site, {
-    action: 'query',
-    titles: metadataTitles.join('|'),
-    prop: 'info|revisions',
-    rvprop: 'timestamp',
-  });
-  for (const page of extra.query.pages ?? []) {
-    // 页面被改名 / 删除时 API 会回 missing，跳过并提示，不要让整次生成失败。
-    if (page.missing === true) {
-      console.warn(`⚠ 页面不存在，已跳过：${page.title}`);
-      continue;
-    }
-    pages.set(page.title, {
-      title: page.title,
-      bytes: page.length ?? 0,
-      edited: page.revisions?.[0]?.timestamp ?? '',
-      editor: '',
-      version: undefined,
+  // 4) 补丁链 + 桶内非分类页（1.21 新内容 / 机制语义 / 数据页）：只补拉还没拿到元数据的标题。
+  //    分类成员在上面已带 {{version}} 取过，不能覆盖；改名 / 删除的页进 missing，由 assertCoverage 报错。
+  const knownTitles = new Set([
+    ...PATCHES.map((patch) => patch.title),
+    ...DOMAINS.flatMap((domain) => domain.pages),
+  ]);
+  const metadataTitles = [...knownTitles].filter((title) => !pages.has(title));
+  const missing = [];
+  if (metadataTitles.length > 0) {
+    const extra = await api(site, {
+      action: 'query',
+      titles: metadataTitles.join('|'),
+      prop: 'info|revisions',
+      rvprop: 'timestamp',
     });
+    for (const page of extra.query.pages ?? []) {
+      // 改名 / 删除的页先记下来，由 assertCoverage 统一报错——静默跳过等于判据变弱。
+      if (page.missing === true) {
+        missing.push(page.title);
+        continue;
+      }
+      pages.set(page.title, {
+        title: page.title,
+        bytes: page.length ?? 0,
+        edited: page.revisions?.[0]?.timestamp ?? '',
+        editor: '',
+        version: undefined,
+      });
+    }
   }
 
-  return { pages, validitySet, stats: statistics, siteinfo: general, site };
+  // 5) Category:Patches —— 补丁链自动核对（新开的热修页必须被 PATCHES 认领）。
+  const patchTitles = new Set();
+  const patchQueries = await paged(site, {
+    action: 'query',
+    list: 'categorymembers',
+    cmtitle: 'Category:Patches',
+    cmlimit: '500',
+    cmtype: 'page',
+  });
+  for (const query of patchQueries) {
+    for (const member of query.categorymembers ?? []) {
+      if (member.ns === 0) patchTitles.add(member.title);
+    }
+  }
+
+  return { pages, validitySet, patchTitles, missing, moddingTitles, stats: statistics, siteinfo: general, site };
 }
 
-/** 校验 Category:Modding 全部页面落桶，漏一页就抛（避免 Wiki 新增页面被静默丢掉）。 */
-function assertCoverage(pages) {
+/**
+ * 校验两件事：
+ * 1. Category:Modding 的每一页都落了桶（Wiki 新增页面不允许被静默丢掉）；
+ * 2. 表里点名的页面都还在（改名 / 删除必须显式更新 DOMAINS / PATCHES / NOTES，不能少一行还装绿）。
+ * @param {Map<string, any>} pages 已取到的页面。
+ * @param {string[]} missing 按标题取但 API 报 missing 的页面。
+ * @returns {void}
+ */
+function assertCoverage(pages, missing = []) {
   const bucketed = new Set(DOMAINS.flatMap((domain) => domain.pages));
-  const missing = [...pages.keys()].filter(
+  const unbucketed = [...pages.keys()].filter(
     (title) => !PATCHES.some((p) => p.title === title) && !bucketed.has(title),
   );
+  const problems = [];
+  if (unbucketed.length > 0) {
+    problems.push(`有 ${unbucketed.length} 页没归入任何域，请在 DOMAINS 里补：\n  - ${unbucketed.join('\n  - ')}`);
+  }
   if (missing.length > 0) {
-    throw new Error(
-      `有 ${missing.length} 页没归入任何域，请在 DOMAINS 里补：\n  - ${missing.join('\n  - ')}`,
+    problems.push(
+      `有 ${missing.length} 页不存在（多半已改名 / 删除），请更新 DOMAINS / PATCHES / NOTES：\n  - ${missing.join('\n  - ')}`,
     );
   }
+  if (problems.length > 0) throw new Error(problems.join('\n\n'));
+}
+
+/**
+ * 补丁链自动核对：`Category:Patches` 里属于当前 / 上一个机制大版本的 `Patch 1.x(.X)` 页
+ * 必须全部在 `PATCHES` 里。2026-11-19 的教训——Wiki 新建 `Patch 1.21.X`（hotfix）时，
+ * 旧脚本只会生成一张「少一行」的表，没人会注意到；现在直接报错并点名。
+ * @param {Set<string>} patchTitles Category:Patches 的 ns0 成员。
+ * @returns {void}
+ */
+function assertPatchCoverage(patchTitles) {
+  const known = new Set(PATCHES.map((patch) => patch.title));
+  const families = [VALIDITY_CATEGORY, PREVIOUS_MINOR]
+    .map((minor) => minor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const pattern = new RegExp(`^Patch (?:${families.join('|')})(?:\\.|$)`);
+  const forgotten = [...patchTitles].filter((title) => pattern.test(title) && !known.has(title)).sort();
+  if (forgotten.length === 0) return;
+  throw new Error(
+    `Wiki 有 ${forgotten.length} 个补丁页没进 PATCHES（${VALIDITY_CATEGORY} / ${PREVIOUS_MINOR} 家族）：\n`
+    + `  - ${forgotten.join('\n  - ')}\n`
+    + '在 PATCHES 里补一行（标题 + 一句用途），再重跑。',
+  );
 }
 
 // ---------------------------------------------------------------- render
 
 /** 渲染表体（不含头部，`--check` 只比对这一部分）。 */
-function renderBody({ pages, validitySet }) {
+function renderBody({ pages, validitySet, moddingTitles }) {
+  const moddingCount = moddingTitles instanceof Set ? moddingTitles.size : '?';
   const lines = [];
   lines.push('## 怎么用这张表');
   lines.push('');
@@ -544,6 +615,13 @@ function renderBody({ pages, validitySet }) {
     if (domain.key === 'mech') {
       lines.push('不在 `Category:Modding` 里、但 modding 常要查语义的机制页。Wiki 只答「是什么」，脚本怎么写仍回层 2。');
       lines.push('');
+    }
+    if (domain.key === 'data') {
+      const extras = domain.pages.filter((title) => !(moddingTitles instanceof Set) || !moddingTitles.has(title));
+      if (extras.length > 0) {
+        lines.push(`其中 ${extras.join(' / ')} 不在 \`Category:Modding\` 里（按 modding 用途收录）。`);
+        lines.push('');
+      }
     }
     lines.push(`| 页面 | 体积 | 最后编辑 | 声明版本 | ${VALIDITY_CATEGORY} | 备注 |`);
     lines.push('|---|---:|---|---|:--:|---|');
@@ -592,7 +670,7 @@ function renderBody({ pages, validitySet }) {
 
   lines.push('## 范围与排除');
   lines.push('');
-  lines.push(`- 本表覆盖 \`Category:Modding\` 全部页面 + **1.21 新内容（${DOMAINS.find((d) => d.key === 'new121')?.pages.length ?? 0} 页）** + **机制语义（${DOMAINS.find((d) => d.key === 'mech')?.pages.length ?? 0} 页）** + 补丁链；\`Category:${VALIDITY_CATEGORY}\` 只用来判新鲜度，不逐条展开。`);
+  lines.push(`- 本表覆盖 \`Category:Modding\` 全部 ${moddingCount} 页，外加 **1.21 新内容（${DOMAINS.find((d) => d.key === 'new121')?.pages.length ?? 0} 页）**、**机制语义（${DOMAINS.find((d) => d.key === 'mech')?.pages.length ?? 0} 页）**、少量非分类数据页与补丁链；\`Category:${VALIDITY_CATEGORY}\` 只用来判新鲜度，不逐条展开。`);
   lines.push('- **不收录**：`Category:Mods` 下 9 个第三方 mod 分类（CK3AGOT · LotR:RiE · RICE · Rajas of Asia · The Fallen Eagle · Way of Kings · When the World Stopped Making Sense · WCGOA · Mod images），合计约 115 页。我们只借鉴模式，不抄工坊 mod 的代码与文案（skill 硬规则 8）。');
   lines.push('- 机制语义那一桶是**按 modding 用途手挑的**，不是 Category:Modding 的成员；没挑进来的玩家向页面（如 `Achievement`、`Beginner\'s guide`）用 `ck3wiki_search` 现查即可。');
   lines.push('- 表是生成时的快照（生成时间见文件头）；下次 CK3 更新后先跑一次 `node scripts/wiki-atlas.mjs` 再开工。');
@@ -657,7 +735,8 @@ function parseArgs(argv) {
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   const data = await collect(options.site);
-  assertCoverage(data.pages);
+  assertCoverage(data.pages, data.missing);
+  assertPatchCoverage(data.patchTitles);
   const markdown = render(data);
 
   if (options.check) {
@@ -684,11 +763,14 @@ async function main() {
 
   fs.mkdirSync(path.dirname(options.out), { recursive: true });
   fs.writeFileSync(options.out, markdown, 'utf8');
-  const modding = DOMAINS.filter((d) => d.key !== 'new121' && d.key !== 'mech')
+  const bucketRows = DOMAINS.filter((d) => d.key !== 'new121' && d.key !== 'mech')
     .flatMap((d) => d.pages).length;
+  const extraRows = DOMAINS.filter((d) => d.key !== 'new121' && d.key !== 'mech')
+    .flatMap((d) => d.pages).filter((title) => !data.moddingTitles.has(title)).length;
   console.log(`✓ 已写入 ${options.out}`);
   console.log(
-    `  Category:Modding ${modding} 页 · 1.21 新内容 ${DOMAINS.find((d) => d.key === 'new121').pages.length} 页`
+    `  Category:Modding ${data.moddingTitles.size} 页（表内 ${bucketRows} 行${extraRows > 0 ? `，含 ${extraRows} 个非分类页` : ''}）`
+    + ` · 1.21 新内容 ${DOMAINS.find((d) => d.key === 'new121').pages.length} 页`
     + ` · 机制语义 ${DOMAINS.find((d) => d.key === 'mech').pages.length} 页`
     + ` · Category:${VALIDITY_CATEGORY} ${data.validitySet.size} 页 · 补丁 ${PATCHES.length} 条`,
   );

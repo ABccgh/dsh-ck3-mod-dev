@@ -12,10 +12,10 @@
  *   2. 三份知识层文件的必需节（SKILL / verified-notes / ingame-acceptance）；
  *   3. 复盘映射锚点：每条编号对应的关键句必须还在原文件里（删了 = 复盘落地断链）；
  *      锚点集 = 11-18 的 A1…H7（28 条）+ 11-18b 的 P1–P16（23 条）+ 11-18c 的 Q1–Q12（13 条）
- *      + 人格层与 cli 的 8 条 = 72 条；另外断言**锚点总数**与**每个复盘编号至少 1 条**
- *      （删锚点 = 少查几项，不能让它悄悄变绿——这正是复盘 Q2「判据自己变弱也是 bug」）；
+ *      + 11-19 hotfix 的 R1–R3（7 条）+ 人格层与 cli 的 8 条 = 79 条；另外断言**锚点总数**与
+ *      **每个复盘编号至少 1 条**（删锚点 = 少查几项，不能让它悄悄变绿——这正是复盘 Q2「判据自己变弱也是 bug」）；
  *   4. 人格层 `cordis.patch.yml`：必备判断句在、会漂的旧话（dejure 2.2 / 吃掉行尾 / 少 1 属正常 /
- *      七层 / 版本枚举）不在；SKILL 的 References 必须点到三份复盘；
+ *      七层 / 版本枚举）不在；SKILL 的 References 必须点到四份复盘；
  *   5. 版本口径：package.json / README 顶部 / README §13 最新条目 / SKILL metadata 互相一致；
  *   6. 部署副本：仓库 vs `~/.agents/skills/ck3-modding` vs `~/dsh-bundles/ck3moddev` 的哈希。
  *
@@ -43,13 +43,13 @@ const DEPLOY_DEFAULT = path.join(os.homedir(), '.agents', 'skills', 'ck3-modding
 const BUNDLE_DEFAULT = path.join(os.homedir(), 'dsh-bundles', 'ck3moddev');
 
 /** 硬规则的期望条数。新增规则时**先改这里**，让「改了数字」成为一次有意识的动作。 */
-const EXPECTED_RULE_COUNT = 29;
+const EXPECTED_RULE_COUNT = 30;
 
 /**
  * 锚点总数的期望值。删/改锚点时**先改这里**：它是「判据自己变弱也是 bug」的兜底——
  * 以前删一条锚点只是通过项少一个，照样打印「✓ 通过」。
  */
-const EXPECTED_ANCHOR_COUNT = 72;
+const EXPECTED_ANCHOR_COUNT = 79;
 
 /** 人格层（预设的 system prompt）文件；它是最先被模型读到的一层，最容易漂。 */
 const PATCH_FILE = 'cordis.patch.yml';
@@ -85,9 +85,10 @@ const SKILL_SECTIONS = [
   '## References',
 ];
 
-/** verified-notes.md 必须有的分节（14 组实测要点 + 改名表 + 验证判据）。 */
+/** verified-notes.md 必须有的分节（16 组实测要点 + 改名表 + 验证判据）。 */
 const NOTES_SECTIONS = [
   '## 1.21 改名与「patch note ≠ 实机名」',
+  '## [hotfix] 热修与版本口径（1.21 hotfix，2026-11-18 发布 / 本机 11-19 收到）',
   '## [interaction] 角色互动（character interaction）',
   '## [cb] 宣战理由（casus belli）',
   '## [government] 政体（government）',
@@ -129,7 +130,8 @@ const RUNBOOK_SECTIONS = [
 
 /**
  * 每一轮复盘用掉的编号段。每个编号**至少要有一条锚点**——缺了说明那一条的落点被删了。
- * 编号来源：11-18 的 A–E/H（H2/H3 已并入 H1）、11-18b 的 P1–P16 + P24、11-18c 的 Q1–Q12。
+ * 编号来源：11-18 的 A–E/H（H2/H3 已并入 H1）、11-18b 的 P1–P16 + P24、11-18c 的 Q1–Q12、
+ * 11-19 hotfix 的 R1–R3。
  */
 const RETRO_IDS = [
   'A1', 'A2',
@@ -141,6 +143,7 @@ const RETRO_IDS = [
   'P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10',
   'P11', 'P12', 'P13', 'P14', 'P15', 'P16', 'P24',
   'Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8', 'Q9', 'Q10', 'Q11', 'Q12',
+  'R1', 'R2', 'R3',
 ];
 
 /** 人格层必须出现的判断句/关键词（都是 11-18c 的结论，缺了就等于人格又漂回去了）。 */
@@ -165,6 +168,7 @@ const SKILL_REQUIRED_REFS = [
   'retro-2026-11-18-ck3mod.md',
   'retro-2026-11-18b-ck3mod-auto-v2.1.md',
   'retro-2026-11-18c-ck3mod-dejure-v2.3.md',
+  'retro-2026-11-19-ck3mod-hotfix.md',
 ];
 
 /**
@@ -249,6 +253,14 @@ const ANCHORS = [
   { id: 'Q12', file: PATCH_FILE, needle: '断网时三信号', label: '人格层：断网降级 SKIP' },
   // 工具链：--root 会转发、未知参数会报错（SKILL 的 Shared checker 段）。
   { id: 'CLI', file: SKILL_FILE, needle: '未知参数都会报错退出 2', label: 'cli：参数不再静默忽略' },
+  // 2026-11-19 · 1.21 hotfix（全站复核）：R1–R3，共 7 条。
+  { id: 'R1', file: SKILL_FILE, needle: 'buildid', label: '规则 30：buildid + mtime 判热修' },
+  { id: 'R1', file: NOTES_FILE, needle: '26757580', label: 'hotfix 节：buildid 前后值' },
+  { id: 'R1', file: PATCH_FILE, needle: 'buildid', label: '人格层：热修看 buildid' },
+  { id: 'R2', file: NOTES_FILE, needle: '别编 1.21.1', label: 'hotfix 节：不编版本号' },
+  { id: 'R2', file: SKILL_FILE, needle: '没有版本号', label: '规则 30：Wiki 页未给版本号' },
+  { id: 'R3', file: NOTES_FILE, needle: '81 个文件', label: 'hotfix 节：影响面文件清单' },
+  { id: 'R3', file: SKILL_FILE, needle: '热修后第一件事', label: '规则 30：热修后先跑 check' },
 ];
 
 /**

@@ -70,7 +70,15 @@ test('删掉硬规则 26 报 SKILL/rules', () => {
   const { code, out } = run(['--repo', root, '--no-deploy']);
   assert.equal(code, 1, out);
   assert.match(out, /\[SKILL\/rules\]/);
-  assert.match(out, /应为 1–29/);
+  assert.match(out, /应为 1–30/);
+});
+
+test('改掉 R1 的 buildid 锚点时报 R1', () => {
+  const root = makeRepo();
+  write(root, NOTES_REL, read(root, NOTES_REL).replaceAll('26757580', '99999999'));
+  const { code, out } = run(['--repo', root, '--no-deploy']);
+  assert.equal(code, 1, out);
+  assert.match(out, /\[R1\]/);
 });
 
 test('改掉 Q5 的锚点句时报 Q5', () => {
@@ -113,7 +121,7 @@ test('--list-anchors 总数与期望一致、复盘编号有落点', () => {
   const matched = /锚点：(\d+) 条 \/ \d+ 个编号（期望 (\d+)）/.exec(out);
   assert.ok(matched, out);
   assert.equal(Number(matched[1]), Number(matched[2]), out);
-  for (const id of ['Q1', 'Q12', 'P1', 'P24', 'H7', 'CLI']) {
+  for (const id of ['Q1', 'Q12', 'P1', 'P24', 'H7', 'R1', 'CLI']) {
     assert.match(out, new RegExp(`^  ${id} \\d+$`, 'm'), `缺少 ${id} 的锚点`);
   }
 });

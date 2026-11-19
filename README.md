@@ -4,7 +4,7 @@
 > 外加 8 个 `ck3mod_*` 工具。工具只做**调用与汇总**——校验规则仍然归四个 mod 自己的
 > `工具-*.mjs` 与 `ck3-modding-tools/cli.mjs`，本插件一份都不复制。
 
-- 包名：`@local/ck3moddev` · 版本 0.5.2 · MIT
+- 包名：`@local/ck3moddev` · 版本 0.6.0 · MIT
 - 作用域：Windows 本机、profile `desktop`、游戏 **CK3 1.21.0 "Florin"**
 - 只做新增：不覆盖、不删除、不改动任何现有插件（`@local/ck3wiki`、`@local/steam`、`@local/prts` 等原样保留）
 - 仓库：<https://github.com/ABccgh/dsh-ck3-mod-dev>（MIT）
@@ -133,6 +133,7 @@ plugin_manager  action: install_bundle  target: %USERPROFILE%\dsh-bundles\ck3mod
 | `workspaceRoot` | `D:\DSH workspace` | 工作区根 |
 | `toolsDir` | `<workspaceRoot>\ck3-modding-tools` | **唯一 mod 注册表**（`configs.mjs`） |
 | `gameRoot` | `D:\Program Files (x86)\Steam\steamapps\common\Crusader Kings III` | 只读 |
+| `steamAppsDir` | `<gameRoot>\..\..`（即 `steamapps`） | `appmanifest_1158310.acf` 所在层；非 Steam 库或自定义目录时覆盖 |
 | `userDir` | `C:\Users\11210\Documents\Paradox Interactive\Crusader Kings III` | `mod/`、`logs/`、`dlc_load.json` |
 | `nodePath` | 空 = 自动探测 | 探测顺序：配置 → `$DSH_HOME/dsh-runtimes/<runtime>/dependencies/node/bin/node{,.exe}` → PATH |
 | `allowGlobalToolPrefixes` | `['ck3wiki_', 'steam_']` | 全局工具白名单（其余在 CK3 会话里隐藏） |
@@ -140,7 +141,8 @@ plugin_manager  action: install_bundle  target: %USERPROFILE%\dsh-bundles\ck3mod
 | `headlessTimeoutSec` | `240` | 单次无头上限（30–900） |
 | `maxOutputChars` | `12000` | 单工具展示上限；超出部分落 `%TEMP%\ck3mod\` |
 
-派生路径：`modsDir=<userDir>\mod`、`logDir=<userDir>\logs`、`gameExe=<gameRoot>\binaries\ck3.exe`。
+派生路径：`modsDir=<userDir>\mod`、`logDir=<userDir>\logs`、`gameExe=<gameRoot>\binaries\ck3.exe`、
+`appManifest=<steamAppsDir>\appmanifest_1158310.acf`。
 
 > **为什么不能直接用 `process.execPath`**：Host 跑在 Electron 主进程里，`process.execPath` 是
 > `DeepSeek Harness.exe`，直接拿去跑 `.mjs` 会启动一个第二个 Harness。必须显式给 node 路径。
@@ -151,7 +153,7 @@ plugin_manager  action: install_bundle  target: %USERPROFILE%\dsh-bundles\ck3mod
 
 | 工具 | 写盘 | 启动游戏 | 说明 |
 |---|---|---|---|
-| `ck3mod_status` | — | — | 环境 + 四 mod 总览：快照/本机副本、能力、git、游戏版本、日志时间、播放集哈希 |
+| `ck3mod_status` | — | — | 环境 + 四 mod 总览：快照/本机副本、能力、git、游戏版本与 **Steam buildid**（判热修）、日志时间、播放集哈希 |
 | `ck3mod_check` | — | — | `check` / `loc` / `reverse` / `selftest`，跑共享 CLI 的 `--json` 并渲染 |
 | `ck3mod_build` | ✅ 发布快照 | — | `generate` / `normalize`（写）或 `*-check`（只比对）/ `pipeline` |
 | `ck3mod_deploy` | ✅ `Documents\...\mod` | — | `deploy` / `check` / `clean`；按 mod 自己的部署脚本，能力探测决定 `--prune` 等 |
@@ -264,12 +266,12 @@ Steam 的 8000 字节上限是**每个上传字段**的，所以 `工坊描述-B
 | 文件 | 作用 |
 |---|---|
 | `skills/ck3-modding/SKILL.md` | 流水线、硬规则、Wiki 路由表（「要点」列指向实测小节）、1.21 变化、覆盖与兼容、真机验收铁律 |
-| `skills/ck3-modding/references/verified-notes.md` | 15 组实测要点：interaction / CB / 政体 / Resources / 议会 / 故事循环 / 斗争 / district / trade / road / laws / ingame / automation / release / verify，每条带 **1.21.0** 的 `.info` 行号，按需只读一节；顶部另有「1.21 改名与 patch note 落差」表 |
-| `skills/ck3-modding/references/ck3-wiki-atlas.md` | 生成物：Category:Modding 全 67 页 + **1.21 新内容 11 页 + 机制语义 25 页** + Category:1.21 校验集 + 补丁链，带最后编辑与 `{{version}}` |
-| `skills/ck3-modding/scripts/wiki-atlas.mjs` | 索引生成器；`--check` 验鲜，漂移退出码 1 |
+| `skills/ck3-modding/references/verified-notes.md` | 16 组实测要点：hotfix / interaction / CB / 政体 / Resources / 议会 / 故事循环 / 斗争 / district / trade / road / laws / ingame / automation / release / verify，每条带 **1.21.0** 的 `.info` 行号，按需只读一节；顶部另有「1.21 改名与 patch note 落差」表 |
+| `skills/ck3-modding/references/ck3-wiki-atlas.md` | 生成物：Category:Modding 全 67 页 + **1.21 新内容 11 页 + 机制语义 27 页** + Category:1.21 校验集（76 页）+ 补丁链（7 条，含 1.21 hotfix），带最后编辑与 `{{version}}` |
+| `skills/ck3-modding/scripts/wiki-atlas.mjs` | 索引生成器；`--check` 验鲜；补丁链 / 页面改名有机器断言（缺页退出 1） |
 | `skills/ck3-modding/references/ingame-acceptance.md` | 真机验收 runbook：准备 / 启动（`-skip -play=`）/ 四 mod 矩阵 / 证据规范 / 收尾 / §9 机器代点（可选） |
 | `工具-同步技能.mjs` | 仓库 `skills/` → 用户 skill 目录；`--check` 只比对，`--dest` 改目标 |
-| `工具-知识层检查.mjs` | **知识层 lint**：硬规则 1–26 连续、三份文件的必需节、复盘映射锚点（A1…H7 + P1–P16，共 51 条）、版本口径、部署副本哈希；失败退出码 1 |
+| `工具-知识层检查.mjs` | **知识层 lint**：硬规则 1–30 连续、三份文件的必需节、复盘映射锚点（A1…H7 + P1–P16 + Q1–Q12 + R1–R3，共 79 条）、版本口径、部署副本哈希；失败退出码 1 |
 | `工具-真机现场.mjs` | 真机验收现场保护：`--begin` 快照存档/设置/播放集，`--end` 按字节还原并核对 SHA256 |
 
 ### 8.1 三层真相
@@ -283,7 +285,7 @@ Steam 的 8000 字节上限是**每个上传字段**的，所以 `工坊描述-B
 一句话：**Wiki 用来理解，原版用来确认，静态校验用来兜底**。`Effects list` / `Triggers list`
 是抄录版、页面自己都写着 outdated，只能用来找名字。
 
-**1.21 的特殊纪律**：Wiki 的 modding 层整体没跟上——`Category:1.21`（75 页）里只有
+**1.21 的特殊纪律**：Wiki 的 modding 层整体没跟上——`Category:1.21`（76 页）里只有
 `Console commands` 一个 Modding 页。所以 1.21 的结论默认先回层 2，Wiki 只取语义；
 连 patch note 的名字都可能对不上（`monthly_tax`、`add_regular_district` 等，详见
 `verified-notes.md` 顶部表），一律以 `grep` 实机结果为准。
@@ -353,6 +355,9 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
   所以部署 patch 天然是「本机配置」，换机或换目录要照 §3.1 改；`lib/config.js` 的默认值则是机器中立的。
 - **Wiki 索引是快照，不是真相**：`--check` 只说明「表体与线上一致」，不保证页面内容正确；
   页面本身也会过期（`Effects list` / `Triggers list` 是抄录版），结论仍要回 `.info` 复核。
+- **热修可能不改版本串**：`launcher-settings.json` 由启动器回写、`ck3.exe` 里也可能是旧串
+  （2026-11-19 的 1.21 hotfix 实测：buildid `26622941 → 26757580`、81 个文件被换，而三处版本串都没变）。
+  判「吃没吃热修」只能看 `ck3mod_status` 的「游戏构建」行（appmanifest buildid + exe mtime）。
 - **skill 是两处副本**：仓库 `skills/` 是源，`~\.agents\skills\ck3-modding` 是部署副本；改完必须跑
   `工具-同步技能.mjs`，否则会话里加载的是旧副本。`--check` 可随时验漂移。
 - **没有无人值守的脚本测试入口（1.21 复测）**：`tests/_tests.info` 只给了游戏内控制台命令
@@ -381,7 +386,7 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 
 - 加/删工具：改 `lib/tools/*.js` 并在 `lib/index.js` 的 `createTools` 里登记；同步 `test/plugin.test.js` 的名字列表。
 - 换默认路径：改 `cordis.patch.yml` 的 `ck3mod-tools.config`（重载即可，不必重启）。
-- CK3 更新后：先 `ck3mod_status` 看游戏版本，再 `ck3mod_check mod=all` 跑基线；
+- CK3 更新后：先 `ck3mod_status` 看**游戏构建（buildid + 安装时间）**——热修不一定改版本串；再 `ck3mod_check mod=all` 跑基线；
   无头命令若因引擎参数变化失败，改 `lib/headless.js` 的 `GAME_ARGS`（唯一一处）。
 - **CK3 大版本更新后**按这个顺序刷新知识层：
   1. 改 `scripts/wiki-atlas.mjs` 的 `GAME_VERSION` 与 `VALIDITY_CATEGORY`（如 `'1.21'` → `'1.22'`），
@@ -407,6 +412,31 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 5. **开游戏前先 `--begin`，收场用杀进程 + `--end`**；游戏内「退出游戏」会覆盖 `autosave_exit` / `last_save`。
 
 ## 13. 更新记录
+
+### 0.6.0（2026-11-19）— 全站 Wiki 复核 + 1.21 hotfix 口径（buildid 判据 + `[hotfix]` 节 + status 报构建）
+
+- **触发**：用户要求「全面检索 CK3 Wiki 上的所有内容，对智能体全面更新」。全站复核（8312 页 / 496 条目；
+  `Category:Modding` 67、`Category:1.21` 76、`Category:Patches` 43）发现三件事：Wiki 新开 `Patch 1.21.X`
+  （1.21 hotfix，2026-11-18，**无 Modding 段、无版本号**）、`Lifestyle` 拆成枢纽页 + `Ruler lifestyle`、
+  `Army` 成本表改由新页 `Base Army Cost` 驱动；同时本机 2026-11-19 13:28 被 Steam 静默热修
+  （buildid `26622941 → 26757580`、81 个文件），而 `launcher-settings.json` / `titus_branch.txt` / exe 的版本串
+  **全都没变**——旧知识层「版本 = 1.21.0」的写法读不出这次更新。
+- **atlas**：`scripts/wiki-atlas.mjs` 增 `PREVIOUS_MINOR` + `assertPatchCoverage`（`Category:Patches` 里属于
+  1.21 / 1.20 家族的页必须进 `PATCHES`，否则退出 1）、`assertCoverage` 把改名/删除页从 warn 升级为报错；
+  `mech` 增 `Lifestyle`、`Ruler lifestyle`（25 → 27），`data` 增 `Base Army Cost`；9 个漂移页与 3 个新页入表；
+  重新生成后 `--check` 一致（113 页元数据、76 页 1.21 校验集、补丁 7 条）。
+- **SKILL.md 0.8.0**：Environment 写实热修（buildid / 81 文件 / 版本串不变）；「1.21 变化」加 hotfix 条；
+  三层真相 75 → 76；路由表加「热修 / 版本口径」并更新兵种、生活方式两行；**硬规则 30**（buildid + mtime 判热修、
+  热修后先 `check --all`、Wiki 没给版本号就别编 `1.21.1`）；References 加 11-19 复盘。
+- **verified-notes.md**：新增 `## [hotfix]`（R1 判据 / R2 不编版本号 / R3 影响面取证），改名表加一行；
+  头部核对日期改 2026-11-19。
+- **人格层**：加「热修不一定改版本号，看 buildid + exe mtime」一段，不写 mod 版本枚举。
+- **lib**：`config` 派生 `steamAppsDir` / `appManifest`（可配置覆盖）；`registry.readGameBuild()` 读 ACF 的
+  buildid / LastUpdated / StateFlags；`ck3mod_status` 新增「游戏构建」行，并在 launcher-settings 落后时提示。
+- **lint**：规则 29 → 30、锚点 72 → **79**（R1–R3 共 7 条）、新增 `[hotfix]` 必需节、References 四份复盘；
+  检查项 87 → **94**。单测 93 → **96**（readGameBuild、status 构建行/滞后提示、R1 锚点）。
+- 验证：`工具-知识层检查.mjs` 94 项全过；`npm test` 96 pass；`cli.mjs check --all` 4/4、`reverse --all` 4/4；
+  `wiki-atlas.mjs --check` 一致；`工具-同步技能.mjs --check` 一致；文档链接 0 缺失；bundle 关开后 0.6.0。
 
 ### 0.5.2（2026-11-18）— 人格层对齐 11-18c + 判据自证（锚点总数 / 编号覆盖 / 人格 / References）
 

@@ -1,10 +1,11 @@
 # CK3 1.21.0 实测要点（按域）
 
 > 这些是**我们自己在原版 `.info` 与 `common/` 上核过**的结论，不是 Wiki 摘抄；每条都带可指认的行号或实例。
-> 游戏版本：**1.21.0 "Florin"**（2026-11-17 发布，本机 2026-11-18 更新）；核对日期：2026-11-18。
+> 游戏版本：**1.21.0 "Florin"**（2026-11-17 发布；本机 11-18 首次安装、**11-19 收到 1.21 hotfix**，
+> buildid `26757580`）；核对日期：2026-11-19。
 > 用法：只在要动某个域时读对应一节（`[slug]`），不要整篇读。
 > 维护：写进来的必须能指认（`.info` 行号 / vanilla 实例）；大版本更新后逐条复核，**失效的删掉**，不要留在里面。
-> 收录：`[interaction]` `[cb]` `[government]` `[resources]` `[council]` `[story]` `[struggle]` `[district]` `[trade]` `[road]` `[laws]` `[ingame]` `[automation]` `[release]` `[verify]`
+> 收录：`[hotfix]` `[interaction]` `[cb]` `[government]` `[resources]` `[council]` `[story]` `[struggle]` `[district]` `[trade]` `[road]` `[laws]` `[ingame]` `[automation]` `[release]` `[verify]`
 > 分工：本文件只放**实测事实**；怎么点、怎么跑在 `ingame-acceptance.md`；规则与红线在 `SKILL.md` 的 Hard rules。
 
 ---
@@ -24,6 +25,35 @@ Patch 1.21 的 Modding 段很密，但**有几条与安装目录对不上**。�
 | `province_mapping` 移除、省份历史重构 | `history/provinces/` 现按王国分文件（`k_england.txt` …），不再有 `00_*.txt` 总表 | 目录实况 |
 | `has_free_building_slot` 改 district scope | 在 district / building 上写；province 上写是 1.9 时代的老习惯 | `00_great_project_types.txt` L3502；见 `[district]` |
 | patch 点名的这些「新增」名，vanilla **0 调用**：`add_regular_district`（effects loc 存在，L4223）、`set_road_tier`、`building_constructor`、`has_next_building_level`、`can_be_upgraded`、`district_has_building_with_flag`、`has_building_flag`、`add_trade_good_modifier`（**不存在**，真名 `add_trade_good_price_modifier`） | 代码可能提供但原版没用；本机未进游戏实测 → 用前先跑一次控制台验证，别凭 patch note 直接上线 | `localization/english/effects_l_english.yml` L4223 / L4025；`scripted_effects/trade_good_price_modifiers.txt` L1 |
+| 1.21 hotfix（Wiki `Patch 1.21.X`） | 页面**没有版本号**，只有「1.21 hotfix」（2026-11-18）；本机 2026-11-19 收到，exe 仍嵌 `1.21.0` / `Florin` | `appmanifest_1158310.acf` buildid `26757580`；`binaries\ck3.exe` mtime 11-19 13:28:30；`launcher-settings.json` mtime 11-18（未回写） |
+
+---
+
+## [hotfix] 热修与版本口径（1.21 hotfix，2026-11-18 发布 / 本机 11-19 收到）
+
+**R1 · 版本串不是热修信号。** 2026-11-19 13:28 本机被 Steam 静默替换 81 个文件，而三处「版本」全都没变：
+`titus_branch.txt` 仍 `release/1.21.0`、`launcher-settings.json` 仍 `1.21.0 (Florin)`（mtime 停在 11-18 13:22，
+它由启动器写、下次启动才回写）、`ck3.exe` 里也只有 `1.21.0`/`Florin` 两个串。真正的信号是
+`steamapps\appmanifest_1158310.acf`：`buildid` `26622941 → 26757580`、`LastUpdated` = 2026-11-19 13:28:37，
+配合 `binaries\ck3.exe` 的 mtime（13:28:30）。`ck3mod_status` 的「游戏构建」行现在直接打印
+buildid + Steam 安装时间 + exe mtime，并在 launcher-settings 落后时提示「版本串可能滞后」。
+
+**R2 · Wiki 页可能没有版本号，别编。** Wiki 的 `Patch 1.21.X`（2026-11-18 由 Kami-sama 新建）正文只写
+「1.21 hotfix … released on 2026-11-18」，**没有 1.21.1 / 1.21.0.x 这类编号**，本机文件同样没有。
+所以记录一律写「1.21 hotfix（2026-11-18）+ buildid 26757580」，**别编 1.21.1**——编出来的版本号
+下次会被人当成事实，拿去对 `supported_version` 或写进发布说明。
+
+**R3 · 影响面按文件清单取证，不能只信「平衡补丁」四个字。** 热修改动 81 个文件：
+`game/common` 31（含 **2 个原版 CB 文件** `casus_belli_types/00_event_war.txt`、`01_fp1_wars.txt`，
+以及 `governments/00_government_types.txt`、`on_action/game_start.txt`、`traditions/*`、`lifestyle_perks/*`、
+`modifiers/*`、`scripted_effects/*`、`situation/*`、`trade/county_potential_trade_goods/*`）、`localization` 27、
+`history` 11（`characters/*` 起始军队 + `provinces/k_huainan.txt` Yangzhou 改产丝绸）、`events` 3、`gui` 3。
+**de-jure 依赖的 `scripted_effects/00_war_effects.txt` 没动**（mtime 仍 11-18），wrapper 契约不变；
+热修后 `cli.mjs check --all` **4/4 PASS**（loc 122 / 28 / 84 / 94、0 error）——这才是「与四个 mod 的脚本面
+不相交」的证据。无头冒烟本轮 **SKIP**：只更新知识层与工具层、没部署任何 mod，跑无头会改播放集与存档。
+
+**用法**：以后每次「CK3 更新了」先看 buildid / mtime（`ck3mod_status`），再跑 `check --all`，最后才决定
+要不要读 `Patch 1.x.X`；热修页没有 Modding 段时，不要为「兼容」改任何脚本。
 
 ---
 

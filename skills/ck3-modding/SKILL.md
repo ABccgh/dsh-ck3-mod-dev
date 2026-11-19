@@ -9,7 +9,7 @@ description: |
   the four published mods, the shared toolchain, or the wiki atlas.
 metadata:
   author: "local workspace"
-  version: "0.7.2"
+  version: "0.8.0"
 ---
 
 # CK3 Modding — Workspace Playbook
@@ -32,7 +32,8 @@ Do **not** load it for playing the game or for unrelated projects.
 1. `D:\DSH workspace\工作区索引.md` — current state, version notes, which mod is where.
 2. The mod's `README.md` — its "怎么改 / 下次 CK3 更新时 / 注意事项" sections are the operational truth.
 3. `references/ck3-wiki-atlas.md`（本 skill 目录下，加载 skill 时会给 base dir）——
-   Wiki 全量导航：67 个 modding 页 + 1.21 新内容 11 页 + 机制语义 25 页，含最后编辑、`{{version}}`、是否 1.21 口径。
+   Wiki 全量导航：67 个 modding 页 + 1.21 新内容 11 页 + 机制语义 27 页 + 补丁链 7 条（含 1.21 hotfix 页），
+   含最后编辑、`{{version}}`、是否 1.21 口径。
 4. `references/verified-notes.md` — **动手前**按路由表的「要点」列读对应小节（`[interaction]` / `[cb]` /
    `[district]` …）：1.21.0 实测结论，每条带 `.info` 行号，只读需要的那节。
 5. `references/ingame-acceptance.md` — **要进游戏验收时**读它：准备/启动/四 mod 矩阵/证据/收尾。
@@ -50,9 +51,12 @@ Never infer a path or a command from memory; read the mod README first.
 - Python (not on PATH):
   `C:\Users\11210\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe`
 - Steam Workshop content: `D:\Program Files (x86)\Steam\steamapps\workshop\content\1158310`.
-- Game version: **1.21.0 "Florin"**（Wiki 记 2026-11-17 与 Silk & Silver 同日发布；本机 2026-11-18 更新，
-  `launcher\launcher-settings.json` = `1.21.0 (Florin)`、`titus_branch.txt` = `release/1.21.0`、
-  `appmanifest_1158310.acf` buildid `26622941` 可复核）。
+- Game version: **1.21.0 "Florin"**（Wiki 记 2026-11-17 与 Silk & Silver 同日发布；本机 2026-11-18 首次安装）。
+  **2026-11-19 13:28 本机收到 1.21 hotfix**：`appmanifest_1158310.acf` buildid `26622941 → 26757580`，
+  81 个文件被替换（`game/common` 31 · `localization` 27 · `history` 11 · `events` 3 · `gui` 3 …）。
+  **版本串没变**：`titus_branch.txt` 仍 `release/1.21.0`、`ck3.exe` 仍嵌 `1.21.0`/`Florin`、
+  `launcher-settings.json` 停在前一天（启动器下次启动才回写）→ **判「吃没吃热修」看 buildid + 文件 mtime**，
+  `ck3mod_status` 的「游戏构建」行已报；热修后第一件事仍是 `check --all`。详见 `[hotfix]`。
 - 四个 mod 的当前发布快照：`ck3-auto-spread` **2.1** · `ck3-curse` **1.0** ·
   `ck3-de-jure-conquest` **2.3** · `ck3-free-resources` **4.1**。
   **free / auto / de-jure 都已按 1.21 发布**（free 2026-11-18 16:23；auto 同日 20:21；de-jure 同日 22:41。
@@ -94,6 +98,9 @@ Never infer a path or a command from memory; read the mod README first.
   CB 的 cost / AI score / trigger 被"清理成更易 patch"的形式。见 `[cb]`。
 - **`game/tests/` + `scripted_tests`**：1.21 自带 20 个脚本测试文件，`tests/_tests.info` 写明用控制台
   `scripted_tests [pattern]` 运行。但**自动入口仍未打通**（见硬规则 9）。
+- **1.21 hotfix（2026-11-18，Wiki 新页 `Patch 1.21.X`）**：纯平衡（867/1066 起始军队、Norse/Varangian
+  入侵规模、MAA 招募与维护折扣、Yangzhou 改产丝绸）+ 崩溃修复 + 贸易/选举若干 bugfix，**没有 Modding 段**；
+  Wiki 页**没有版本号**，别编 `1.21.1`。本机 11-19 才收到；四个 mod `check --all` 仍 4/4 → 与我们的脚本面不相交。见 `[hotfix]`。
 
 ## 查资料：三层真相
 
@@ -105,7 +112,7 @@ Never infer a path or a command from memory; read the mod README first.
 | 2 | 本机原版 1.21.0：`.info` 文档与 `common/`（`ck3mod_vanilla`） | 键名、类型、参数、这个键现在还在不在 | 只有 DLC 新内容才可能缺 |
 | 3 | 四个 mod 自己的 `数据-*.mjs` + `工具-静态校验.mjs` + loc 检查 | 我们自己的不变量与契约 | 只覆盖我们写过的规则 |
 
-**1.21 期间的额外纪律**：Wiki 的 modding 层整体没跟上——`Category:1.21` 75 页里只有 `Console commands`
+**1.21 期间的额外纪律**：Wiki 的 modding 层整体没跟上——`Category:1.21` 76 页里只有 `Console commands`
 一个 Modding 页。所以 **1.21 的结论默认先走层 2（`.info` + 现行脚本），Wiki 只取语义与示例**；
 patch note 也不可信到名字级别（见 `verified-notes.md` 顶部「改名与落差」表）。
 
@@ -149,8 +156,8 @@ patch note 也不可信到名字级别（见 `verified-notes.md` 顶部「改名
 | 贸易 / 商业共和国 | **无 modding 页**；`Market`、`Merchant`、`Merchant lifestyle`、`Republican`、`Trade company` | `common/trade/**`、`common/trade_tasks/` | `[trade]` |
 | 道路 / 地图样条 | **无专页**；`Map modding` | `common/roads/**` + `gfx/map/spline_network/` | `[road]` |
 | 法律 | `Laws`（1.21 口径） | `common/laws/_laws.info`、`common/law_groups/` | `[laws]` |
-| 兵种 / 常备军 | `Regiments modding`；`Army`、`Hired forces` | `common/men_at_arms_types/` | — |
-| 生活方式 | `Lifestyles modding`；`Lifestyle`、`Merchant lifestyle` | `common/lifestyle_perks/` | — |
+| 兵种 / 常备军 | `Regiments modding`；`Army`、`Hired forces`；成本表由 `Base Army Cost` 驱动 | `common/men_at_arms_types/` | — |
+| 生活方式 | `Lifestyles modding`；`Lifestyle`（枢纽）、`Ruler lifestyle`、`Adventurer lifestyle`、`Merchant lifestyle` | `common/lifestyle_perks/` | — |
 | 宝物 | `Artifact modding`；`Artifacts` | `common/artifacts/` | — |
 | 历史（角色/头衔/省份） | `History modding` | `history/`（**省份已按王国分文件**） | — |
 | 故事循环 | `Story cycles modding`；`Stories` | `common/story_cycles/` + `create_story` | `[story]` |
@@ -167,6 +174,7 @@ patch note 也不可信到名字级别（见 `verified-notes.md` 顶部「改名
 | 控制台与调试 | `Mod troubleshooting`、`Console commands`（1.21） | `_commandline_options.info` | — |
 | 真机验收 / 启动参数 / 存档保护 | —（`_commandline_options.info` 就是文档） | `_commandline_options.info`、`pdx_settings.txt`、`game/tests/` | `[ingame]` |
 | 发布 / 工坊核对 / descriptor 形状 | `Mod structure`（2023 页，键表仍准） | 各 mod 的 `.mod` / `descriptor.mod`、`数据-元数据.mjs` | `[release]` |
+| 热修 / 版本口径 | `Patches`、`Patch 1.21`、`Patch 1.21.X` | `appmanifest_1158310.acf` 的 buildid + `ck3.exe` mtime（`ck3mod_status` 会报）；`_commandline_options.info` | `[hotfix]` |
 | 机器代点 / 探针 / 点击纪律 | — | `references/ingame-acceptance.md` §9 | `[automation]` |
 | 打包 / descriptor | `Mod structure`（2023 页，键表仍准） | 各 mod 的 `.mod` / `descriptor.mod` | — |
 | 兼容 / 覆盖 | `Mod compatibility`、`Modding` 的 Override rules | — | — |
@@ -218,7 +226,7 @@ checker and each mod's own `工具-*.mjs`; prefer them over hand-written PowerSh
 
 | Tool | Use it for | Writes |
 |---|---|---|
-| `ck3mod_status` | env + four-mod overview before starting: snapshot / local copy / capabilities / git / game version | — |
+| `ck3mod_status` | env + four-mod overview before starting: snapshot / local copy / capabilities / git / game version + **Steam buildid 与安装时间**（判热修用） | — |
 | `ck3mod_check` | `check` / `loc` / `reverse` / `selftest` (structured PASS/FAIL + loc counts) | — |
 | `ck3mod_build` | `generate` / `normalize` (write), or `*-check` to compare only | release snapshot |
 | `ck3mod_deploy` | `deploy` / `check` / `clean` through the mod's own 部署 script | `Documents\...\mod` |
@@ -420,6 +428,12 @@ documented expected count and say so.
     A 段断言两个文件**不存在**、M 段断言脚本与 loc 里 0 处 `cn_report` / `cn_dejure.0001`、
     N 段允许「文件集合只少这两个 + loc 只删 8 行」。需求可以在验收中变更，但必须**纳入同一版**（未上传时）
     并让差异断言把「只改了这些」钉死。
+30. **热修不一定改版本号：判「吃没吃热修」看 buildid + 文件 mtime**。`launcher-settings.json` 由启动器回写、
+    可能落后于实际安装；`ck3.exe` 也可能仍嵌旧版本串（2026-11-19 实测：buildid `26622941 → 26757580`、
+    81 个文件被替换，而 exe 仍写 `1.21.0`/`Florin`）。判据用 `ck3mod_status` 的「游戏构建」行
+    （`appmanifest_1158310.acf` 的 buildid + 安装时间 + exe mtime）。**热修后第一件事仍是 `check --all`**，
+    绿了才能说「与四个 mod 的脚本面不相交」；Wiki 的 `Patch 1.x.X` 页只写「hotfix」、没给版本号时，
+    **别编 `1.21.1`**——按「1.21 hotfix + buildid」记。
 
 ## Verification layers
 
@@ -445,8 +459,8 @@ Never claim a layer passed if it was skipped; say **SKIP** and why.
 ## References
 
 - Wiki 索引（本次勘察生成）：`references/ck3-wiki-atlas.md`
-- 实测要点（按域，带 `.info` 行号）：`references/verified-notes.md`（含 `[release]` 发布/工坊核对、
-  `[automation]` 真机自动化、`[verify]` 无头/A5/反向判据）
+- 实测要点（按域，带 `.info` 行号）：`references/verified-notes.md`（含 `[hotfix]` 热修与版本口径、
+  `[release]` 发布/工坊核对、`[automation]` 真机自动化、`[verify]` 无头/A5/反向判据）
 - 真机验收 runbook（含 §9 机器代点与 §9.6 点击纪律）：`references/ingame-acceptance.md`
 - 踩坑总账（2026-11-18 项目收尾）：`D:\DSH workspace\.admin\retro-2026-11-18-ck3mod.md`
 - 踩坑续篇（2026-11-18b auto v2.1）：`D:\DSH workspace\.admin\retro-2026-11-18b-ck3mod-auto-v2.1.md`
@@ -454,9 +468,12 @@ Never claim a layer passed if it was skipped; say **SKIP** and why.
 - 踩坑续篇（2026-11-18c 法理征服 v2.3）：`D:\DSH workspace\.admin\retro-2026-11-18c-ck3mod-dejure-v2.3.md`
   —— Q1–Q12（判定 / 校验器 / 发布 / 真机 / 收尾），落点见硬规则 19、26、27–29 与
   `[cb]` / `[verify]` / `[release]` / `[ingame]`；人格层同样吃这套事实（`cordis.patch.yml`）
+- 热修复盘（2026-11-19 全站复核）：`D:\DSH workspace\.admin\retro-2026-11-19-ck3mod-hotfix.md`
+  —— R1–R3（版本串不是热修信号 / 不编版本号 / 影响面取证），落点见硬规则 30 与 `[hotfix]`
 - 文档索引兜底：`D:\DSH workspace\.admin\工具-文档链接检查.mjs`（收尾必跑；`--all` 扫整个 `.admin`）
 - auto 的 L 段与回滚：`D:\DSH workspace\ck3-auto-spread\README.md`、`发布说明.md`
-- 索引生成器：`scripts/wiki-atlas.mjs`（`--check` 验鲜，`--out` 改输出位置）
+- 索引生成器：`scripts/wiki-atlas.mjs`（`--check` 验鲜，`--out` 改输出位置；补丁链与页面改名都有
+  机器断言：`assertPatchCoverage` / `assertCoverage`，缺页直接退出 1）
 - Shared tools: `D:\DSH workspace\ck3-modding-tools\README.md`
 - Survey / decisions: `D:\DSH workspace\ck3-modding-survey\README.md`, `06-落地候选.md`
 - Tests/tooling details: `D:\DSH workspace\ck3-modding-survey\03-工具链与测试.md`

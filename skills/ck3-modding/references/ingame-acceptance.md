@@ -215,6 +215,9 @@ Get-ChildItem "C:\Users\11210\Documents\Paradox Interactive\Crusader Kings III\m
   存档会被覆盖的清单 → 全部在 `references/verified-notes.md` 的 `[ingame]`。
 - 1.21 与 1.20 的差异（`development→prosperity`、区划/贸易/道路新库、法律可作 scope 等）→
   `SKILL.md` 的「1.21 变化」。
+- **热修不改版本串**：本机 2026-11-19 已吃 1.21 hotfix（buildid `26757580`），主菜单仍显示
+  `Florin (1.21.0)`，只有校验码会变。开测前用 `ck3mod_status` 的「游戏构建」行确认，别拿启动器
+  或主菜单的版本号判「有没有更新」；详见 `[hotfix]`。
 - 四个 mod 的已知旧结论：curse `测试清单.md` 的 `T-G16` 是 **1.20.0.3** 时期通过的，
   「入口在更多…」这条在 1.21 观察到相反；de-jure README 的「启动器显示 1.20 兼容」同理。
   **验收以本文件的矩阵为准**，旧记录只当历史。

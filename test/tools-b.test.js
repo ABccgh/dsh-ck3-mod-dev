@@ -16,6 +16,7 @@ import path from 'node:path';
 import { test } from 'node:test';
 
 import { normalizeConfig } from '../lib/config.js';
+import { readGameBuild } from '../lib/registry.js';
 import { statusTool } from '../lib/tools/status.js';
 import { logsTool } from '../lib/tools/logs.js';
 import { vanillaTool } from '../lib/tools/vanilla.js';
@@ -71,7 +72,8 @@ function makeConfig(t, overrides = {}) {
   return normalizeConfig({
     workspaceRoot: root,
     toolsDir: path.join(root, 'tools'),
-    gameRoot: path.join(root, 'ck3'),
+    // 按真实布局摆：<steamapps>\common\Crusader Kings III —— steamAppsDir 由 gameRoot 反推两层。
+    gameRoot: path.join(root, 'steamapps', 'common', 'ck3'),
     userDir: path.join(root, 'user'),
     maxOutputChars: 12_000,
     ...overrides,
@@ -119,6 +121,11 @@ function fakeRegistry(...mods) {
 test('status：环境、dlc_load、四个 mod 块与建议', async (t) => {
   const config = makeConfig(t);
   write(path.join(config.launcherSettings), '{"rawVersion":"1.20.3","version":"1.20.3 (Crozier)"}');
+  write(
+    config.appManifest,
+    '"AppState"\n{\n\t"appid"\t\t"1158310"\n\t"StateFlags"\t\t"4"\n'
+    + '\t"LastUpdated"\t\t"1795066117"\n\t"buildid"\t\t"26757580"\n}\n',
+  );
   write(
     path.join(config.userDir, 'dlc_load.json'),
     JSON.stringify({ enabled_mods: ['mod/a.mod', 'mod/b.mod'], disabled_dlcs: [] }),
@@ -179,6 +186,7 @@ test('status：环境、dlc_load、四个 mod 块与建议', async (t) => {
   for (const id of ids) assert.match(text, new RegExp(`\\[${id}\\]`));
   assert.match(text, /node：C:\\fake\\node\.exe（来源 test） · v24\.21\.0/);
   assert.match(text, /游戏版本：1\.20\.3/);
+  assert.match(text, /游戏构建：buildid 26757580 · Steam 安装于 \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
   assert.match(text, /dlc_load\.json：2 条启用 mod，0 条禁用 DLC · SHA256 [0-9A-F]{64}/);
   assert.match(text, /error\.log：\d+ B · \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
   assert.match(text, /debug\.log：\d+ B · /);
@@ -204,6 +212,50 @@ test('status：环境、dlc_load、四个 mod 块与建议', async (t) => {
   await assert.rejects(tool.execute({ mod: 'nope' }), /未知 mod：nope/);
 });
 
+test('readGameBuild：解析 buildid / 安装时间，缺失时返回 error', (t) => {
+  const dir = tempDir(t);
+  const file = path.join(dir, 'appmanifest_1158310.acf');
+  write(
+    file,
+    '"AppState"\n{\n\t"StateFlags"\t\t"4"\n\t"LastUpdated"\t\t"1795066117"\n\t"buildid"\t\t"26757580"\n}\n',
+  );
+
+  const build = readGameBuild({ appManifest: file });
+  assert.equal(build.buildId, '26757580');
+  assert.equal(build.stateFlags, '4');
+  assert.ok(build.updatedAt instanceof Date);
+  assert.equal(build.updatedAt.toISOString(), new Date(1795066117 * 1000).toISOString());
+  assert.equal(build.error, '');
+
+  const missing = readGameBuild({ appManifest: path.join(dir, 'nope.acf') });
+  assert.equal(missing.buildId, '');
+  assert.match(missing.error, /读不到/);
+});
+
+test('status：buildid 行与 launcher-settings 滞后提示', async (t) => {
+  const config = makeConfig(t);
+  const launcher = path.join(config.launcherSettings);
+  const exe = path.join(config.gameRoot, 'binaries', 'ck3.exe');
+  write(launcher, '{"rawVersion":"1.21.0","version":"1.21.0 (Florin)"}');
+  write(config.appManifest, '"AppState"\n{\n\t"LastUpdated"\t\t"1795066117"\n\t"buildid"\t\t"26757580"\n}\n');
+  write(exe, 'MZ');
+  // 热修场景：本体比 launcher-settings 新 → 提示版本串可能滞后。
+  fs.utimesSync(launcher, new Date('2026-11-18T05:22:00Z'), new Date('2026-11-18T05:22:00Z'));
+  fs.utimesSync(exe, new Date('2026-11-19T05:28:30Z'), new Date('2026-11-19T05:28:30Z'));
+
+  const tool = statusTool(
+    makeDeps(config, {
+      getRegistry: async () => {
+        throw new Error('不需要注册表');
+      },
+    }),
+  );
+  const { text } = await tool.execute({});
+  assert.match(text, /游戏构建：buildid 26757580/);
+  assert.match(text, /ck3\.exe \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
+  assert.match(text, /launcher-settings\.json 未随本体更新/);
+});
+
 test('status：注册表失败不抛，其余照常输出', async (t) => {
   const config = makeConfig(t);
   const tool = statusTool(
@@ -221,6 +273,7 @@ test('status：注册表失败不抛，其余照常输出', async (t) => {
   assert.match(text, /mod 注册表：FAILED configs\.mjs 缺失/);
   assert.match(text, /node：未找到（找不到 node 可执行文件）/);
   assert.match(text, /游戏版本：读不到/);
+  assert.match(text, /游戏构建：读不到/);
   assert.match(text, /dlc_load\.json：FAILED/);
   assert.match(text, /error\.log：——/);
   assert.match(text, /debug\.log：——/);
