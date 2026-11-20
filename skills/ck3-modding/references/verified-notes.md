@@ -1,11 +1,11 @@
-# CK3 1.21.0 实测要点（按域）
+# CK3 1.21.0.3 实测要点（按域）
 
 > 这些是**我们自己在原版 `.info` 与 `common/` 上核过**的结论，不是 Wiki 摘抄；每条都带可指认的行号或实例。
-> 游戏版本：**1.21.0 "Florin"**（2026-11-17 发布；本机 11-18 首次安装、**11-19 收到 1.21 hotfix**，
-> buildid `26757580`）；核对日期：2026-11-19。
+> 游戏版本：**1.21.0.3 "Florin"**（1.21.0 于 2026-11-17 发布；本机 11-18 首次安装，11-19 收到两次热修：
+> `1.21 hotfix` → buildid `26757580`、**`1.21.0.3` → buildid `26785313`**）；核对日期：2026-11-20。
 > 用法：只在要动某个域时读对应一节（`[slug]`），不要整篇读。
 > 维护：写进来的必须能指认（`.info` 行号 / vanilla 实例）；大版本更新后逐条复核，**失效的删掉**，不要留在里面。
-> 收录：`[hotfix]` `[interaction]` `[cb]` `[government]` `[resources]` `[council]` `[story]` `[struggle]` `[district]` `[trade]` `[road]` `[laws]` `[scheme]` `[ingame]` `[automation]` `[release]` `[verify]`
+> 收录：`[hotfix]` `[title]` `[interaction]` `[cb]` `[government]` `[resources]` `[council]` `[story]` `[struggle]` `[district]` `[trade]` `[road]` `[laws]` `[scheme]` `[ingame]` `[automation]` `[release]` `[verify]`
 > 分工：本文件只放**实测事实**；怎么点、怎么跑在 `ingame-acceptance.md`；规则与红线在 `SKILL.md` 的 Hard rules。
 
 ---
@@ -25,32 +25,38 @@ Patch 1.21 的 Modding 段很密，但**有几条与安装目录对不上**。�
 | `province_mapping` 移除、省份历史重构 | `history/provinces/` 现按王国分文件（`k_england.txt` …），不再有 `00_*.txt` 总表 | 目录实况 |
 | `has_free_building_slot` 改 district scope | 在 district / building 上写；province 上写是 1.9 时代的老习惯 | `00_great_project_types.txt` L3502；见 `[district]` |
 | patch 点名的这些「新增」名，vanilla **0 调用**：`add_regular_district`（effects loc 存在，L4223）、`set_road_tier`、`building_constructor`、`has_next_building_level`、`can_be_upgraded`、`district_has_building_with_flag`、`has_building_flag`、`add_trade_good_modifier`（**不存在**，真名 `add_trade_good_price_modifier`） | 代码可能提供但原版没用；本机未进游戏实测 → 用前先跑一次控制台验证，别凭 patch note 直接上线 | `localization/english/effects_l_english.yml` L4223 / L4025；`scripted_effects/trade_good_price_modifiers.txt` L1 |
-| 1.21 hotfix（Wiki `Patch 1.21.X`） | 页面**没有版本号**，只有「1.21 hotfix」（2026-11-18）；本机 2026-11-19 收到，exe 仍嵌 `1.21.0` / `Florin` | `appmanifest_1158310.acf` buildid `26757580`；`binaries\ck3.exe` mtime 11-19 13:28:30；`launcher-settings.json` mtime 11-18（未回写） |
+| 1.21 hotfix + `1.21.0.3`（Wiki `Patch 1.21.X`） | 两节都在：`1.21 hotfix`（2026-11-18）+ **`1.21.0.3`（2026-11-19）**；版本串仍不变（exe 仍嵌 `1.21.0` / `Florin`） | `appmanifest_1158310.acf` buildid `26757580` → **`26785313`**、`LastUpdated` 2026-11-19 23:12（本地）；`binaries\ck3.exe` mtime 11-19 23:12 |
 
 ---
 
-## [hotfix] 热修与版本口径（1.21 hotfix，2026-11-18 发布 / 本机 11-19 收到）
+## [hotfix] 热修与版本口径（1.21 hotfix 2026-11-18 / 1.21.0.3 2026-11-19）
 
 **R1 · 版本串不是热修信号。** 2026-11-19 13:28 本机被 Steam 静默替换 81 个文件，而三处「版本」全都没变：
 `titus_branch.txt` 仍 `release/1.21.0`、`launcher-settings.json` 仍 `1.21.0 (Florin)`（mtime 停在 11-18 13:22，
-它由启动器写、下次启动才回写）、`ck3.exe` 里也只有 `1.21.0`/`Florin` 两个串。真正的信号是
+它由启动器写、下次启动才回写）、`binaries\ck3.exe` 里也只有 `1.21.0`/`Florin` 两个串。真正的信号是
 `steamapps\appmanifest_1158310.acf`：`buildid` `26622941 → 26757580`、`LastUpdated` = 2026-11-19 13:28:37，
 配合 `binaries\ck3.exe` 的 mtime（13:28:30）。`ck3mod_status` 的「游戏构建」行现在直接打印
 buildid + Steam 安装时间 + exe mtime，并在 launcher-settings 落后时提示「版本串可能滞后」。
 
-**R2 · Wiki 页可能没有版本号，别编。** Wiki 的 `Patch 1.21.X`（2026-11-18 由 Kami-sama 新建）正文只写
-「1.21 hotfix … released on 2026-11-18」，**没有 1.21.1 / 1.21.0.x 这类编号**，本机文件同样没有。
-所以记录一律写「1.21 hotfix（2026-11-18）+ buildid 26757580」，**别编 1.21.1**——编出来的版本号
-下次会被人当成事实，拿去对 `supported_version` 或写进发布说明。
+**R1b · 当晚又更了一次：`1.21.0.3`。** 2026-11-19 23:12（本地）buildid `26757580 → 26785313`，
+`LastUpdated` = `1795101145`、`binaries\ck3.exe` mtime 23:12——版本串**还是没动**。Wiki 的 `Patch 1.21.X` 页
+2026-11-20 补了 `1.21.0.3` 节（revid 38988）：起始领地宽限恢复、村庄/城墙/庄园/军事区划主建筑补征召兵、
+行政/天朝/贤能征召兵惩罚 50%→25%、**建衔与篡位金币成本下调**、修「不可见的 Guelphs & Ghibellines 开局暂停」、
+修「领主无国库却靠剥夺共和国男爵领暴富」。**仍无 Modding 段**。热修后 `cli.mjs check --all` **5/5 PASS**
+（dejure 28 / free 84 / auto 94 / mastery 34 / organizer 20）——这才是「与在营 5 个的脚本面不相交」的证据。
 
-**R3 · 影响面按文件清单取证，不能只信「平衡补丁」四个字。** 热修改动 81 个文件：
+**R2 · 版本号以 Wiki 为准：`1.21.0.3` 有编号了。** 11-18 那版页面只写「1.21 hotfix」，所以当时记
+「1.21 hotfix（2026-11-18）+ buildid」；11-20 页面补了 **`1.21.0.3`**（2026-11-19 发布），本机 buildid
+`26785313` 对应的就是它。**别编 `1.21.1`**，也**别再说「页面没有版本号」**——编号有了，但版本串仍然不变：
+判据永远是 buildid + mtime，不是 `titus_branch.txt` / exe / `supported_version`。
+
+**R3 · 影响面按文件清单取证，不能只信「平衡补丁」四个字。** 第一次热修改动 81 个文件：
 `game/common` 31（含 **2 个原版 CB 文件** `casus_belli_types/00_event_war.txt`、`01_fp1_wars.txt`，
 以及 `governments/00_government_types.txt`、`on_action/game_start.txt`、`traditions/*`、`lifestyle_perks/*`、
 `modifiers/*`、`scripted_effects/*`、`situation/*`、`trade/county_potential_trade_goods/*`）、`localization` 27、
 `history` 11（`characters/*` 起始军队 + `provinces/k_huainan.txt` Yangzhou 改产丝绸）、`events` 3、`gui` 3。
-**de-jure 依赖的 `scripted_effects/00_war_effects.txt` 没动**（mtime 仍 11-18），wrapper 契约不变；
-热修后 `cli.mjs check --all` **4/4 PASS**（loc 34 / 28 / 84 / 94、0 error）——这才是「与在营 4 个的脚本面
-不相交」的证据。无头冒烟本轮 **SKIP**：只更新知识层与工具层、没部署任何 mod，跑无头会改播放集与存档。
+**de-jure 依赖的 `scripted_effects/00_war_effects.txt` 没动**（mtime 仍 11-18），wrapper 契约不变。
+无头冒烟本轮 **SKIP**：只更新知识层与工具层、没部署任何 mod，跑无头会改播放集与存档。
 
 **用法**：以后每次「CK3 更新了」先看 buildid / mtime（`ck3mod_status`），再跑 `check --all`，最后才决定
 要不要读 `Patch 1.x.X`；热修页没有 Modding 段时，不要为「兼容」改任何脚本。
@@ -144,6 +150,47 @@ Wiki 页停在 2021 年，**字段层级还是错的**。规格在 `common/gover
 - `currency_levels_cap`（L674-680）管 piety / prestige / influence / merit 的等级上限；上限数值在
   `defines/00_defines.txt` 的 `LEVELS_PIETY`（L154）、`LEVELS_PRESTIGE`（L155）、`DEFAULT_PIETY_LEVEL_CAP`（L160）。
 - 政体定义分三个文件：`00_government_types.txt`、`01_japan_government_types.txt`、`02_theocratic_government_types.txt`。
+
+## [title] 头衔 / 法理 / 封臣树（title & de jure）
+
+2026-11-20 法理整顿（organizer v1.0）核过的域。**Wiki 只给语义与名字，语法一律回层 2**：
+
+- **三层分工**：`Titles § De Jure` 给阈值语义（公国/王国要 >50% 法理县、帝国 >80%，且至少 2 个低一级或
+  1 个同级头衔；法理漂移约 100 年 / 1200 点进度）；**可执行入口是 `every_alert_creatable_title`**
+  （角色作用域，「遍历该角色可创建的头衔」，原版用法 `00_test_interactions.txt:781`、`01_suggestions.txt:806`）——
+  阈值已经编在引擎里，**别自己重写 50%/80%**。
+- **`title_capital_county` 是 landed title scope**（`Scopes list`），不是角色字段。「把某个头衔给它首都县的
+  持有人」= `title_capital_county.holder`（原版 `00_grant_titles_interaction.txt:2016` 就是这个写法；
+  `00_culture_interactions.txt:237`、`00_alliance.txt:1762` 同型）。**不是**「首府公国的持有人」。
+- **批量易手的原版配方**（`Mod troubleshooting §9` 的 run 脚本范例）：`create_title_and_vassal_change =
+  { type = conquest save_scope_as = change }` → `every_in_de_jure_hierarchy = { change_title_holder =
+  { holder = root change = scope:change } }` → `resolve_title_and_vassal_change = scope:change`。
+  成对数量、`type` 取值与 `$CHANGE$` 收口点是各 mod 自己的契约（organizer 的 H1/H2 断言 12 对）。
+- **`is_de_jure_liege_or_above_target`**（`Triggers list`，title → title）判「法理上位」；organizer 的链条保护
+  = `this = root.capital_county` OR 该触发（L1）。
+- **领域判定**：`is_vassal_or_below_of`（`Triggers list`「vassal or below」；Patch 1.3 起不把非统治者算封臣；
+  原版 `00_civil_war.txt:1009/1234`、`00_claim.txt:251/285`、`00_event_templates.txt:307`）——任意深度封臣树，
+  独立统治者与**封臣统治者**都能用。`is_vassal_of` 只判直属；`top_liege = root` **只对独立统治者成立**。
+- **`create_character` 的性别**：模板可能不带（`_scripted_character_templates.info:47-53` 原文
+  「no gender data … create_character logs an error」）；`gender` / `opposite_gender` /
+  `gender_female_chance = 50` 三选一，否则 `PostValidate … returned false`。新伯爵九项结构见 organizer H8。
+- **任命制头衔**（中国/日本 `appointment_with_level_requirement`）：受让人必须过
+  `has_appointment_level_for_title`（角色 → 头衔），并在头衔/领域两侧查
+  `has_title_law_flag = appointment_with_level_requirement` / `has_realm_law_flag`
+  （`title_on_actions.txt:2486/2491/2493/2514`、`06_ep3_interactions.txt:176/885/1861/3634`）。
+  **Wiki 对该触发器 0 命中 → 只能层 2**。不满足就把头衔留在原持有人手里，别硬塞。
+- **`change_government` 只吃字面 key**（安装目录 0 处 scope 用法：`00_religious_war.txt:2698/2798/2856/3006`）。
+  想「让新持有人沿用旧政体」只能枚举字面量，`change_government = scope:x` 不生效。
+- **触发器有作用域类型**：`is_mercenary_company` / `is_holy_order` 是 **landed title** 触发器，写在角色作用域
+  会报 `Inconsistent trigger scopes (character vs. landed_title)` → 放进 `primary_title = { }`。
+- **同级/更高头衔分不出去**：`resolve_title_and_vassal_change` 对「同级或更高」直接拒绝（`same or higher tier`）
+  ——国王的第二个王国、皇帝的第二帝国只能留在玩家名下。**这类引擎不变量必须写进 UI 与文档**，否则被当 bug。
+- **「只留首都伯爵领」的字面口径**：只留 `root.capital_county` 一个县，**不是**「首都公国里的所有县」；
+  两种解释差很多，需求要先钉死（organizer 取前者）。
+- **建衔成本随补丁变**：`1.21.0.3`（2026-11-19）下调了「创建/篡位头衔」金币成本——定价/平衡时先看
+  `Patch 1.21.X`，别抄 1.21.0 的旧数。
+- **本域会触发的原版噪声**（不指向本 mod 脚本）：商业共和国建政链、商人家族头衔、日本 `previous_holder`——
+  判读方法见 `[ingame]`。
 
 ## [resources] 资源 / 虔诚档位
 
@@ -369,11 +416,12 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
 - **退出菜单是陷阱**：游戏内「退出游戏」会写 `autosave_exit.ck3`（`00_defines.txt:1448` 的 `EXIT_SAVE_NAME`）
   与 `last_save.ck3`；收场必须杀进程。
 - **版本/校验码在 UI 里**：主菜单右下与暂停菜单左下显示 `Florin（1.21.0），校验码: <hex>（有修改）`；
-  装载 mod 后校验码变化，可用来确认挂载（`-skip_checksum` 会跳过计算，验收别加）。
+  **UI 只读 exe 里的串**，吃了 `1.21.0.3` 热修也照样显示 `1.21.0`——别拿它判版本。装载 mod 后校验码变化，
+  可用来确认挂载（`-skip_checksum` 会跳过计算，验收别加）。
 - **右键互动菜单（1.21 实测，证据来自已下架的降祸 mod）**：右键角色 → 分类菜单（外交 / 私人 / 敌对 / …）；
   `common_interaction = no` 的互动**直接展开在「敌对」下**（1.20 记录是收进「更多…」），同分类另有
   「其他 N 项……」折叠 → 入口判定按实际位置记录，不按旧文档。该 mod 已于 2026-11-19 删除，这条只当
-  1.21 菜单结构的历史证据；在营 4 个里没有「敌对」分类互动，判入口时按当次菜单实测。
+  1.21 菜单结构的历史证据；在营 5 个里没有「敌对」分类互动，判入口时按当次菜单实测。
 - **互动选项窗**：勾选式复选框 + 底部确认；单项悬停给效果 tooltip（实测：肺炎 = 健康 −1、生育 −20%、恐惧 −10）。
 - **游戏规则面板**：主菜单右下「游戏规则」→ 右侧「游戏规则过滤器」；mod 规则按 `categories` 归类
   （auto 的 `ai` → 过滤器选 AI 就能翻到），规则名/描述/取值全部走 loc。
@@ -388,6 +436,17 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   `00_laamp_triggers.txt` **184**、原版 story cycle 的 `cannot change faith` **3**、
   原版 DLC 的 `Wrong scope for effect` **6**。
   → **看到 8k 条 [E] 不等于 mod 坏了**：先按 `Script location` 分组，再看有没有指向自己的文件。
+- **日志归属看「块的链首」**（2026-11-20 organizer 实测）：每个 `Script system error` 块里有若干
+  `Script location` 行，**第一行才是归属**——以本 mod 文件名开头才算我们的错；末端指向本 mod 决议
+  （调用链落在我们的 effect 上）**不等于**本 mod 报错。用户会话实测：242 个块 → 36 个末端含
+  `cn_dejure_organizer` 决议 → **0 个起于本 mod 脚本**。
+- **本域会触发的原版噪声三清单**（判 A5 时当「已知原版侧」扣掉，但 README/工坊文案要如实写明）：
+  ① **商业共和国建政链**：`on_vassal_change → gdp_found_a_republic_effect` /
+  `gdp_merchant_becomes_patrician_effect` 对「无首都的家族头衔持有人」建政，并拒绝「同级或更高」的转封
+  （`same or higher tier`）——**功能影响**：商业共和国里 P5（转封）部分被原版拒绝，P1–P4 照常（23 条）；
+  ② `create_dynamic_title … house already has house title`（商人家族头衔重复建，7 条）；
+  ③ 日本 `on_title_gain` 读新建头衔的 `scope:previous_holder`（没加 `?=`）报 `Failed context switch`
+  （原版自身创建头衔同样触发，6 条）。
 - **验收场景要先能观测到改动（de-jure v2.3 实测）**：v2.3 的头号改动是行政政体胜利结算 Influence，
   而第一轮用户新开的是**流求部落局**（公国级、部落政体）——那一项在整局里根本不会出现，等于没测；
   第二轮改拜占庭行政政体才闭合。准备阶段先写清「本次改动需要什么政体/等级/阶段才可见」，不满足就换局。
@@ -426,6 +485,12 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   单人新开局很可能走 `on_game_start_after_lobby`（`game_start.txt:2806`），日志却无报错
   （2026-11-18 实测：同版本、同一套选人流程，唯一变量就是钩子）。要目标流程就先
   `every_courtier = { limit = { is_adult = yes } save_scope_as = <target_scope> }` 再触发。
+- **探针要先「落到角色」**：`on_game_start` 的 root 是 `none`，在 root 上判角色条件会报
+  `Wrong scope for trigger: none`。正确做法：用 **`random_independent_ruler`**（可按政体加 limit，每类抽 1 个）
+  或 **`random_ruler`**（抽封臣）选人 → `trigger_event = zz_probe.0001`（隐藏事件，root = 该角色）→ 事件里调效果。
+  `every_ruler` + 全局变量去重**不生效**：实测在整张地图跑了成百上千次（debug.log 成对刷屏）。
+  `random_independent_ruler` 的原版用法见 `00_debug_interactions.txt:1180`；organizer 用这套跑了
+  **7 类政体 + 1 个封臣统治者 = 8/8**。
 - **追加 on_action 只能写列表**（这是本次踩的实坑）：`on_game_start = { effect = { … } }` 会**整块覆盖**原版，
   实测开局局势 intro 直接变成 `ERROR:[ghibelline_leader…]` 占位；正确写法
   `on_game_start = { on_actions = { zz_my_action } }` + `zz_my_action = { effect = { … } }`。
@@ -505,6 +570,13 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   被回写成 `1.21.0`（mtime 变了）；② `steam_workshop_search` 显示「更新于 <日期> / 0.1 MiB / 订阅数」；
   ③ 条目 ID 未变。**精确 `file_size` 拿不到就记 SKIP 并写原因**，别猜。
   auto v2.1 实测：条目 3779621287、0.1 MiB、订阅 1770、内层 75,393 B（精确值 SKIP）。
+- **首传与更新的信号不同（2026-11-20 organizer 实测）**：organizer 首次上传后两份 descriptor 各 **+28 B**
+  （233→261 / 138→166 B，末字节仍 `0x22`、SHA256 `4F0AE29B…` / `3068C8CF…`），新增
+  `remote_file_id="3842795131"`，但 **`supported_version` 仍是 `1.21.*`**——没有回写。
+  → 「更新」看 `supported_version` 是否被写成实测版本，「首传」只看 `remote_file_id` 是否出现且与条目 ID 一致；
+  两者都伴随「+28 B」这条字节特征。
+- **上传后必须回填 META 再重生成**：organizer 未回填时 `工具-部署.mjs --check` = **6/8**（两份 descriptor 的
+  `remote_file_id` 不一致），回填 `数据-元数据.mjs` 的 `remoteFileId` + `工具-生成.mjs` 后 = **8/8**。
 - **首次上传的 descriptor 变化是「回写版本 + 新增一行 `remote_file_id`」**：mastery v1.0 首次上传后两份本机
   descriptor 从 207 / 114 B 变成 **235 / 142 B**（+28 B），`supported_version` 被写成 `1.21.0`，并新增
   `remote_file_id="3842327113"`；**末字节仍是 `"`、无行尾换行**。所以删本机副本前先记**字节数 / 末字节 / SHA256**
@@ -517,6 +589,11 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
 - **工坊预检的「三份 descriptor 字段一致」在本机副本还在时会有意报不一致**：mastery 回填后快照是 `1.21.*`、
   本机副本被启动器回写成 `1.21.0` → 预检报 1 项不一致；删掉本机副本、只剩快照两份（都是 `1.21.*`）→ PASS。
   这是**预期差异**、不是故障；`工具-部署.mjs --check` 对 `1.21.x` 本就按字段容忍。
+- **描述结构是用户偏好，不是模板**：「第 1 段：模组介绍 / 第 2 段：适用范围」这种拆法是自作主张——
+  organizer 明确要求「不要分开」，改成**整篇一段**（无标记），静态校验 J 段口径也改为「无标记时整篇算一段」
+  （`splitSegments` 本来就有整篇回退）。整篇 **5367 B** ≤ 8000。
+- **改动说明两种形态**：描述末尾加 `[h2]改动说明[/h2]` 节；另给独立 `工坊改动说明.txt`（**846 B**）供启动器
+  「修补程序说明」字段。两者都 UTF-8 + LF + 无 BOM，BBCode 只用 `[h1][h2][b][list][*]`。
 
 ## [verify] 验证判据（无头 / A5 / 反向显示）
 
@@ -537,6 +614,11 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   所有结构性判据一律先剥注释（括号配平还要 `stripStrings`）再跑；注释里的示例片段不算数。
 - **反向样本必须断言「确实改到了目标」**：样本改完与原文相等就直接抛错（`if (next === src) throw`），
   否则「样本没生效」会被读成「判据没开火」，白跑一轮。
+- **反向样本也可能只改到注释**：organizer 的「范围判定退回 `top_liege`」样本用
+  `replace('is_vassal_or_below_of = root', 'top_liege = root')`，只替换到**文件头注释里的示例**，代码没动、
+  校验器照样 PASS。→ 用 **`replaceAll`**，或先剥注释再匹配，并保留 `next !== src` 断言。
+- **探针跑完要证明「回到已验证状态」**：删掉探针两个文件 → `--clean` 重部署 → 与已验证干净态比
+  **8 个文件 SHA256 全同**（organizer 实测），干净态的无头结论才继续有效；探针文件不许随发布物留下。
 - **`--root` 模式跳过部署比对**：拿 v1.0 反例跑 `--root` 时，K 段原本会去比「当前本机副本」——
   部署的是新版，反例就凭空多出 3 条「不一致」（de-jure 实测 20 → 23）。判据必须与部署状态解耦：
   在 `--root` 模式下 K 段只提示跳过。同理，任何「拿样本比当前环境」的检查都要先问「这个环境变量该不该参与」。

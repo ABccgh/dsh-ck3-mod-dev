@@ -9,15 +9,15 @@
  * 硬规则编号、各节标题、版本口径、部署副本哈希都变成断言，跑一次即知映射是否断裂。
  *
  * 检查分六组：
- *   1. SKILL.md 硬规则：编号必须是 1..N 连续、无缺号无重号（N 与 EXPECTED_RULE_COUNT 一致）；
+ *   1. SKILL.md 硬规则：编号必须是 1..N 连续、无缺号无重号（N 与 EXPECTED_RULE_COUNT 一致，当前 41）；
  *   2. 三份知识层文件的必需节（SKILL / verified-notes / ingame-acceptance）；
  *   3. 复盘映射锚点：每条编号对应的关键句必须还在原文件里（删了 = 复盘落地断链）；
  *      锚点集 = 11-18 的 A1…H7（28 条）+ 11-18b 的 P1–P16（23 条）+ 11-18c 的 Q1–Q12（13 条）
- *      + 11-19 hotfix 的 R1–R3（7 条）+ 11-19 mastery 的 M1–M12（21 条）+ 一个在营 4 个不变量（2 条）
- *      + 人格层与 cli 的 8 条 = 102 条；另外断言**锚点总数**与
+ *      + 11-19 hotfix 的 R1–R3（7 条）+ 11-19 mastery 的 M1–M12（21 条）+ 11-20 organizer 的 O1–O26（43 条）
+ *      + 在营 5 个不变量（2 条）+ 人格层与 cli 的 8 条 = 145 条；另外断言**锚点总数**与
  *      **每个复盘编号至少 1 条**（删锚点 = 少查几项，不能让它悄悄变绿——这正是复盘 Q2「判据自己变弱也是 bug」）；
  *   4. 人格层 `cordis.patch.yml`：必备判断句在、会漂的旧话（dejure 2.2 / 吃掉行尾 / 少 1 属正常 /
- *      七层 / 版本枚举 / 退役 mod）不在；SKILL 的 References 必须点到五份复盘；
+ *      七层 / 版本枚举 / 退役 mod）不在；SKILL 的 References 必须点到六份复盘；
  *      另断言 SKILL 与人格层都不再出现退役 mod 的仓库名（历史只许留在 `.admin` 与 工作区索引）；
  *   5. 版本口径：package.json / README 顶部 / README §13 最新条目 / SKILL metadata 互相一致；
  *   6. 部署副本：仓库 vs `~/.agents/skills/ck3-modding` vs `~/dsh-bundles/ck3moddev` 的哈希。
@@ -46,13 +46,13 @@ const DEPLOY_DEFAULT = path.join(os.homedir(), '.agents', 'skills', 'ck3-modding
 const BUNDLE_DEFAULT = path.join(os.homedir(), 'dsh-bundles', 'ck3moddev');
 
 /** 硬规则的期望条数。新增规则时**先改这里**，让「改了数字」成为一次有意识的动作。 */
-const EXPECTED_RULE_COUNT = 34;
+const EXPECTED_RULE_COUNT = 41;
 
 /**
  * 锚点总数的期望值。删/改锚点时**先改这里**：它是「判据自己变弱也是 bug」的兜底——
  * 以前删一条锚点只是通过项少一个，照样打印「✓ 通过」。
  */
-const EXPECTED_ANCHOR_COUNT = 102;
+const EXPECTED_ANCHOR_COUNT = 145;
 
 /** 人格层（预设的 system prompt）文件；它是最先被模型读到的一层，最容易漂。 */
 const PATCH_FILE = 'cordis.patch.yml';
@@ -81,20 +81,21 @@ const SKILL_SECTIONS = [
   '## Shared checker (candidates 1/3)',
   '## Native tools (agent preset「CK3 模组开发」)',
   '## Per-mod pipeline',
-  '## 覆盖与兼容（四个 mod 都靠这套边界活着）',
+  '## 覆盖与兼容（五个 mod 都靠这套边界活着）',
   '## 真机验收（in-game acceptance）',
   '## Hard rules',
   '## Verification layers',
   '## References',
 ];
 
-/** verified-notes.md 必须有的分节（16 组实测要点 + 改名表 + 验证判据）。 */
+/** verified-notes.md 必须有的分节（17 组实测要点 + 改名表 + 验证判据）。 */
 const NOTES_SECTIONS = [
   '## 1.21 改名与「patch note ≠ 实机名」',
-  '## [hotfix] 热修与版本口径（1.21 hotfix，2026-11-18 发布 / 本机 11-19 收到）',
+  '## [hotfix] 热修与版本口径（1.21 hotfix 2026-11-18 / 1.21.0.3 2026-11-19）',
   '## [interaction] 角色互动（character interaction）',
   '## [cb] 宣战理由（casus belli）',
   '## [government] 政体（government）',
+  '## [title] 头衔 / 法理 / 封臣树（title & de jure）',
   '## [resources] 资源 / 虔诚档位',
   '## [council] 议会（council）',
   '## [story] 故事循环（story cycle）',
@@ -116,9 +117,10 @@ const RUNBOOK_SECTIONS = [
   '## 1. 三条铁律',
   '## 2. 准备（五步，全部在开游戏之前）',
   '## 3. 启动',
-  '## 4. 四个 mod 的验收矩阵',
+  '## 4. 五个 mod 的验收矩阵',
   '### 4.1 mastery（谋略）',
   '### 4.4 auto（自动传播）',
+  '### 4.5 organizer（法理整顿）',
   '## 5. 证据规范',
   '## 6. 收尾（六步，顺序不能换）',
   '## 7. 判定边界',
@@ -149,6 +151,8 @@ const RETRO_IDS = [
   'Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8', 'Q9', 'Q10', 'Q11', 'Q12',
   'R1', 'R2', 'R3',
   'M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12',
+  'O1', 'O2', 'O3', 'O4', 'O5', 'O6', 'O7', 'O8', 'O9', 'O10', 'O11', 'O12', 'O13',
+  'O14', 'O15', 'O16', 'O17', 'O18', 'O19', 'O20', 'O21', 'O22', 'O23', 'O24', 'O25', 'O26',
 ];
 
 /** 人格层必须出现的判断句/关键词（11-18c 与 11-19 mastery 的结论，缺了就等于人格又漂回去了）。 */
@@ -164,6 +168,11 @@ const PERSONA_REQUIRED = [
   '按枚举写满',
   '剥注释',
   '一次只回答一个问题',
+  '终局状态',
+  'remote_file_id',
+  '链首',
+  'is_vassal_or_below_of',
+  '在营 5 个',
 ];
 
 /** 人格层禁词：被推翻的旧结论 / 已知会漂的写法 / 已删除的 mod。 */
@@ -187,6 +196,7 @@ const SKILL_REQUIRED_REFS = [
   'retro-2026-11-18c-ck3mod-dejure-v2.3.md',
   'retro-2026-11-19-ck3mod-hotfix.md',
   'retro-2026-11-19-ck3mod-mastery.md',
+  'retro-2026-11-20-ck3mod-organizer.md',
 ];
 
 /**
@@ -275,8 +285,8 @@ const ANCHORS = [
   { id: 'R1', file: SKILL_FILE, needle: 'buildid', label: '规则 30：buildid + mtime 判热修' },
   { id: 'R1', file: NOTES_FILE, needle: '26757580', label: 'hotfix 节：buildid 前后值' },
   { id: 'R1', file: PATCH_FILE, needle: 'buildid', label: '人格层：热修看 buildid' },
-  { id: 'R2', file: NOTES_FILE, needle: '别编 1.21.1', label: 'hotfix 节：不编版本号' },
-  { id: 'R2', file: SKILL_FILE, needle: '没有版本号', label: '规则 30：Wiki 页未给版本号' },
+  { id: 'R2', file: NOTES_FILE, needle: '1.21.0.3', label: 'hotfix 节：Wiki 已给 1.21.0.3 编号' },
+  { id: 'R2', file: SKILL_FILE, needle: '1.21.0.3', label: '规则 30：编号以 Wiki 为准、版本串不变' },
   { id: 'R3', file: NOTES_FILE, needle: '81 个文件', label: 'hotfix 节：影响面文件清单' },
   { id: 'R3', file: SKILL_FILE, needle: '热修后第一件事', label: '规则 30：热修后先跑 check' },
   // 2026-11-19 · 谋略 Scheme Mastery v1.0（M1–M12）：21 条映射 + 在营 4 个不变量 2 条。
@@ -301,8 +311,52 @@ const ANCHORS = [
   { id: 'M11', file: NOTES_FILE, needle: '235 / 142 B', label: '[release]：新增 remote_file_id 行' },
   { id: 'M12', file: NOTES_FILE, needle: '本机副本还在', label: '[release]：预检有意报不一致' },
   { id: 'M12', file: NOTES_FILE, needle: '预期差异', label: '[release]：读成预期差异而非故障' },
-  { id: 'INV', file: SKILL_FILE, needle: '在营 4 个', label: '环境段：在营 4 个 mod' },
-  { id: 'INV', file: PATCH_FILE, needle: 'mastery', label: '人格层：在营 4 个含 mastery' },
+  { id: 'INV', file: SKILL_FILE, needle: '在营 5 个', label: '环境段：在营 5 个 mod' },
+  { id: 'INV', file: PATCH_FILE, needle: 'organizer', label: '人格层：在营 5 个含 organizer' },
+  // 2026-11-20 · 法理整顿 De Jure Organizer v1.0（O1–O26）：43 条落点。
+  { id: 'O1', file: SKILL_FILE, needle: '终局状态', label: '规则 35：需求先要终局状态' },
+  { id: 'O1', file: PATCH_FILE, needle: '终局状态', label: '人格层：需求先要终局状态' },
+  { id: 'O2', file: SKILL_FILE, needle: '先找通用键', label: '规则 32：「所有 X」先找通用键' },
+  { id: 'O2', file: RUNBOOK_FILE, needle: '任意政体', label: '§4.5：所有政体的验收前置' },
+  { id: 'O3', file: NOTES_FILE, needle: 'title_capital_county.holder', label: '[title]：受让人 = 首都县持有人' },
+  { id: 'O4', file: SKILL_FILE, needle: '同级或更高', label: '规则 39：同级不能分封' },
+  { id: 'O4', file: NOTES_FILE, needle: '同级/更高', label: '[title]：同级/更高头衔分不出去' },
+  { id: 'O5', file: NOTES_FILE, needle: '只留首都伯爵领', label: '[title]：只留首都伯爵领的字面口径' },
+  { id: 'O6', file: SKILL_FILE, needle: 'gender_female_chance', label: '规则 36：create_character 性别' },
+  { id: 'O6', file: NOTES_FILE, needle: 'gender_female_chance', label: '[title]：性别三选一' },
+  { id: 'O7', file: SKILL_FILE, needle: 'Inconsistent trigger scopes', label: '规则 38：触发器作用域' },
+  { id: 'O7', file: NOTES_FILE, needle: 'is_mercenary_company', label: '[title]：title 触发器' },
+  { id: 'O8', file: SKILL_FILE, needle: 'is_vassal_or_below_of', label: '规则 37：领域判定' },
+  { id: 'O8', file: NOTES_FILE, needle: 'is_vassal_or_below_of', label: '[title]：任意深度封臣树' },
+  { id: 'O9', file: NOTES_FILE, needle: 'top_liege = root', label: '[title]：top_liege 只对独立统治者' },
+  { id: 'O10', file: NOTES_FILE, needle: 'change_government', label: '[title]：change_government 只吃字面 key' },
+  { id: 'O11', file: NOTES_FILE, needle: 'has_appointment_level_for_title', label: '[title]：任命制等级守卫' },
+  { id: 'O12', file: SKILL_FILE, needle: 'capital_county', label: '规则 37：无地 guard' },
+  { id: 'O12', file: RUNBOOK_FILE, needle: '有首都伯爵领', label: '§4.5：前置含首都伯爵领' },
+  { id: 'O13', file: SKILL_FILE, needle: 'same or higher tier', label: '规则 39：原版拒绝同级转封' },
+  { id: 'O13', file: NOTES_FILE, needle: 'gdp_found_a_republic_effect', label: '[ingame]：商业共和国建政链噪声' },
+  { id: 'O13', file: RUNBOOK_FILE, needle: '商业共和国', label: '§4.5：商业共和国判读' },
+  { id: 'O14', file: NOTES_FILE, needle: 'previous_holder', label: '[ingame]：日本 previous_holder 噪声' },
+  { id: 'O15', file: SKILL_FILE, needle: 'Wrong scope for trigger: none', label: '规则 23：root 是 none' },
+  { id: 'O15', file: RUNBOOK_FILE, needle: 'Wrong scope for trigger: none', label: '§9.3：探针先落到角色' },
+  { id: 'O16', file: SKILL_FILE, needle: 'random_independent_ruler', label: '规则 23：随机选人' },
+  { id: 'O16', file: NOTES_FILE, needle: 'random_ruler', label: '[automation]：random_ruler 抽封臣' },
+  { id: 'O17', file: NOTES_FILE, needle: '8 个文件', label: '[verify]：探针哈希回到已验证态' },
+  { id: 'O17', file: RUNBOOK_FILE, needle: '哈希一致', label: '§6：收尾核对哈希' },
+  { id: 'O18', file: SKILL_FILE, needle: 'replaceAll', label: '规则 33：反向样本 replaceAll' },
+  { id: 'O18', file: NOTES_FILE, needle: 'replaceAll', label: '[verify]：样本只改到注释' },
+  { id: 'O19', file: SKILL_FILE, needle: '判据过期', label: '规则 19：判据随需求更新' },
+  { id: 'O20', file: SKILL_FILE, needle: '先复跑', label: '规则 25：未自退先复跑' },
+  { id: 'O21', file: SKILL_FILE, needle: '链首', label: '规则 41：日志归属看链首' },
+  { id: 'O21', file: NOTES_FILE, needle: '链首', label: '[ingame]：块首归属法' },
+  { id: 'O22', file: NOTES_FILE, needle: '整篇', label: '[release]：描述整篇不分段' },
+  { id: 'O23', file: NOTES_FILE, needle: '工坊改动说明', label: '[release]：改动说明两形态' },
+  { id: 'O24', file: SKILL_FILE, needle: 'remote_file_id', label: '规则 40：首传信号' },
+  { id: 'O24', file: NOTES_FILE, needle: 'remote_file_id', label: '[release]：首传 +28 B' },
+  { id: 'O24', file: PATCH_FILE, needle: 'remote_file_id', label: '人格层：首传只看 remote_file_id' },
+  { id: 'O25', file: SKILL_FILE, needle: '6/8', label: '规则 40：回填 META 前 6/8' },
+  { id: 'O25', file: NOTES_FILE, needle: '8/8', label: '[release]：回填后 8/8' },
+  { id: 'O26', file: NOTES_FILE, needle: '末字节', label: '[release]：删副本前记末字节' },
 ];
 
 /**

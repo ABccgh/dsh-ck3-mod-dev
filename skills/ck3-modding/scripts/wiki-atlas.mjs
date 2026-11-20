@@ -44,7 +44,7 @@ const BODY_MARKER = '<!-- atlas-body -->';
 let timeoutMs = 180_000;
 
 /** 本机游戏版本：CK3 大版本更新后，改这里 + SKILL.md 的 Environment 段。 */
-const GAME_VERSION = '1.21.0 (Florin)';
+const GAME_VERSION = '1.21.0.3 (Florin)';
 
 /**
  * 「当前版本口径」分类：Wiki 编辑者会把整页标进 `Category:1.<minor>`。
@@ -166,7 +166,7 @@ const DOMAINS = [
       'Warfare',
       'Barony',
       'County',
-      'Building',
+      'Buildings',
       'Activity',
       'Schemes',
       'Situation',
@@ -308,7 +308,7 @@ const NOTES = {
   Warfare: '战争流程与战争分数',
   Barony: '男爵领（最低级头衔）',
   County: '伯爵领：控制力 / 繁荣 / 民意',
-  Building: '建筑清单与效果',
+  Buildings: '2026-11-19 被清成 85 B 占位页（`{{expand}}`），建筑清单已并入 `Districts`；键表仍回 `common/buildings/_buildings.info`',
   Activity: '活动（狩猎 / 宴会 / 朝圣…）框架',
   Schemes: '阴谋 / 计谋（含 1.21 贸易计谋）',
   Situation: '局势（Situation）机制',
@@ -322,7 +322,7 @@ const NOTES = {
 const PATCHES = [
   { title: 'Patches', note: '版本总表' },
   { title: 'Patch 1.21', note: '2026-11-17 与 Silk & Silver 同日；trade / districts / roads / laws 的脚本面源头' },
-  { title: 'Patch 1.21.X', note: '1.21 hotfix（2026-11-18）：平衡 + 崩溃修复，**无 Modding 段**；页面未给版本号' },
+  { title: 'Patch 1.21.X', note: '两节：`1.21 hotfix`（2026-11-18）+ **`1.21.0.3`（2026-11-19）**；纯平衡 + 崩溃修复 + 建衔/篡位金币成本下调，两节都**无 Modding 段**' },
   { title: 'Patch 1.20', note: '2026-09-30 与 By God Alone 同日；上一个机制大版本' },
   { title: 'Patch 1.20.X', note: '1.20.0.3 / 0.4 / 1.20.1 / 1.20.1.2 修复链' },
   { title: 'Patch 1.19', note: '2026-04-20；1.20 之前的基线' },
@@ -605,7 +605,7 @@ function renderBody({ pages, validitySet, moddingTitles }) {
     lines.push(`## ${domain.title}（${domain.pages.length} 页）`);
     lines.push('');
     if (domain.key === 'other') {
-      lines.push('Paradox 自家 mod 的机制文档。只有在研究「官方 mod 怎么组织内容」时才看；我们四个 mod 不依赖其中任何一条。');
+      lines.push('Paradox 自家 mod 的机制文档。只有在研究「官方 mod 怎么组织内容」时才看；我们五个 mod 不依赖其中任何一条。');
       lines.push('');
     }
     if (domain.key === 'new121') {
@@ -665,7 +665,7 @@ function renderBody({ pages, validitySet, moddingTitles }) {
   lines.push('|---|---|---|---|');
   lines.push('| 1 | 本 Wiki | 语义、示例、工作流、补丁说明 | 页面 >1 年未动；`*list` 抄录页 |');
   lines.push(`| 2 | 本机原版 ${GAME_VERSION}（\`.info\` / \`common\`，经 \`ck3mod_vanilla\`；或控制台 \`script_docs\`） | 键名、类型、参数、是否仍存在 | 只有 DLC 新内容时才可能缺 |`);
-  lines.push('| 3 | 四个 mod 自己的 `数据-*.mjs` + 工具-静态校验 + loc 检查 | 我们自己的不变量与契约 | 只覆盖我们写过的规则 |');
+  lines.push('| 3 | 五个 mod 自己的 `数据-*.mjs` + 工具-静态校验 + loc 检查 | 我们自己的不变量与契约 | 只覆盖我们写过的规则 |');
   lines.push('');
 
   lines.push('## 范围与排除');

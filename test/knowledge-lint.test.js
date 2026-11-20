@@ -70,7 +70,7 @@ test('删掉硬规则 26 报 SKILL/rules', () => {
   const { code, out } = run(['--repo', root, '--no-deploy']);
   assert.equal(code, 1, out);
   assert.match(out, /\[SKILL\/rules\]/);
-  assert.match(out, /应为 1–34/);
+  assert.match(out, /应为 1–41/);
 });
 
 test('改掉 R1 的 buildid 锚点时报 R1', () => {
@@ -121,9 +121,33 @@ test('--list-anchors 总数与期望一致、复盘编号有落点', () => {
   const matched = /锚点：(\d+) 条 \/ \d+ 个编号（期望 (\d+)）/.exec(out);
   assert.ok(matched, out);
   assert.equal(Number(matched[1]), Number(matched[2]), out);
-  for (const id of ['Q1', 'Q12', 'P1', 'P24', 'H7', 'R1', 'M1', 'M10', 'M12', 'INV', 'CLI']) {
+  for (const id of ['Q1', 'Q12', 'P1', 'P24', 'H7', 'R1', 'M1', 'M10', 'M12', 'O1', 'O13', 'O24', 'O26', 'INV', 'CLI']) {
     assert.match(out, new RegExp(`^  ${id} \\d+$`, 'm'), `缺少 ${id} 的锚点`);
   }
+});
+
+test('改掉 [title] 的 title_capital_county.holder 时报 O3', () => {
+  const root = makeRepo();
+  write(root, NOTES_REL, read(root, NOTES_REL).replaceAll('title_capital_county.holder', 'title_capital_county'));
+  const { code, out } = run(['--repo', root, '--no-deploy']);
+  assert.equal(code, 1, out);
+  assert.match(out, /\[O3\]/);
+});
+
+test('人格层删掉终局状态时报 PERSONA', () => {
+  const root = makeRepo();
+  write(root, PATCH_REL, read(root, PATCH_REL).replaceAll('终局状态', '终局'));
+  const { code, out } = run(['--repo', root, '--no-deploy']);
+  assert.equal(code, 1, out);
+  assert.match(out, /\[PERSONA\]/);
+});
+
+test('References 漏掉 11-20 organizer 复盘时报 REFS', () => {
+  const root = makeRepo();
+  write(root, SKILL_REL, read(root, SKILL_REL).replaceAll('retro-2026-11-20-ck3mod-organizer.md', 'retro-x.md'));
+  const { code, out } = run(['--repo', root, '--no-deploy']);
+  assert.equal(code, 1, out);
+  assert.match(out, /\[REFS\]/);
 });
 
 test('package.json 与 README 版本不一致报 VERSION', () => {

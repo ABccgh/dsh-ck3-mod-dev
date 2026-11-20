@@ -1,11 +1,11 @@
 # dsh-ck3-mod-dev —— CK3 模组开发智能体 + 工具插件
 
 > 一个 DSH profile bundle：一个可在会话里选择的智能体预设 **「CK3 模组开发」**（`preset-ck3mod`），
-> 外加 8 个 `ck3mod_*` 工具。工具只做**调用与汇总**——校验规则仍然归四个 mod 自己的
+> 外加 8 个 `ck3mod_*` 工具。工具只做**调用与汇总**——校验规则仍然归五个 mod 自己的
 > `工具-*.mjs` 与 `ck3-modding-tools/cli.mjs`，本插件一份都不复制。
 
-- 包名：`@local/ck3moddev` · 版本 0.7.0 · MIT
-- 作用域：Windows 本机、profile `desktop`、游戏 **CK3 1.21.0 "Florin"**
+- 包名：`@local/ck3moddev` · 版本 0.8.0 · MIT
+- 作用域：Windows 本机、profile `desktop`、游戏 **CK3 1.21.0.3 "Florin"**（buildid 26785313）
 - 只做新增：不覆盖、不删除、不改动任何现有插件（`@local/ck3wiki`、`@local/steam`、`@local/prts` 等原样保留）
 - 仓库：<https://github.com/ABccgh/dsh-ck3-mod-dev>（MIT）
 
@@ -153,7 +153,7 @@ plugin_manager  action: install_bundle  target: %USERPROFILE%\dsh-bundles\ck3mod
 
 | 工具 | 写盘 | 启动游戏 | 说明 |
 |---|---|---|---|
-| `ck3mod_status` | — | — | 环境 + 四 mod 总览：快照/本机副本、能力、git、游戏版本与 **Steam buildid**（判热修）、日志时间、播放集哈希 |
+| `ck3mod_status` | — | — | 环境 + 五 mod 总览：快照/本机副本、能力、git、游戏版本与 **Steam buildid**（判热修）、日志时间、播放集哈希 |
 | `ck3mod_check` | — | — | `check` / `loc` / `reverse` / `selftest`，跑共享 CLI 的 `--json` 并渲染 |
 | `ck3mod_build` | ✅ 发布快照 | — | `generate` / `normalize`（写）或 `*-check`（只比对）/ `pipeline` |
 | `ck3mod_deploy` | ✅ `Documents\...\mod` | — | `deploy` / `check` / `clean`；按 mod 自己的部署脚本，能力探测决定 `--prune` 等 |
@@ -166,7 +166,7 @@ plugin_manager  action: install_bundle  target: %USERPROFILE%\dsh-bundles\ck3mod
 
 ### 5.1 能力探测（不硬编码）
 
-在营 4 个（dejure / free / auto / mastery）的脚本并不统一：dejure 的部署支持
+在营 5 个（dejure / organizer / free / auto / mastery）的脚本并不统一：dejure 的部署支持
 `--check --clean --allow-launcher-rewrite`，mastery 支持 `--check --clean`，free 只有 `--check`，
 auto-spread **v2.1 起**有 `--check` / `--clean`（此前根本没有部署脚本）。
 插件在运行时读脚本文本里出现过的 `'--xxx'` 字面量，据此决定允许哪些参数；
@@ -270,7 +270,7 @@ Steam 的 8000 字节上限是**每个上传字段**的，所以 `工坊描述-B
 | `skills/ck3-modding/references/verified-notes.md` | 16 组实测要点：hotfix / interaction / CB / 政体 / Resources / 议会 / 故事循环 / 斗争 / district / trade / road / laws / ingame / automation / release / verify，每条带 **1.21.0** 的 `.info` 行号，按需只读一节；顶部另有「1.21 改名与 patch note 落差」表 |
 | `skills/ck3-modding/references/ck3-wiki-atlas.md` | 生成物：Category:Modding 全 67 页 + **1.21 新内容 11 页 + 机制语义 27 页** + Category:1.21 校验集（76 页）+ 补丁链（7 条，含 1.21 hotfix），带最后编辑与 `{{version}}` |
 | `skills/ck3-modding/scripts/wiki-atlas.mjs` | 索引生成器；`--check` 验鲜；补丁链 / 页面改名有机器断言（缺页退出 1） |
-| `skills/ck3-modding/references/ingame-acceptance.md` | 真机验收 runbook：准备 / 启动（`-skip -play=`）/ 四 mod 矩阵 / 证据规范 / 收尾 / §9 机器代点（可选） |
+| `skills/ck3-modding/references/ingame-acceptance.md` | 真机验收 runbook：准备 / 启动（`-skip -play=`）/ 五 mod 矩阵（含 §4.5 organizer）/ 证据规范 / 收尾 / §9 机器代点（可选） |
 | `工具-同步技能.mjs` | 仓库 `skills/` → 用户 skill 目录；`--check` 只比对，`--dest` 改目标 |
 | `工具-知识层检查.mjs` | **知识层 lint**：硬规则 1–30 连续、三份文件的必需节、复盘映射锚点（A1…H7 + P1–P16 + Q1–Q12 + R1–R3，共 79 条）、版本口径、部署副本哈希；失败退出码 1 |
 | `工具-真机现场.mjs` | 真机验收现场保护：`--begin` 快照存档/设置/播放集，`--end` 按字节还原并核对 SHA256 |
@@ -394,10 +394,10 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
      补 `PATCHES` 里的新补丁页；跑一次生成，`assertCoverage` 会指出 Wiki 新增的 modding 页。
   2. 复核 `references/verified-notes.md`：逐条回新版本 `.info`，**失效的删掉**，行号全部更新；
      新机制页（如 1.21 的 trade / districts / roads）按同一格式加节。
-  3. 复核 `references/ingame-acceptance.md`：启动参数表（`_commandline_options.info`）、四 mod 矩阵的
+  3. 复核 `references/ingame-acceptance.md`：启动参数表（`_commandline_options.info`）、五 mod 矩阵的
      入口与期望、证据命令；`[ingame]` 一节同步更新。
   4. 改 `SKILL.md` 的 Environment 与「1.2x 变化」段；`metadata.version` 加一。
-  5. 重跑 `cli.mjs check --all`（四个 mod 的 vanilla token 是否还在）；必要时跑无头冒烟与真机验收。
+  5. 重跑 `cli.mjs check --all`（五个 mod 的 vanilla token 是否还在）；必要时跑无头冒烟与真机验收。
   6. `cordis.patch.yml` 的人格层与 SKILL 一起改（它是最先读到的摘要；别在里面枚举 mod 版本号，会漂）。
   7. `工具-同步技能.mjs` 同步 + `--check`；`工具-知识层检查.mjs` 必须绿（规则/节/映射/**锚点总数与逐编号覆盖**/
      人格必备词与禁词/References/版本/部署副本）；`.admin\工具-文档链接检查.mjs` 必须 0 缺失；
@@ -413,6 +413,46 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 5. **开游戏前先 `--begin`，收场用杀进程 + `--end`**；游戏内「退出游戏」会覆盖 `autosave_exit` / `last_save`。
 
 ## 13. 更新记录
+
+### 0.8.0（2026-11-20）— 复盘 11-20 organizer 落地（O1–O26：规则 35–41 / `[title]` / 1.21.0.3 / Wiki 全量复核）
+
+- **触发**：用户「全面检索 CK3 Wiki + 根据整个对话对智能体全面更新」——11-20 法理整顿
+  De Jure Organizer v1.0 的复盘（`.admin/retro-2026-11-20-ck3mod-organizer.md`，O1–O26）已写成施工图，
+  知识层与插件代码留着本轮做。
+- **Wiki 全量复核**：`Category:Modding` 67 页（生成器断言全覆盖）、`Category:1.21` **76 → 79** 页
+  （新增 `Duel` / `Ecclesiastical` / `Meditate in Seclusion`）、补丁链 7 条；**修掉生成器唯一红项**——
+  `Building` 已改名 `Buildings`（且被清成 85 B 占位页，建筑清单并入 `Districts`）；
+  `Patch 1.21.X` 现在有 **`1.21.0.3`（2026-11-19）** 节；索引重建后 `--check` 一致。
+  领域取证：`change_title_holder` / `create_title_and_vassal_change` / `resolve_title_and_vassal_change` /
+  `every_alert_creatable_title` / `create_character` 命中 `Effects`+`Effects list`，
+  `title_capital_county` 命中 `Scopes list`，`is_vassal_or_below_of` / `is_de_jure_liege_or_above_target`
+  命中 `Triggers list`；`has_appointment_level_for_title` **0 命中**（只能层 2）。
+- **SKILL.md 0.10.0**：在营 **5 个**（加 organizer 1.0，工坊 3842795131）；游戏版本改
+  **1.21.0.3**（buildid `26757580 → 26785313`，版本串仍不变）；**硬规则 35–41**（终局状态 /
+  `create_character` 性别 / `is_vassal_or_below_of` / 触发器作用域 / 引擎不变量写进 UI / 首传
+  `remote_file_id` + 回填 META / 日志链首），并改写 16 / 26 / 30、扩写 23 / 25 / 32 / 33；
+  路由表新增「头衔变更 / 封臣树 / 建档」行、`头衔 / 法理` 指向 `[title]`；pipeline 加 organizer 行；
+  Verification layers 加「探针」行；References 加第六份复盘。
+- **verified-notes.md**：新增 **`## [title]`**（12 条：建衔阈值与 `every_alert_creatable_title`、
+  `title_capital_county` 是 title scope、批量易手的原版配方、`is_de_jure_liege_or_above_target`、
+  `is_vassal_or_below_of` / `is_vassal_of` / `top_liege`、`create_character` 性别、任命制等级守卫、
+  `change_government` 字面 key、title 触发器、同级例外、只留首都县的口径、建衔成本随补丁变）；
+  `[hotfix]` 加 `1.21.0.3`（R1b）并把 R2 翻成「有编号了」；`[ingame]` 加**日志块首归属法**与
+  原版噪声三清单（23 / 7 / 6 条）；`[release]` 加首传只 +28 B、`supported_version` 不回写、回填 META
+  6/8 → 8/8、描述整篇 5367 B + 改动说明 846 B；`[verify]` 加「反向样本只改到注释」；`[automation]` 加
+  「探针先落到角色」（`random_independent_ruler` / `random_ruler`）。
+- **ingame-acceptance.md**：§4 改「五个 mod」并新增 **§4.5 organizer（G1–G10 + 政体矩阵 + 判读口径）**；
+  §5 加日志块首归属；§8 更新 1.21.0.3 与首传形状；§9.3 加「root 是 none → 随机选人 → 隐藏事件」；
+  §9.4 加政体覆盖 8/8。
+- **人格层**：在营 5 个 + `1.21.0.3`；首传只看 `remote_file_id`；新增三句判断（终局状态 /
+  通用键 / 日志链首）；`?v=5 → 6`。
+- **lib**：`status` / `build` / `registry` 的文案从「四个 mod」改「五个」，并补 organizer 支持 `--clean`。
+- **lint**：规则 34 → **41**、锚点 102 → **145**（O1–O26 共 43 条）、`[title]` 变必需节、
+  `[hotfix]` 标题更新、runbook §4/§4.5 必需、人格必备词 +5、References 六份复盘；
+  R2 / INV 两条锚点 needle 随事实翻转（不删条目）。
+- **单测**：99 → **102**（新增 O3 锚点 / 人格终局状态 / References 六份复盘三条变异）。
+- 验证：`工具-知识层检查.mjs` **161 项全过**；`npm test` **102 pass**；`cli.mjs check --all` **5/5**；
+  `wiki-atlas.mjs --check` 一致；同步 `--check` 一致；文档链接 0 缺失；bundle 关开后 **0.8.0**。
 
 ### 0.7.0（2026-11-19）— 复盘 11-19 mastery 落地（M1–M12：规则 31–34 / `[scheme]` / runbook §4.1 换 mastery + §9.6 三条）
 

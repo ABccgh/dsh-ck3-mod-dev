@@ -1,10 +1,10 @@
 # CK3 Wiki 索引（生成物，勿手改表体）
 
-> 生成时间：2026-11-19T05:57:14Z
+> 生成时间：2026-11-20T07:48:19Z
 > 站点：CK3 Wiki（MediaWiki 1.39.4）· https://ck3.paradoxwikis.com
-> 体量：8312 页 / 496 条目 / 5488 文件
-> 本机游戏：1.21.0 (Florin)
-> 内容哈希：0cdb8ec399006453
+> 体量：8319 页 / 496 条目 / 5494 文件
+> 本机游戏：1.21.0.3 (Florin)
+> 内容哈希：4fcb687eaa4a7374
 >
 > 这是**导航图，不是知识库**：只存标题、体积、最后编辑、`{{version}}` 声明与一句用法备注，不复制 Wiki 正文。
 > 刷新：`node scripts/wiki-atlas.mjs`；验鲜：加 `--check`（有漂移退出码 1）。
@@ -107,18 +107,18 @@
 | 页面 | 体积 | 最后编辑 | 声明版本 | 1.21 | 备注 |
 |---|---:|---|---|:--:|---|
 | Activity | 87.2 KB | 2026-11-17 | — | ✓ | 活动（狩猎 / 宴会 / 朝圣…）框架 |
-| Army | 121.2 KB | 2026-11-18 | — | ✓ | 军队 / 常备军 / 补给（1.21 口径）；2026-11-18 重写：MAA 成本表改由 Base Army Cost 变量页驱动 |
+| Army | 120.3 KB | 2026-11-20 | — | ✓ | 军队 / 常备军 / 补给（1.21 口径）；2026-11-18 重写：MAA 成本表改由 Base Army Cost 变量页驱动 |
 | Artifacts | 36.4 KB | 2026-11-17 | — | ✓ | 宝物与词条 |
 | Barony | 37.4 KB | 2026-11-17 | — | ✓ | 男爵领（最低级头衔） |
-| Building | 19.3 KB | 2026-09-30 | — |  | 建筑清单与效果 |
-| Casus belli | 49.8 KB | 2026-11-17 | — | ✓ | CB 玩家向语义；脚本字段看 _casus_belli.info 与 [cb] |
+| Buildings | 85 B | 2026-11-19 | — |  | 2026-11-19 被清成 85 B 占位页（`{{expand}}`），建筑清单已并入 `Districts`；键表仍回 `common/buildings/_buildings.info` |
+| Casus belli | 54.2 KB | 2026-11-19 | — | ✓ | CB 玩家向语义；脚本字段看 _casus_belli.info 与 [cb] |
 | Council | 39.4 KB | 2026-11-17 | — | ✓ | 议会玩法与任务（脚本面见 [council]） |
 | County | 24.0 KB | 2026-11-17 | — | ✓ | 伯爵领：控制力 / 繁荣 / 民意 |
 | Culture | 158.0 KB | 2026-11-18 | — | ✓ | 文化 / 传统 / 革新语义；2026-11-18 重排：全部文化并入主表 + 新增 Unique cultural mechanics 节 |
 | Doctrines | 80.3 KB | 2026-11-19 | — | ✓ | 教义清单与互斥 |
 | Government | 44.0 KB | 2026-11-18 | — | ✓ | 政体玩法；**2026-11-18 把 non-dynastic governments 改名 minor governments**；脚本字段看 _governments.info 与 [government] |
 | Hired forces | 12.4 KB | 2026-11-17 | — | ✓ | 雇佣兵与骑士团 |
-| Innovation | 80.1 KB | 2026-11-17 | — | ✓ | 革新与时代 |
+| Innovation | 80.4 KB | 2026-11-19 | — | ✓ | 革新与时代 |
 | Laws | 10.6 KB | 2026-11-17 | — | ✓ | 法律体系；1.21 起 law 可作 scope（见 [laws]） |
 | Lifestyle | 3.9 KB | 2026-11-18 | — | ✓ | 生活方式枢纽页（2026-11-18 拆分）：Ruler / Adventurer / Merchant 三套 perk 树 |
 | Modifiers | 84.0 KB | 2026-11-17 | — | ✓ | 修正语义与来源；键表仍以 _modifiers.info 为准 |
@@ -130,8 +130,8 @@
 | Struggles | 45.4 KB | 2026-11-17 | — | ✓ | 斗争（玩家向；脚本面见 [struggle]） |
 | Tenet | 141.6 KB | 2026-11-17 | — | ✓ | 信条 |
 | Titles | 33.1 KB | 2026-11-17 | — | ✓ | 头衔层级 / 法理 / 继承（1.21 口径） |
-| Traditions | 388.8 KB | 2026-11-18 | — |  | 传统清单（1.21 口径） |
-| Traits | 175.7 KB | 2026-11-17 | — | ✓ | 特质玩家向效果表（找 ID 用） |
+| Traditions | 414.0 KB | 2026-11-20 | — |  | 传统清单（1.21 口径） |
+| Traits | 175.6 KB | 2026-11-19 | — | ✓ | 特质玩家向效果表（找 ID 用） |
 | Warfare | 37.6 KB | 2026-11-17 | — | ✓ | 战争流程与战争分数 |
 
 ## 美术 / 地图 / 音频（9 页）
@@ -160,7 +160,7 @@
 
 ## 非通用（Paradox 自家 mod 文档）（9 页）
 
-Paradox 自家 mod 的机制文档。只有在研究「官方 mod 怎么组织内容」时才看；我们四个 mod 不依赖其中任何一条。
+Paradox 自家 mod 的机制文档。只有在研究「官方 mod 怎么组织内容」时才看；我们五个 mod 不依赖其中任何一条。
 
 | 页面 | 体积 | 最后编辑 | 声明版本 | 1.21 | 备注 |
 |---|---:|---|---|:--:|---|
@@ -174,7 +174,7 @@ Paradox 自家 mod 的机制文档。只有在研究「官方 mod 怎么组织�
 | Way of Kings/Knights Radiant | 13.5 KB | 2021-11-19 | — |  | — |
 | Way of Kings/Shardic Victories | 7.6 KB | 2023-09-27 | — |  | — |
 
-## Category:1.21 校验集（76 页）
+## Category:1.21 校验集（79 页）
 
 Wiki 编辑者标注为「1.21 口径」的页面。做 1.21 相关改动时优先从这批起步；**本版里面只有 `Console commands` 一个 Modding 页**，其余全是玩家向，modding 结论不能拿它免检。
 
@@ -185,18 +185,19 @@ Wiki 编辑者标注为「1.21 口径」的页面。做 1.21 相关改动时优�
 - Celestial · Celestial estate · Character · Character decisions
 - Console commands · Council · County · Court
 - Culture · Dharmic religions · Districts · Doctrines
-- Domicile · Dynasty · Ecclesiastical estate · Education focus
-- Government · Great project districts · Great projects · Hired forces
-- Historical artifacts · Holy relics · Holy sites · Hooks
-- Innovation · Knight · Laws · Lifestyle
-- List of hegemonies · Manor · Market · Merchant
-- Merchant decisions · Merchant lifestyle · Meritocratic · Modifiers
-- Nomadic capital · Pagan religions · Power sharing · Prisoner
-- Religion · Republican · Resources · Ritsuryō
-- Royal court · Ruler lifestyle · Schemes · Sinitic religions
-- Situation · Special districts · Stories · Struggles
-- Subjects · Succession laws · Tenet · Titles
-- Trade company · Traits · Travel · Warfare
+- Domicile · Duel · Dynasty · Ecclesiastical
+- Ecclesiastical estate · Education focus · Government · Great project districts
+- Great projects · Hired forces · Historical artifacts · Holy relics
+- Holy sites · Hooks · Innovation · Knight
+- Laws · Lifestyle · List of hegemonies · Manor
+- Market · Meditate in Seclusion · Merchant · Merchant decisions
+- Merchant lifestyle · Meritocratic · Modifiers · Nomadic capital
+- Pagan religions · Power sharing · Prisoner · Religion
+- Republican · Resources · Ritsuryō · Royal court
+- Ruler lifestyle · Schemes · Sinitic religions · Situation
+- Special districts · Stories · Struggles · Subjects
+- Succession laws · Tenet · Titles · Trade company
+- Traits · Travel · Warfare
 
 ## 补丁链
 
@@ -204,7 +205,7 @@ Wiki 编辑者标注为「1.21 口径」的页面。做 1.21 相关改动时优�
 |---|---:|---|---|
 | Patches | 8.1 KB | 2026-11-17 | 版本总表 |
 | Patch 1.21 | 212.0 KB | 2026-11-17 | 2026-11-17 与 Silk & Silver 同日；trade / districts / roads / laws 的脚本面源头 |
-| Patch 1.21.X | 3.1 KB | 2026-11-18 | 1.21 hotfix（2026-11-18）：平衡 + 崩溃修复，**无 Modding 段**；页面未给版本号 |
+| Patch 1.21.X | 3.8 KB | 2026-11-20 | 两节：`1.21 hotfix`（2026-11-18）+ **`1.21.0.3`（2026-11-19）**；纯平衡 + 崩溃修复 + 建衔/篡位金币成本下调，两节都**无 Modding 段** |
 | Patch 1.20 | 85.5 KB | 2026-09-30 | 2026-09-30 与 By God Alone 同日；上一个机制大版本 |
 | Patch 1.20.X | 43.9 KB | 2026-11-17 | 1.20.0.3 / 0.4 / 1.20.1 / 1.20.1.2 修复链 |
 | Patch 1.19 | 49.8 KB | 2026-09-30 | 2026-04-20；1.20 之前的基线 |
@@ -215,8 +216,8 @@ Wiki 编辑者标注为「1.21 口径」的页面。做 1.21 相关改动时优�
 | 层 | 来源 | 能回答什么 | 什么时候别信 |
 |---|---|---|---|
 | 1 | 本 Wiki | 语义、示例、工作流、补丁说明 | 页面 >1 年未动；`*list` 抄录页 |
-| 2 | 本机原版 1.21.0 (Florin)（`.info` / `common`，经 `ck3mod_vanilla`；或控制台 `script_docs`） | 键名、类型、参数、是否仍存在 | 只有 DLC 新内容时才可能缺 |
-| 3 | 四个 mod 自己的 `数据-*.mjs` + 工具-静态校验 + loc 检查 | 我们自己的不变量与契约 | 只覆盖我们写过的规则 |
+| 2 | 本机原版 1.21.0.3 (Florin)（`.info` / `common`，经 `ck3mod_vanilla`；或控制台 `script_docs`） | 键名、类型、参数、是否仍存在 | 只有 DLC 新内容时才可能缺 |
+| 3 | 五个 mod 自己的 `数据-*.mjs` + 工具-静态校验 + loc 检查 | 我们自己的不变量与契约 | 只覆盖我们写过的规则 |
 
 ## 范围与排除
 

@@ -36,17 +36,18 @@ define 的 95 只是硬顶——判读时连「当时同谋填了几个」一起
 ```powershell
 $node = "C:\Users\11210\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe"
 cd "D:\DSH workspace\ck3-modding-tools"
-& $node .\cli.mjs check --all          # 1) 静态/loc 必须 4/4 PASS，红了别开游戏
+& $node .\cli.mjs check --all          # 1) 静态/loc 必须 5/5 PASS，红了别开游戏
 
 # 2) 部署要验收的 mod（auto 自 v2.1 起也有 工具-部署.mjs；之前没有，只能手工拷贝）
-cd "D:\DSH workspace\ck3-scheme-mastery";   & $node .\工具-部署.mjs
-cd "D:\DSH workspace\ck3-de-jure-conquest"; & $node .\工具-部署.mjs
-cd "D:\DSH workspace\ck3-free-resources";   & $node .\工具-部署.mjs
-cd "D:\DSH workspace\ck3-auto-spread";      & $node .\工具-部署.mjs
+cd "D:\DSH workspace\ck3-scheme-mastery";     & $node .\工具-部署.mjs
+cd "D:\DSH workspace\ck3-de-jure-conquest";   & $node .\工具-部署.mjs
+cd "D:\DSH workspace\ck3-de-jure-organizer";  & $node .\工具-部署.mjs
+cd "D:\DSH workspace\ck3-free-resources";     & $node .\工具-部署.mjs
+cd "D:\DSH workspace\ck3-auto-spread";        & $node .\工具-部署.mjs
 
 # 3) 建现场（快照 + 改写播放集），--mods 只列本次要验的
 cd "D:\DSH workspace\dsh-ck3-mod-dev"
-& $node .\工具-真机现场.mjs --begin --mods cn_scheme_mastery,cn_dejure_conquest,free_resources,auto_spread
+& $node .\工具-真机现场.mjs --begin --mods cn_scheme_mastery,cn_dejure_conquest,cn_dejure_organizer,free_resources,auto_spread
 ```
 
 4. **确认 `Documents\...\mod\*.mod` 都在**（`--begin` 会替 `--mods` 校验，缺了直接报错）。
@@ -75,10 +76,10 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 
 > **不存在 `-develop`**：`_commandline_options.info` 没有这一项，exe 里也搜不到。
 > 热载正确做法：`-debug_mode` 下用控制台 `reload`（引擎里另有未文档化的 `-filewatcher`）。
-> 四个 mod 现在都声明 `supported_version="1.21.*"`；启动器若仍提示「有此 mod 不兼容」，先查
+> 五个 mod 现在都声明 `supported_version="1.21.*"`；启动器若仍提示「有此 mod 不兼容」，先查
 > `Documents\...\mod\*.mod` 是不是 1.20 时代的老副本（重新部署即可）。
 
-## 4. 四个 mod 的验收矩阵
+## 4. 五个 mod 的验收矩阵
 
 每条只做一件事；**期望**写的是「该看到什么」，不是「应该没问题」。
 
@@ -154,6 +155,33 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 > 报「没发现任何问题」）；A5 **机器复核通过**：`error.log` 里 `auto_spread` **0 条**、无 `Script location`
 > 指向本 mod，同期 8,094 条 [E] 全为原版/DLC 噪声（基线见 `verified-notes.md [ingame]`）。
 
+### 4.5 organizer（法理整顿）
+
+**前置（缺一条就换局或 SKIP）**：**任意政体**（封建 / 氏族 / 部落 / 行政 / 游牧 / 共和 / 神权）、
+**独立统治者或封臣统治者**、公爵级及以上、有首都伯爵领、和平期。矩阵与 mod 自己的
+`测试清单.md` 一一对应（G1–G10），详细期望在那边，这里只留判读要点。
+
+| 项 | 入口 | 操作 | 期望 | 证据 |
+|---|---|---|---|---|
+| G1 只留首都链条 | 决议「一键法理整顿」 | 点一次 → 看头衔列表 | 名下只剩**首都伯爵领** + 首都链上**原本持有**的公国/王国/帝国/霸权；其余全没了（同级额外头衔例外） | 头衔列表截图 |
+| G2 封臣瘦身 | 原来持 2+ 县的封臣 | 看他的头衔 | 只剩 1 个县（保留他自己的 `capital_county`），其余由新建伯爵接任 | 角色面板 |
+| G3 高等头衔跟首都县 | 任一公国/王国/帝国 | 看持有人 | 持有人 == 它**首都伯爵领**的持有人（`title_capital_county.holder`），不是「首府公国」 | 头衔页 tooltip |
+| G4 每级 ≤1 | 任一头衔封臣 | 数他的头衔 | 伯爵领 ≤1、公国 ≤1、王国 ≤1、帝国 ≤1（男爵领不在此列） | 角色面板 |
+| G5 无同级/更高封臣 | 全领地 | 看最高 tier | 严格低于你（皇帝底下可有国王；国王底下不能有国王） | 领地树 |
+| G6 新伯爵出现 | 被分封出去的县 | 看持有人 | 是**新建角色**（本地文化/信仰/仪式，`dynasty = generate`），不是原来的大地主 | 角色面板 |
+| G7 成本 / 冷却 / 日志 | 决议 | 点前后看资源 + `error.log` | 扣 **300 金 + 300 威望**；**180 天**冷却；起于 `cn_dejure_organizer_*` 的报错 **0 条** | 资源条 + 决议页 + 日志命令 |
+| G8 幂等 | 冷却结束后再点一次 | 看结果 | 头衔与封臣关系不再变化（第二趟没活可干） | 前后对照 |
+| G9 封臣统治者 | 行政总督 / 国王手下的公爵 | 点决议 | 决议可见；只整理**自己的子领域**（不向上、不横向，不会把自己的头衔送给领主/兄弟） | 领地树前后 |
+| G10 非封建政体 | 部落 / 游牧 / 行政 / 共和 / 神权各一次 | 点决议 | 三条规则同样成立；新伯爵政体**默认封建**（已知项）、任命制头衔例外见 README | 各局截图 |
+
+> **判读口径**：① 同级/更高例外（国王的第二个王国、皇帝的第二帝国）会留在玩家名下——这是引擎限制，
+> 不是 bug，工具提示与 README 已写明；② 商业共和国局会看到原版 `gdp_found_a_republic_effect` 建政链
+> 与 `create_dynamic_title … house already has house title`，日本局会看到 `previous_holder` 报错——
+> **按错误块的链首归因**（§5），只有起于 `cn_dejure_organizer_*` 的才算本 mod 失败；
+> 商业共和国里 P5（转封）部分被原版以 `same or higher tier` 拒绝，属已知功能影响。
+> ③ 2026-11-20 用户报告 G1–G10 通过（14:50，口述无逐项截图）；同会话 242 个错误块里 36 个末端指向本 mod、
+> **0 个起于本 mod**。复跑时优先补「封臣统治者」与「商业共和国」两局的截图。
+
 ## 5. 证据规范
 
 - **截图**：命名 `<mod>-<项号>-<hhmm>.png`（例 `mastery-G3-1452.png`），统一放
@@ -162,14 +190,19 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 
 ```powershell
 $u = "C:\Users\11210\Documents\Paradox Interactive\Crusader Kings III"
-foreach ($t in 'cn_scheme_mastery','cn_dejure_conquest','free_resources','auto_spread') {
+foreach ($t in 'cn_scheme_mastery','cn_dejure_conquest','cn_dejure_organizer','free_resources','auto_spread') {
   "{0,-22} {1}" -f $t, (Select-String -Path "$u\logs\error.log" -Pattern $t -ErrorAction SilentlyContinue).Count
 }
-Select-String -Path "$u\logs\debug.log" -Pattern 'mod/(cn_scheme_mastery|cn_dejure_conquest|free_resources|auto_spread)\.mod\|Enabled'
+Select-String -Path "$u\logs\debug.log" -Pattern 'mod/(cn_scheme_mastery|cn_dejure_conquest|cn_dejure_organizer|free_resources|auto_spread)\.mod\|Enabled'
 ```
 
+- **日志归属按「块首」判**：每个 `Script system error` 块取**第一个** `file:` / `Script location` 行，
+  以本 mod 文件名开头才算我们的错；末端指向本 mod（调用链落在我们脚本上）**不算**。organizer 实测：
+  用户会话 242 块 → 36 块末端含本 mod 决议 → **0 块起于本 mod**。
+
 - **挂载确认**：暂停菜单左下角显示 `Florin（1.21.0），校验码: <hex>（有修改）`；校验码与无 mod 时不同
-  即说明 mod 已被挂载（`-skip_checksum` 会跳过计算，别加）。
+  即说明 mod 已被挂载（`-skip_checksum` 会跳过计算，别加）。UI 只读 exe 里的版本串——**吃了 `1.21.0.3`
+  热修也照样显示 `1.21.0`**，别拿它判版本。
 - **结论表**（写进 `.admin/update-record-*.md` 或 mod 的 `验证记录\`）：
 
 ```markdown
@@ -223,12 +256,15 @@ Get-ChildItem "C:\Users\11210\Documents\Paradox Interactive\Crusader Kings III\m
   存档会被覆盖的清单 → 全部在 `references/verified-notes.md` 的 `[ingame]`。
 - 1.21 与 1.20 的差异（`development→prosperity`、区划/贸易/道路新库、法律可作 scope 等）→
   `SKILL.md` 的「1.21 变化」。
-- **热修不改版本串**：本机 2026-11-19 已吃 1.21 hotfix（buildid `26757580`），主菜单仍显示
-  `Florin (1.21.0)`，只有校验码会变。开测前用 `ck3mod_status` 的「游戏构建」行确认，别拿启动器
-  或主菜单的版本号判「有没有更新」；详见 `[hotfix]`。
-- 四个 mod 的已知旧结论：降祸 mod（已删除）的 `测试清单.md` 里 `T-G16` 是 **1.20.0.3** 时期通过的，
+- **热修不改版本串**：本机 2026-11-19 已吃两次热修——`1.21 hotfix`（buildid `26757580`）与
+  **`1.21.0.3`**（buildid `26785313`），主菜单仍显示 `Florin (1.21.0)`，只有校验码会变。开测前用
+  `ck3mod_status` 的「游戏构建」行确认，别拿启动器或主菜单的版本号判「有没有更新」；详见 `[hotfix]`。
+- **首传后的 descriptor 形状**：两份各 **+28 B**（`remote_file_id` 行），末字节仍是 `"`；
+  **`supported_version` 可能仍是 `1.21.*`**（organizer 实测），别因为「没回写版本」判上传失败。
+- 五个 mod 的已知旧结论：降祸 mod（已删除）的 `测试清单.md` 里 `T-G16` 是 **1.20.0.3** 时期通过的，
   「入口在更多…」这条在 1.21 观察到相反；de-jure README 的「启动器显示 1.20 兼容」同理。
-  mastery 的 G7 个人栏位是**用户口述确认**（无截图），证据强度低于截图，复跑时优先补。
+  mastery 的 G7 个人栏位是**用户口述确认**（无截图），证据强度低于截图，复跑时优先补；
+  organizer 的 G1–G10 同样是用户口述通过（2026-11-20 14:50），复跑时优先补「封臣统治者」与「商业共和国」两局。
   **验收以本文件的矩阵为准**，旧记录只当历史。
 
 ## 9. 机器代点（仅在用户当次明确要求时）
@@ -301,6 +337,21 @@ zz_probe_game_start = {
   `on_game_start_after_lobby` 后立刻出现（同版本、同一套选人流程，唯一变量就是钩子）。两个钩子都**只能写
   `on_actions` 列表**，靠全局变量 `zz_probe_done` 去重，避免重复触发。
 
+- **root 是 `none`，探针要先「落到角色」**：`on_game_start` 的 root 不是任何角色，直接在 root 上判
+  `is_independent_ruler` / `exists = capital_county` 会报 `Wrong scope for trigger: none`。
+  需要「任意政体 / 封臣统治者」时改用随机选人 + 隐藏事件（organizer 的政体覆盖 8/8 就是这么跑的）：
+
+```
+# 每个政体各抽 1 个独立统治者；封臣统治者改用 random_ruler + limit = { is_independent_ruler = no }
+random_independent_ruler = {
+	limit = { government_has_flag = <该政体的 flag> }
+	save_scope_as = zz_probe_actor
+}
+scope:zz_probe_actor = { trigger_event = zz_probe.0001 }   # 隐藏事件里 root = 该角色
+```
+
+  `every_ruler` + 全局变量去重**不生效**（实测在整张地图跑成百上千次、debug.log 成对刷屏）；
+  `random_independent_ruler` 的原版用法见 `00_debug_interactions.txt:1180`。
 - **绝对不要**写 `on_game_start = { effect = { … } }`：那是**整块覆盖**，原版开局设置全丢
   （实测：局势 intro 立刻变成 `ERROR:[ghibelline_leader…]` 占位）。
 - 目标流程（需要 `scope:xxx_target`）：先 `every_courtier = { limit = { is_adult = yes } save_scope_as = xxx_target }`
@@ -316,6 +367,7 @@ zz_probe_game_start = {
 | 目标流程面板（右侧对方头像） | 数值断言的精确读数（`debug_log` 不解析数据函数，只能截图） |
 | 政体门控后的列表内容、`error.log` 计数 | 跨年连续运行（原版事件会**自动暂停**游戏；必须跑时间的项一开始就划给人） |
 | **HUD 入口（hover 读 tooltip 定位）**：F9 决议已实测（mastery G2）；事件面板换档 / 互斥 / 撤档 | 需要「同谋填满」这类**多因子自然条件**的读数（只能换局或明确 SKIP） |
+| **政体覆盖**：随机选人探针（`random_independent_ruler` / `random_ruler`）→ 隐藏事件，7 政体 + 1 封臣统治者 **8/8** 跑到最后一行 | 探针只能证「效果整段能跑完」，不证 UI 与数值 |
 
 > 2026-11-19 更正：**决议列表能自动**——右侧 HUD 图标列逐个 hover 读 tooltip 可定位「决议 F9」，
 > 再滚到「决议（N）」组；free 的 F1 下次可补测。

@@ -6,10 +6,10 @@ description: |
   casus belli, localization, descriptors, thumbnails; running static validation,
   shared loc checks, reverse verification, headless smoke tests, local deployment,
   in-game acceptance, and Steam Workshop updates. Load this before touching any of
-  the four published mods, the shared toolchain, or the wiki atlas.
+  the five published mods, the shared toolchain, or the wiki atlas.
 metadata:
   author: "local workspace"
-  version: "0.9.0"
+  version: "0.10.0"
 ---
 
 # CK3 Modding — Workspace Playbook
@@ -18,8 +18,8 @@ metadata:
 
 Load this skill when the task concerns:
 
-- any of the four in-service mods（在营 4 个）: `ck3-auto-spread`, `ck3-de-jure-conquest`,
-  `ck3-free-resources`, `ck3-scheme-mastery`;
+- any of the five in-service mods（在营 5 个）: `ck3-auto-spread`, `ck3-de-jure-conquest`,
+  `ck3-de-jure-organizer`, `ck3-free-resources`, `ck3-scheme-mastery`;
 - the shared checker in `D:\DSH workspace\ck3-modding-tools`;
 - **查 CK3 Wiki**：某个 trigger/effect/字段现在到底怎么写、1.21 改了什么；
 - localization, script validation, headless checks, deployment, or Workshop uploads;
@@ -32,11 +32,11 @@ Do **not** load it for playing the game or for unrelated projects.
 1. `D:\DSH workspace\工作区索引.md` — current state, version notes, which mod is where.
 2. The mod's `README.md` — its "怎么改 / 下次 CK3 更新时 / 注意事项" sections are the operational truth.
 3. `references/ck3-wiki-atlas.md`（本 skill 目录下，加载 skill 时会给 base dir）——
-   Wiki 全量导航：67 个 modding 页 + 1.21 新内容 11 页 + 机制语义 27 页 + 补丁链 7 条（含 1.21 hotfix 页），
+   Wiki 全量导航：67 个 modding 页 + 1.21 新内容 11 页 + 机制语义 27 页 + 补丁链 7 条（含 `Patch 1.21.X` 双热修节），
    含最后编辑、`{{version}}`、是否 1.21 口径。
 4. `references/verified-notes.md` — **动手前**按路由表的「要点」列读对应小节（`[interaction]` / `[cb]` /
    `[district]` …）：1.21.0 实测结论，每条带 `.info` 行号，只读需要的那节。
-5. `references/ingame-acceptance.md` — **要进游戏验收时**读它：准备/启动/四 mod 矩阵/证据/收尾。
+5. `references/ingame-acceptance.md` — **要进游戏验收时**读它：准备/启动/五 mod 矩阵/证据/收尾。
 6. `D:\DSH workspace\ck3-modding-survey\06-落地候选.md` — if the task is "what should we do next".
 7. `D:\DSH workspace\ck3-modding-survey\03-工具链与测试.md` — if the task involves tests/tooling.
 
@@ -51,24 +51,30 @@ Never infer a path or a command from memory; read the mod README first.
 - Python (not on PATH):
   `C:\Users\11210\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe`
 - Steam Workshop content: `D:\Program Files (x86)\Steam\steamapps\workshop\content\1158310`.
-- Game version: **1.21.0 "Florin"**（Wiki 记 2026-11-17 与 Silk & Silver 同日发布；本机 2026-11-18 首次安装）。
-  **2026-11-19 13:28 本机收到 1.21 hotfix**：`appmanifest_1158310.acf` buildid `26622941 → 26757580`，
-  81 个文件被替换（`game/common` 31 · `localization` 27 · `history` 11 · `events` 3 · `gui` 3 …）。
-  **版本串没变**：`titus_branch.txt` 仍 `release/1.21.0`、`ck3.exe` 仍嵌 `1.21.0`/`Florin`、
-  `launcher-settings.json` 停在前一天（启动器下次启动才回写）→ **判「吃没吃热修」看 buildid + 文件 mtime**，
-  `ck3mod_status` 的「游戏构建」行已报；热修后第一件事仍是 `check --all`。详见 `[hotfix]`。
-- 在营 4 个 mod 的当前发布快照（**四个都已按 1.21 发布**）：`ck3-auto-spread` **2.1** ·
-  `ck3-de-jure-conquest` **2.3** · `ck3-free-resources` **4.1** · `ck3-scheme-mastery` **1.0**。
+- Game version: **1.21.0.3 "Florin"**（Wiki 记 1.21.0 于 2026-11-17 与 Silk & Silver 同日发布；本机 2026-11-18 首次安装）。
+  **两次热修**：① 2026-11-19 13:28，buildid `26622941 → 26757580`，81 个文件被替换
+  （`game/common` 31 · `localization` 27 · `history` 11 · `events` 3 · `gui` 3 …）；
+  ② 2026-11-19 23:12（本地），buildid `26757580 → 26785313`——Wiki 的 `Patch 1.21.X` 页现在有
+  **`1.21.0.3`（2026-11-19）** 节，就是这一次。
+  **版本串没变**：`titus_branch.txt` 仍 `release/1.21.0`、`binaries\ck3.exe` 仍嵌 `1.21.0`/`Florin`、
+  `launcher-settings.json` 由启动器回写、可能滞后 → **判「吃没吃热修」看 buildid + 文件 mtime**，
+  `ck3mod_status` 的「游戏构建」行已报；每次热修后第一件事仍是 `check --all`。详见 `[hotfix]`。
+- 在营 5 个 mod 的当前发布快照（**五个都已按 1.21 发布**）：`ck3-auto-spread` **2.1** ·
+  `ck3-de-jure-conquest` **2.3** · `ck3-free-resources` **4.1** · `ck3-scheme-mastery` **1.0** ·
+  `ck3-de-jure-organizer` **1.0**。
   free 2026-11-18 16:23、auto 同日 20:21、de-jure 同日 22:41、mastery 2026-11-19（工坊 **3842327113**、
-  tag `Gameplay`）。仓库快照 `supported_version="1.21.*"`、工坊侧被启动器回写为 `1.21.0`；free 工坊
-  `file_size` 96,074 B，auto 内层 75,393 B、精确 `file_size` 记 **SKIP**——shell 拿不到 Steam API key；
+  tag `Gameplay`）、organizer 2026-11-20 15:05（工坊 **3842795131**）。仓库快照 `supported_version="1.21.*"`；
+  free / auto / dejure / mastery 的工坊侧被启动器回写成 `1.21.0`，**organizer 首传后仍是 `1.21.*`**——
+  首传的回写信号是 descriptor 新增 `remote_file_id`（见硬规则 40）。free 工坊 `file_size` 96,074 B，
+  auto 内层 75,393 B、精确 `file_size` 记 **SKIP**——shell 拿不到 Steam API key；
   de-jure 的页面信号某轮断网 SKIP，只核到 descriptor 回写 + 双层字节形状 257/163 B 未变。
   mastery **首次**上传后两份 descriptor 是「回写 `1.21.0` **+ 新增一行 `remote_file_id`**」：235 / 142 B、
-  末字节 `"`（回填前 207 / 114 B）。见 `[release]`。
+  末字节 `"`（回填前 207 / 114 B）；organizer 首传只 +28 B（233→261 / 138→166 B），`supported_version` 没动。
+  见 `[release]`。
 - **降祸 mod（curse）已于 2026-11-19 彻底删除**：工坊下架、仓库整目录移除、`ck3-modding-tools/configs.mjs`
   条目摘除。历史只留在 `.admin` 与 `工作区索引.md`；**别再按它写命令、验收项或检查项**。
-- **四个 mod 的本机副本都已删**（改用工坊订阅，避免重复定义）；要本地测先跑各自 `工具-部署.mjs` 重建
-  （mastery / de-jure / auto 支持 `--clean`，free 只有 `--check`）。
+- **五个 mod 的本机副本都已删**（改用工坊订阅，避免重复定义）；要本地测先跑各自 `工具-部署.mjs` 重建
+  （mastery / de-jure / auto / organizer 支持 `--clean`，free 只有 `--check`）。
 - **新版本上手第一件事**：跑该 mod 的 `工具-静态校验.mjs`。H 段（引擎 token）与 H2 段（原版角色货币覆盖）
   会回答「只发兼容版，还是要功能更新」——free 的 H2 就是 2026-11-18 为此加的。
   **判完若只是兼容发布，再用 L 段（`v_prev` ↔ `v_new` 差异断言）把「兼容发布 = 内容零改动」变成机器事实**，
@@ -101,9 +107,12 @@ Never infer a path or a command from memory; read the mod README first.
   CB 的 cost / AI score / trigger 被"清理成更易 patch"的形式。见 `[cb]`。
 - **`game/tests/` + `scripted_tests`**：1.21 自带 20 个脚本测试文件，`tests/_tests.info` 写明用控制台
   `scripted_tests [pattern]` 运行。但**自动入口仍未打通**（见硬规则 9）。
-- **1.21 hotfix（2026-11-18，Wiki 新页 `Patch 1.21.X`）**：纯平衡（867/1066 起始军队、Norse/Varangian
-  入侵规模、MAA 招募与维护折扣、Yangzhou 改产丝绸）+ 崩溃修复 + 贸易/选举若干 bugfix，**没有 Modding 段**；
-  Wiki 页**没有版本号**，别编 `1.21.1`。本机 11-19 才收到；在营 4 个 `check --all` 仍 4/4 → 与我们的脚本面不相交。见 `[hotfix]`。
+- **两次热修（2026-11-18 / 2026-11-19，Wiki 页 `Patch 1.21.X`）**：① `1.21 hotfix`（2026-11-18）纯平衡
+  （867/1066 起始军队、Norse/Varangian 入侵规模、MAA 招募与维护折扣、Yangzhou 改产丝绸）+ 崩溃修复 +
+  贸易/选举若干 bugfix；② **`1.21.0.3`（2026-11-19）**：起始领地宽限恢复、村庄/城墙/庄园补征召兵、
+  行政/天朝/贤能政体的征召兵惩罚减半、**建衔与篡位金币成本下调**、修「不可见的 Guelphs & Ghibellines
+  开局暂停」。两节都**没有 Modding 段**；Wiki 现已给出 `1.21.0.3` 编号（别再写「页面没版本号」）。
+  本机 11-19 收到两次；在营 **5 个** `check --all` 仍 **5/5** → 与我们的脚本面不相交。见 `[hotfix]`。
 
 ## 查资料：三层真相
 
@@ -112,10 +121,10 @@ Never infer a path or a command from memory; read the mod README first.
 | 层 | 来源 | 能回答什么 | 什么时候别信 |
 |---|---|---|---|
 | 1 | CK3 Wiki（`ck3wiki_*` 工具） | 语义、示例、工作流、补丁说明 | 页面 >1 年没动；`Effects list` / `Triggers list` 这类抄录页 |
-| 2 | 本机原版 1.21.0：`.info` 文档与 `common/`（`ck3mod_vanilla`） | 键名、类型、参数、这个键现在还在不在 | 只有 DLC 新内容才可能缺 |
-| 3 | 在营 4 个 mod 自己的 `数据-*.mjs` + `工具-静态校验.mjs` + loc 检查 | 我们自己的不变量与契约 | 只覆盖我们写过的规则 |
+| 2 | 本机原版 1.21.0.3：`.info` 文档与 `common/`（`ck3mod_vanilla`） | 键名、类型、参数、这个键现在还在不在 | 只有 DLC 新内容才可能缺 |
+| 3 | 在营 5 个 mod 自己的 `数据-*.mjs` + `工具-静态校验.mjs` + loc 检查 | 我们自己的不变量与契约 | 只覆盖我们写过的规则 |
 
-**1.21 期间的额外纪律**：Wiki 的 modding 层整体没跟上——`Category:1.21` 76 页里只有 `Console commands`
+**1.21 期间的额外纪律**：Wiki 的 modding 层整体没跟上——`Category:1.21` 79 页里只有 `Console commands`
 一个 Modding 页。所以 **1.21 的结论默认先走层 2（`.info` + 现行脚本），Wiki 只取语义与示例**；
 patch note 也不可信到名字级别（见 `verified-notes.md` 顶部「改名与落差」表）。
 
@@ -134,13 +143,13 @@ patch note 也不可信到名字级别（见 `verified-notes.md` 顶部「改名
 - `Effects list`（267 KB）与 `Triggers list`（162 KB）是**抄录版**，Wiki 自己写着
   「outdated，有废弃的、也有缺的」——只用来找名字，语法一律回层 2 复核。
 - 页首 `{{version|X}}` 与「最后编辑」都给新鲜度：停在 `1.1` / 2020–2023 的页先当参考。
-- `Category:1.21`（75 页）是编辑者标的「当前版本口径」，可以当起点，但不是免检章。
+- `Category:1.21`（79 页）是编辑者标的「当前版本口径」，可以当起点，但不是免检章。
 - 不抄正文进仓库：索引只存标题/日期/一句备注，正文用工具现读。
 
 ### 路由表：什么话题去哪个页面
 
 「要点」列指向 `references/verified-notes.md` 里的实测小节（本 skill 目录下）：**按需只读一节，不要整篇读**；
-`—` 表示这个域还没核过。每条都带 1.21.0 的 `.info` 行号。
+`—` 表示这个域还没核过。每条都带 1.21.0.3 的 `.info` 行号或原版脚本行号。
 
 | 要做的事 | Wiki（层 1） | 语法真相（层 2） | 要点 |
 |---|---|---|---|
@@ -149,13 +158,14 @@ patch note 也不可信到名字级别（见 `verified-notes.md` 顶部「改名
 | 决策 | `Decisions modding`；玩家向 `Character decisions` | `common/decisions/` + `.info` | — |
 | 特质 | `Trait modding`；玩家向 `Traits` | `common/traits/` + `.info` | — |
 | 宣战理由 CB | **无专页**；`Casus belli` 是玩家向机制页 | `common/casus_belli_types/` + `_casus_belli.info`；**组在 `common/casus_belli_groups/`** | `[cb]` |
-| 头衔 / 法理 | `Title modding`；机制语义 `Titles` | `common/titles/`、`history/titles/` | — |
+| 头衔 / 法理 | `Title modding`；机制语义 `Titles`（§De Jure 给阈值语义） | `common/titles/`、`history/titles/` | `[title]` |
+| 头衔变更 / 封臣树 / 建档 | `Titles`；`Effects list`（`change_title_holder` / `create_title_and_vassal_change` / `resolve_title_and_vassal_change` / `every_alert_creatable_title`）、`Triggers list`（`is_vassal_or_below_of` / `is_de_jure_liege_or_above_target`）、`Scopes list`（`title_capital_county`）；**`Mod troubleshooting §9` 是可运行的批量易手范例** | `common/character_interactions/`、`on_action/title_on_actions.txt`、`_scripted_character_templates.info` | `[title]` |
 | 文化 / 传统 | `Culture modding`；`Culture`、`Traditions` | `common/culture/` | — |
 | 宗教 / 教义 | `Religions modding`（1.20 口径）；`Religion`、`Doctrines`、`Tenet` | `common/religion/` | — |
-| 政体 | `Governments modding`（2021 页，旧） | `common/governments/` + `.info` | `[government]` |
+| 政体 | `Governments modding`（2021 页，旧） | `common/governments/` + `.info`；跨政体/封臣树判定见 `[title]` | `[government]` |
 | 议会 | `Council modding`；玩家向 `Council` | `common/council_positions/`、`common/council_tasks/` | `[council]` |
 | 地产 / 区划 | `Holdings modding`（旧）；1.21 玩家向 `Districts`、`Special districts`、`Great project districts` | `common/holdings/`、**`common/districts/`**、`common/buildings/` | `[district]` |
-| 建筑 / 市场修正 | `Building`；1.21 玩家向 `Market` | `common/buildings/_buildings.info` | `[district]` |
+| 建筑 / 市场修正 | `Buildings`（2026-11-19 被清成 **85 B 占位页**，清单已并入 `Districts`）；1.21 玩家向 `Market` | `common/buildings/_buildings.info` | `[district]` |
 | 贸易 / 商业共和国 | **无 modding 页**；`Market`、`Merchant`、`Merchant lifestyle`、`Republican`、`Trade company` | `common/trade/**`、`common/trade_tasks/` | `[trade]` |
 | 道路 / 地图样条 | **无专页**；`Map modding` | `common/roads/**` + `gfx/map/spline_network/` | `[road]` |
 | 法律 | `Laws`（1.21 口径） | `common/laws/_laws.info`、`common/law_groups/` | `[laws]` |
@@ -216,12 +226,13 @@ cd "D:\DSH workspace\ck3-scheme-mastery"
 以及任何**未知参数都会报错退出 2**——2026-11-18 之前它们被静默忽略，`check --root <目录>`
 会照常跑发布快照并 PASS，等于「以为验了反例、其实没验」。
 
-Baseline at 2026-11-19 (1.21.0 + hotfix): mastery loc 34 / de-jure 28（v2.3，移除战后报告后 36→28）/ free 84 / auto 94, all 0 errors,
-`check --all` 4/4 PASS、`reverse --all` 4/4 PASS（mastery 13 例、auto 7 例，其余按各自脚本）。
-`auto` / `dejure` / `mastery` 的静态校验都支持 `--root`；
+Baseline at 2026-11-20 (1.21.0.3): mastery loc 34 / de-jure 28（v2.3，移除战后报告后 36→28）/ free 84 / auto 94 /
+organizer 20, all 0 errors, `check --all` **5/5 PASS**、`reverse --all` **5/5 PASS**
+（organizer 29 例、mastery 13 例、auto 7 例，其余按各自脚本）。
+`auto` / `dejure` / `mastery` / `organizer` 的静态校验都支持 `--root`；
 `check` runs against the release snapshot and passes. Passing `--root` is preferred over deploying a local copy.
 Spelling: `ck3spell` is blocked by hosts; `spellcheck.py` (pyspellchecker + game English corpus)
-found 0 real typos in the four mods; only the `behaviour`/`behavior` style variant.
+found 0 real typos in the five mods; only the `behaviour`/`behavior` style variant.
 
 ## Native tools (agent preset「CK3 模组开发」)
 
@@ -230,20 +241,20 @@ checker and each mod's own `工具-*.mjs`; prefer them over hand-written PowerSh
 
 | Tool | Use it for | Writes |
 |---|---|---|
-| `ck3mod_status` | env + 在营 4 个 overview before starting: snapshot / local copy / capabilities / git / game version + **Steam buildid 与安装时间**（判热修用） | — |
+| `ck3mod_status` | env + 在营 5 个 overview before starting: snapshot / local copy / capabilities / git / game version + **Steam buildid 与安装时间**（判热修用） | — |
 | `ck3mod_check` | `check` / `loc` / `reverse` / `selftest` (structured PASS/FAIL + loc counts) | — |
 | `ck3mod_build` | `generate` / `normalize` (write), or `*-check` to compare only | release snapshot |
 | `ck3mod_deploy` | `deploy` / `check` / `clean` through the mod's own 部署 script | `Documents\...\mod` |
 | `ck3mod_headless` | backup → single-mod playset → ck3.exe → restore + SHA256 → log triage | `dlc_load.json` (restored) |
 | `ck3mod_logs` | `error.log` `[E]` lines; `debug.log` Enabled / Mounted isolation | — |
-| `ck3mod_vanilla` | search the installed 1.21 scripts / loc / `.info` docs for real triggers and effects | — |
+| `ck3mod_vanilla` | search the installed 1.21.0.3 scripts / loc / `.info` docs for real triggers and effects | — |
 | `ck3mod_workshop` | per-segment description bytes (≤ 8000), descriptor fields, empty `remote_file_id` | — |
 
 Wiki 工具（同一会话里保留可见，只读）：
 
 | Tool | 用来 |
 |---|---|
-| `ck3wiki_category` | 取清单：`Modding`（67 页）/ `1.21`（75 页） |
+| `ck3wiki_category` | 取清单：`Modding`（67 页）/ `1.21`（79 页） |
 | `ck3wiki_search` | 全文检索（支持 `incategory:` / `insource:` / `intitle:`） |
 | `ck3wiki_titles` | 名字对不准时先搜标题 |
 | `ck3wiki_sections` | 长页先看目录，再按节读 |
@@ -265,19 +276,20 @@ Common order: **edit source → generate (if table-driven) → normalize → che
 | `ck3-de-jure-conquest` | `数据-mod表.mjs` + CB script/loc | `工具-生成.mjs`, `工具-规范化.mjs` | `工具-检查.mjs`（静态 **A–O**：L 结构含 1.21 wrapper + 内联残留；M 决策锚点 + wrapper 契约 + 战后报告已移除；N v2.2↔v2.3 差异；O configs↔快照；`--root` v1.0 must report **20**） | CB is hand-written; v2.3 = 1.21 兼容 + 结算对齐 + 移除战后报告；v2.0 settlement checklist 在 `发布说明.md` |
 | `ck3-free-resources` | `数据-资源表.mjs` | `工具-生成.mjs` (golden check), `工具-部署.mjs` | `工具-检查.mjs` | generated events/loc; never hand-edit products |
 | `ck3-auto-spread` | `数据-元数据.mjs`（META / 快照路径）+ hand-written script/loc | `工具-生成.mjs`（**只生成两份 descriptor**，`--check` golden） | `工具-检查.mjs`（静态 A–M，含 L 段差异；loc 94；reverse 7） | settings via global variables + game rules；v2.1 起有 `工具-部署.mjs`（`--check` / `--clean`），**没有内容生成器** |
+| `ck3-de-jure-organizer` | `数据-设计.mjs`（5 阶段 / 12 事务 / 补建与授予级数）+ `数据-元数据.mjs`；effects / triggers / decisions 手写 | `工具-生成.mjs`（**只生成两份 descriptor**）、`工具-规范化.mjs`、`工具-缩略图.py` | `工具-检查.mjs`（静态 **A–O**：G 段 48 个引擎 token 双向核对 + type 枚举；H1–H9 契约（12 对 create/resolve、`$CHANGE$` 收口、五阶段顺序、新伯爵九项结构）；**L0–L11**（tier 反查、链条保护、只留首都县、受让人 = `title_capital_county.holder`、等级上限、无政体闸门、封臣树范围、任命等级）；反向 **29**；部署 `--check` / `--clean`） | 单决议「一键法理整顿」；「所有政体」= 7 政体 + 封臣统治者探针 8/8，见 `[title]` |
 
 After editing, always run the mod's `工具-检查.mjs check` (or the original `工具-静态校验.mjs`)
 and keep it output green. Do not "fix" a check by deleting it; if a check is stale, update its
 documented expected count and say so.
 
-## 覆盖与兼容（四个 mod 都靠这套边界活着）
+## 覆盖与兼容（五个 mod 都靠这套边界活着）
 
 来自 Wiki `Modding §Override rules`、`Mod compatibility`、`Mod structure`：
 
 - **整文件覆盖**：mod 里放 `同路径同名` 文件 → 原版整个文件被替换。危险：原版后续补的内容全丢。
 - **单对象覆盖**：同一 ID 重新定义（defines / on_actions / 本地化 / UI types 各有各的规则），
-  只替换那个对象。在营 4 个一律走这条，能加就不改。
-- **`replace_path`**：让原版某个目录完全不加载，只给总转换用——我们不用，别在四个 mod 里加。
+  只替换那个对象。在营 5 个一律走这条，能加就不改。
+- **`replace_path`**：让原版某个目录完全不加载，只给总转换用——我们不用，别在五个 mod 里加。
 - **加载顺序**：多人游戏要求所有人同一套 mod、同一顺序；发布说明里要写清依赖。
 - **探测别的 mod**：共享全局变量 + `scripted_trigger`（`Mod compatibility` 的 pattern），
   只在真需要软依赖时用；否则保持零依赖。
@@ -286,8 +298,8 @@ documented expected count and say so.
 
 ## 真机验收（in-game acceptance）
 
-无头只验加载期；互动、UI、tooltip、决策面板只有进游戏才知道。完整 runbook（准备 → 启动 → 四 mod 矩阵 →
-证据 → 收尾）在 `references/ingame-acceptance.md`；这里只留铁律和闭环工具。
+无头只验加载期；互动、UI、tooltip、决策面板只有进游戏才知道。完整 runbook（准备 → 启动 → 五 mod 矩阵 →
+证据 → 收尾）在 `references/ingame-acceptance.md`（organizer 的矩阵在 §4.5）；这里只留铁律和闭环工具。
 
 **三条铁律**
 
@@ -306,7 +318,9 @@ define 的 95 只是硬顶、contract 是 100——别把「没到 100%」当成
 
 **代点两步（仅用户当次明确同意时）**：① 探针 mod **两个开局钩子都要挂**——`on_game_start` +
 `on_game_start_after_lobby`（单人新开局常走后者；只挂前者时面板不出现、日志却无报错），
-用全局变量去重；② **凡「必须连续跑时间」的项一开始就划给人**（原版事件会自动暂停游戏），
+用全局变量去重；但 **`on_game_start` 的 root 是 `none`**，探针不能在 root 上判角色条件：用
+`random_independent_ruler` / `random_ruler`（可按政体 limit）选人 → `trigger_event` 隐藏事件，事件里 root 才是该角色；
+`every_ruler` + 全局变量去重**不生效**（会在整张地图跑成百上千次）。② **凡「必须连续跑时间」的项一开始就划给人**（原版事件会自动暂停游戏），
 点击纪律（全尺寸截图量坐标、行高 36 px、间隔 ≥1.2–1.5 s、选角色先 hover）见 runbook §9.6；
 ③ **事件面板选项每点一次都可能整体位移**——每次点击前重新 hover、读 tooltip 核对**选项名**，别沿用上一次的像素
 （2026-11-19 实测把「收敛锋芒」当「先这样」点到）；debug 顶栏的调试开关会把文案变成原始 loc 串，取证前先确认文案正常；
@@ -351,7 +365,7 @@ HUD 入口靠 hover 读快捷键（F4 内阁 / F5 贸易 / F6 廷臣 / F7 谋略
 9. **`scripted_tests` 仍无无人值守入口（2026-11-18 在 1.21 复测）**：`tests/_tests.info` 只给了控制台命令
    `scripted_tests [pattern]`；`-automated_test` 会起一局全自动 AI 对局、150 s 不退出且日志里没有测试结果；
    `-run_console_action=scripted_tests` 10 s 退出 0 但**不产生任何 `ScriptedTests` 输出**（应用初始化阶段还没有游戏状态）。
-   → **可重复的路径只有「人工控制台 + run 脚本 / `scripted_tests`」**。别给四个 mod 加 `tests/`，除非哪天证明自动入口。
+   → **可重复的路径只有「人工控制台 + run 脚本 / `scripted_tests`」**。别给五个 mod 加 `tests/`，除非哪天证明自动入口。
 10. **Do not trust `dlc_load.json` alone for isolation.** 启动器另有一套播放集数据库；另外
     `Documents\...\player\game_rules\presets.txt` 的 `LastAppliedRules` 记着**各 mod 游戏规则的当前取值**
     （例如 `on_auto_spread_ai`）。播放集里**没有那个 mod 时**，每次启动会报一条
@@ -373,11 +387,12 @@ HUD 入口靠 hover 读快捷键（F4 内阁 / F5 贸易 / F6 廷臣 / F7 谋略
     `on_game_start = { on_actions = { my_action } }` + `my_action = { effect = { … } }`。
 16. **工坊流程的两个顺序**：① **上传前先 `ck3mod_deploy`** —— 启动器 Mod 库只认
     `Documents\...\mod\*.mod`，清场后它会显示空库、没有可上传物；② **两个 descriptor 归启动器管** ——
-    点上传只把 `supported_version` 从通配回写成实测版本（`1.21.*`→`1.21.0`）；快照末字节是 `"`、
-    没有行尾换行时**长度不变**（de-jure v2.3 实测 257 / 163 B 原样），所以静态校验对这两个文件按字段比。
-    「`file_size` 少 1」只出现在**快照带行尾换行**的旧形状里（free v4.1 实测 96,075 → 96,074），不是常态。
-    它读的是外层 `.mod`，但**内层 `descriptor.mod` 也会被一起回写** → 按字段比必须覆盖内外两份
-    （容差 `1.21.*` / `1.21.x`）。
+    点上传会重写这两份文件，**首传与更新形状不同**（首传新增 `remote_file_id`、`supported_version` 可能
+    仍是通配；更新才回写实测版本），**判据见硬规则 40**。快照末字节是 `"`、没有行尾换行时**字节数不变**
+    （de-jure v2.3 实测 257 / 163 B 原样；organizer 首传 233→261 / 138→166 B，只 +28 B），
+    所以静态校验对这两个文件按字段比。「`file_size` 少 1」只出现在**快照带行尾换行**的旧形状里
+    （free v4.1 实测 96,075 → 96,074），不是常态。它读的是外层 `.mod`，但**内层 `descriptor.mod` 也会被
+    一起回写** → 按字段比必须覆盖内外两份（容差 `1.21.*` / `1.21.x`）。
 17. **前提先于功能**：现象是「功能没生效」时，先逐条确认前置条件真的成立——目标对象还活着
     （拿死人做 `add_hook` 会静默失败）、对象过得了代码里的闸门（AI 受害者被 `is_ai = no` 挡掉）、
     命令在零售版被接受（Wiki 只证明「存在」）。前置条件不成立时，代码看起来就是「写错了」。
@@ -403,9 +418,12 @@ HUD 入口靠 hover 读快捷键（F4 内阁 / F5 贸易 / F6 廷臣 / F7 谋略
 22. **校验器的结论行不许硬编码样本数**。各 mod 的反向样本数不同（历史：curse 32；现在 mastery 13、auto 7），显示必须从脚本
     输出解析（`反向验证：N / N 项如期报错`）；期望值只写在 `configs.mjs` 的 `expect` 里，
     断言的是「显示等于实际」，不是断言常量。
-23. **探针两个开局钩子都要挂**。单人新开局常走 `on_game_start_after_lobby`（`game_start.txt:2806`），
-    只挂 `on_game_start` 时面板不出现、日志却无报错；两个钩子都写 `on_actions = { zz_probe_game_start }`，
-    用全局变量去重。模板见 `references/ingame-acceptance.md §9.3`。
+23. **探针两个开局钩子都要挂，且 root 不会自动是「某个角色」**。单人新开局常走
+    `on_game_start_after_lobby`（`game_start.txt:2806`），只挂 `on_game_start` 时面板不出现、日志却无报错；
+    两个钩子都写 `on_actions = { zz_probe_game_start }`，用全局变量去重。**但 `on_game_start` 的 root 是 `none`**：
+    在 root 上判角色条件会报 `Wrong scope for trigger: none`——先 `random_independent_ruler` / `random_ruler`
+    （可按政体加 limit）选人，再 `trigger_event` 隐藏事件，事件里 root 才是那个角色；
+    `every_ruler` + 全局变量去重**不生效**（实测在整张地图跑成百上千次）。模板见 `references/ingame-acceptance.md §9.3`。
 24. **代点点击纪律；要跑时间的项一开始就划给人**。坐标从**全尺寸截图**量（预览 1708 宽，系数 1.1241），
     事件面板每行约 36 px；两次点击间隔 ≥1.2–1.5 s（选项点击会 `trigger_event` 重绘事件）；
     选角色先 hover 出 tooltip 再单点（点海面/不可通行地形会清空已选、点男爵领会打开角色档案）；
@@ -414,12 +432,14 @@ HUD 入口靠 hover 读快捷键（F4 内阁 / F5 贸易 / F6 廷臣 / F7 谋略
     到 `Start running through history.` + 本 mod 报错 0 + 播放集 SHA256 还原；到 history 但没自退是
     概率性的（同一部署 33.1 s 未退、30 秒后复跑 25.9 s exit 0），先复跑一次再下结论。A5 两条：
     mod token 0 条 **且** 没有 `Script location` 指向本 mod 的文件；1.21 原版噪声可达 8,094 条 [E]，
-    不先按位置分组就会误判（基线见 `verified-notes.md [ingame]`）。
+    不先按位置分组就会误判（基线见 `verified-notes.md [ingame]`）。**块的归属看链首**——见硬规则 41。
 26. **发布快照是发布物：字节形状跟启动器一致，上传确认只认机器信号**。两份 descriptor 上传后末字节是 `"`、
     没有行尾换行；生成器不许带 `\n`，快照做到「与上一版逐字节只差两处值」（静态校验 L 段守住）。
     没有生成器的 mod 补一个只生成 descriptor 的 `工具-生成.mjs` + `数据-元数据.mjs`（内容文件仍手写）。
-    上传后确认只认三个机器信号（descriptor 被回写成实测版本 + `steam_workshop_search` 的日期/体积 +
-    条目 ID 未变）；精确 `file_size` 拿不到就写 **SKIP**，别猜。
+    上传后确认只认机器信号：**更新** = descriptor 被回写成实测版本（mtime 变了）+
+    `steam_workshop_search` 的日期/体积 + 条目 ID 未变；**首传** = descriptor 新增 `remote_file_id`
+    （与拿到的条目 ID 一致），`supported_version` **可能仍是 `1.21.*` 不动**（organizer 实测）——
+    见硬规则 40。精确 `file_size` 拿不到就写 **SKIP**，别猜。
     **形状对了就不会再 −1**：快照末字节本来没有 `\n` 时，上传后长度不变（de-jure v2.3 实测 257 / 163 B
     原样，只把 `1.21.*` 回写成 `1.21.0`）——把「−1 字节」当常态，会把正常误判成异常。
     另外：`工具-部署.mjs` 对外层 `.mod` 有「语义等价就跳过写盘」的兜底，生成器改了形状它也**不会**重写旧文件；
@@ -441,9 +461,9 @@ HUD 入口靠 hover 读快捷键（F4 内阁 / F5 贸易 / F6 廷臣 / F7 谋略
 30. **热修不一定改版本号：判「吃没吃热修」看 buildid + 文件 mtime**。`launcher-settings.json` 由启动器回写、
     可能落后于实际安装；`ck3.exe` 也可能仍嵌旧版本串（2026-11-19 实测：buildid `26622941 → 26757580`、
     81 个文件被替换，而 exe 仍写 `1.21.0`/`Florin`）。判据用 `ck3mod_status` 的「游戏构建」行
-    （`appmanifest_1158310.acf` 的 buildid + 安装时间 + exe mtime）。**热修后第一件事仍是 `check --all`**，
-    绿了才能说「与在营 4 个的脚本面不相交」；Wiki 的 `Patch 1.x.X` 页只写「hotfix」、没给版本号时，
-    **别编 `1.21.1`**——按「1.21 hotfix + buildid」记。
+    （`appmanifest_1158310.acf` 的 buildid + 安装时间 + `binaries\ck3.exe` mtime）。**热修后第一件事仍是
+    `check --all`**，绿了才能说「与在营 5 个的脚本面不相交」；Wiki 的 `Patch 1.21.X` 页现在给出
+    **`1.21.0.3`（2026-11-19）**，按「Wiki 编号 + buildid」记——版本串不变，**别用版本串判热修**。
 31. **需求先分类再出计划**：一句话问自己「用户要的是**新内容**（scheme / 事件 / CB / 决策 / 互动）
     还是**开关或数值**（修正 / 游戏规则 / 面板）？」主题词（谋杀、计谋、海战…）只影响文案与选材，
     **不决定交付形态**。分类不清就先问一个问题确认，别先画三份计划——2026-11-19 mastery 需求改了 4 次、
@@ -451,14 +471,45 @@ HUD 入口靠 hover 读快捷键（F4 内阁 / F5 贸易 / F6 廷臣 / F7 谋略
 32. **「所有 X」先找通用键；没有就按枚举写满，并加一条从安装目录反查枚举集合的断言**。引擎经常没有跨类别键
     （计谋的成功率/成长/上限/阶段时长/栏位就是 5 类各一套，`00_definitions.txt:2168-2353`）。
     做法：枚举写进 `数据-*.mjs`，断言每次从安装目录解析实际出现的集合（缺一类就红）——将来原版新增类别
-    会自动报警，而不是靠人记得补（mastery 的 L0 段，当前 5 类）。
+    会自动报警，而不是靠人记得补（mastery 的 L0 段，当前 5 类）。反过来，「所有政体」也有通用解：
+    `is_vassal_or_below_of` 把「独立统治者」推广到任意深度的封臣树——**先找这种通用键**，再按政体逐项跑探针
+    证明（organizer 7 政体 + 封臣统治者 8/8）。
 33. **结构性判据一律跑在剥离注释的文本上；反向样本必须证明「真的改到了」**。注释里出现的示例片段不算数：
     mastery 的 L5 被决策文件注释里的 `is_shown = { is_ai = no }` 满足，「删掉闸门」的坏样本照样 PASS；
     括号配平还要先剥字符串。反向样本改完必须断言 `next !== src`（`if (next === src) throw`）——
-    样本没生效会被误判成「判据没开火」，白跑一轮。
+    样本没生效会被误判成「判据没开火」，白跑一轮。**用 `replaceAll` 或先剥注释**：organizer 实测
+    `replace('is_vassal_or_below_of = root', 'top_liege = root')` 只改到**文件头注释里的示例**，
+    代码没动、校验器照样 PASS——等于没测。
 34. **探针一次只回答一个问题**。一条 on_action 里塞两件互相覆盖的事（两次 `start_scheme`）时，第一个失败
     会被第二个掩盖：mastery G7 个人侧 `sway` 没起来，两次都只有 1 张卡，既证不了基线也证不了 +1，只能交回人工。
     多步实验拆成多次启动，或让每一步都有**独立可观测的产物**。
+35. **需求先要「终局状态」，过程动作不是需求**。让用户用「点完之后我的头衔列表 / 领地长什么样」描述验收，
+    再倒推算法。organizer 第一版按「实时法理归位」写（补建 + 转封 + 归位，6 事务），静态 / 反向 / 无头全绿，
+    真机直接不通过——用户要的是**终局**（只留首都链条、封臣每级 1 个、高等头衔给首都县持有人），不是过程。
+    先写「终局定义表」，再逐条对应可观测验收项（G1–G10）。
+36. **`create_character` 必须显式给性别**。模板可能不带性别（`_scripted_character_templates.info:50` 原文
+    「If no gender data is set here or in a base template: create_character logs an error」），否则无头直接
+    3 条 `PostValidate of effect 'create_character' returned false`。`gender` / `opposite_gender` /
+    `gender_female_chance` 三选一；新角色九项结构（template / gender / culture / faith / rite / location /
+    dynasty / save_scope_as / set_employer）要有静态断言（organizer 的 H8）。
+37. **「我的领域」用 `is_vassal_or_below_of = root`，不要用 `top_liege = root`**。`is_vassal_of` 只判直属封臣，
+    `top_liege = root` 只在独立统治者时成立——拿它当范围判定，「所有政体可用」就是假的（封臣统治者、行政总督
+    全被挡）。无地 / 雇佣兵团长用 `exists = capital_county` 挡；`change_government` 只吃字面 key
+    （全安装目录 0 处 scope 用法），想复制政体只能枚举。
+38. **触发器 / 效果先核作用域类型**。`is_mercenary_company` / `is_holy_order` 是**头衔**触发器，写在角色
+    作用域会报 `Inconsistent trigger scopes (character vs. landed_title)`——放进 `primary_title = { }`。
+    抄任何触发器前先在 `Triggers list` / `.info` 的 scope 列确认它吃哪种 scope。
+39. **游戏不变量要写进 UI 与文档**。引擎不允许把同级或更高头衔封给封臣（`resolve_title_and_vassal_change`
+    报 `same or higher tier`），任命制头衔还受 `has_appointment_level_for_title` 限制——这些「做不到」必须
+    写进决议 `is_valid` tooltip 与 README，否则会被当 bug 报（例：国王的第二个王国只能留在玩家名下）。
+40. **首传只看 `remote_file_id`，随后必须回填 META 再重生成**。organizer 首传后两份 descriptor 各 +28 B
+    （233→261 / 138→166 B），**`supported_version` 仍是 `1.21.*`**——「点上传会把 supported_version 回写成
+    实测版本」在首传**不成立**（更新时才回写）。拿到编号后必须回填 `数据-元数据.mjs` 的 `remoteFileId`
+    → `工具-生成.mjs` 重生成 → 部署比对：未回填 **6/8**、回填后 **8/8**。
+41. **日志归属看错误块的链首**。取每个 `Script system error` 块的**第一个** `file:` / `Script location` 行，
+    以本 mod 文件名开头才算我们的错。organizer 用户会话 242 块里 36 块末端指向本 mod 决议、**0 块起于本 mod
+    脚本**（23 GDP 商业共和国建政链 / 7 商人家族头衔 / 6 日本 `previous_holder`）——这 36 条要作为
+    「已知原版噪声」写进 README 与工坊描述，别把链条末端当证据。
 
 ## Verification layers
 
@@ -469,6 +520,7 @@ HUD 入口靠 hover 读快捷键（F4 内阁 / F5 贸易 / F6 廷臣 / F7 谋略
 | Reverse | shared `reverse` + per-mod reverse | whether checks actually fire on deliberate defects |
 | Headless | `ck3.exe -debug_mode -nographics -shutdown_after_history` | load-time errors only; 判据 = 到 history + 本 mod 0 报错 + 播放集还原；「没自退」先复跑；not interactions/on_game_start |
 | Console run-script（手动） | `run/` + 控制台 `run x.txt` | 条件搭建与效果链，可重复；仍需人开游戏 |
+| 探针（临时 on_action → 隐藏事件） | `zz_probe_*.txt` + `debug_log` 埋点 | 「整段效果能不能跑完」（organizer 8/8 政体）；不证明 UI / 数值；一次只答一个问题，跑完删并用文件哈希证明回到已验证状态 |
 | Console `scripted_tests`（1.21，手动） | 游戏内控制台 `scripted_tests [pattern]` | 原版自带 20 个测试文件；需要已载入存档；无人值守入口未打通 |
 | In-game（人点、机记；用户明确要求时可机器代点） | `工具-真机现场.mjs` + 点击 + 截图 + `error.log` token 计数 | 互动 / UI / tooltip / 决策 / 宣战界面；不能证明数值平衡与长期运行；**必须连续跑时间的项留给人** |
 | Workshop | launcher upload + page check | packaging/size/ID, not logic |
@@ -485,8 +537,8 @@ Never claim a layer passed if it was skipped; say **SKIP** and why.
 
 - Wiki 索引（本次勘察生成）：`references/ck3-wiki-atlas.md`
 - 实测要点（按域，带 `.info` 行号）：`references/verified-notes.md`（含 `[hotfix]` 热修与版本口径、
-  `[scheme]` 计谋类别与成功率天花板、`[release]` 发布/工坊核对、`[automation]` 真机自动化、
-  `[verify]` 无头/A5/反向判据）
+  `[title]` 头衔/法理/封臣树、`[scheme]` 计谋类别与成功率天花板、`[release]` 发布/工坊核对、
+  `[automation]` 真机自动化、`[verify]` 无头/A5/反向判据）
 - 真机验收 runbook（含 §9 机器代点与 §9.6 点击纪律）：`references/ingame-acceptance.md`
 - 踩坑总账（2026-11-18 项目收尾）：`D:\DSH workspace\.admin\retro-2026-11-18-ck3mod.md`
 - 踩坑续篇（2026-11-18b auto v2.1）：`D:\DSH workspace\.admin\retro-2026-11-18b-ck3mod-auto-v2.1.md`
@@ -500,6 +552,10 @@ Never claim a layer passed if it was skipped; say **SKIP** and why.
   —— M1–M12（需求先分类 / 「所有 X」→ 枚举 + 反查 / 潜力天花板 / `SCHEMES_PER_TYPE` / 注释喂饱判据 /
   死工坊 ID / 面板行位漂移 / 调试 UI 陷阱 / HUD 快捷盘 / 探针一事一件 / 首次上传形状 / 预检有意差异），
   落点见硬规则 31–34 与 `[scheme]` / `[release]` / `[verify]` / `[automation]` 及 runbook §4.1、§9.6
+- 复盘续篇（2026-11-20 法理整顿 De Jure Organizer v1.0）：`D:\DSH workspace\.admin\retro-2026-11-20-ck3mod-organizer.md`
+  —— O1–O26（终局状态 / create_character 性别 / `is_vassal_or_below_of` / 触发器作用域 / 同级例外写进 UI /
+  首传 `remote_file_id` / 日志链首归属 / 政体矩阵探针 / 注释骗过反向样本 / 商业共和国与日本噪声），
+  落点见硬规则 35–41 与 `[title]` / `[release]` / `[verify]` / `[ingame]` / `[automation]` 及 runbook §4.5
 - 文档索引兜底：`D:\DSH workspace\.admin\工具-文档链接检查.mjs`（收尾必跑；`--all` 扫整个 `.admin`）
 - auto 的 L 段与回滚：`D:\DSH workspace\ck3-auto-spread\README.md`、`发布说明.md`
 - 索引生成器：`scripts/wiki-atlas.mjs`（`--check` 验鲜，`--out` 改输出位置；补丁链与页面改名都有

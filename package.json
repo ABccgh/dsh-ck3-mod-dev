@@ -1,6 +1,6 @@
 {
   "name": "@local/ck3moddev",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "description": "CK3 mod development tools for DeepSeek Harness: check, build, deploy, headless smoke test, log triage, vanilla lookup, workshop preflight",
@@ -21,7 +21,7 @@
   ],
   "meta": {
     "title": "CK3 Mod Dev",
-    "description": "CK3 模组开发智能体（1.21.0 Florin + 1.21 hotfix 判据）：8 个 ck3mod_* 工具（校验/生成/部署/无头冒烟/日志/原版检索/工坊预检，status 报 Steam buildid）+ 1.21 迁移要点、Wiki 索引（含补丁链自动核对）、真机验收现场保护与三层查证纪律。"
+    "description": "CK3 模组开发智能体（1.21.0.3 Florin / buildid 26785313）：8 个 ck3mod_* 工具（校验/生成/部署/无头冒烟/日志/原版检索/工坊预检，status 报 Steam buildid）+ 1.21 迁移要点、Wiki 索引（含补丁链自动核对）、头衔/法理/封臣树实测（[title]）、真机验收现场保护与三层查证纪律。"
   },
   "scripts": {
     "test": "node --test \"test/*.test.js\""

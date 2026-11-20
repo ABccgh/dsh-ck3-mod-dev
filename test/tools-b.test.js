@@ -118,7 +118,7 @@ function fakeRegistry(...mods) {
 // ck3mod_status
 // ---------------------------------------------------------------------------
 
-test('status：环境、dlc_load、四个 mod 块与建议', async (t) => {
+test('status：环境、dlc_load、五个 mod 块与建议', async (t) => {
   const config = makeConfig(t);
   write(path.join(config.launcherSettings), '{"rawVersion":"1.20.3","version":"1.20.3 (Crozier)"}');
   write(
