@@ -626,3 +626,27 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   「必须有 wrapper + 内联零残留」后，v1.0 反例从 16 变成 20。直接改数字等于自证；正确做法是用
   `git show HEAD:工具-静态校验.mjs` 把**旧版校验器**跑在同一样本上（旧版仍是 16），
   再逐条对出新增的 4 条（缺 3 个 wrapper + 6 处内联残留合成 1 条）——差值来自断言集合变化，不是判据失灵。
+
+---
+
+## [dependency] 共用脚本库（前置 mod，2026-11-21 core 实测）
+
+- **`.mod` 支持 `dependencies={ "显示名" }`**：值必须与库 descriptor 的 `name` 逐字一致（不是文件夹名）。
+  本机已订阅的工坊 mod 里有现成例子（如 `ugc_2730101159.mod` 同时依赖三个库）；内外两份 descriptor 都写。
+- **缺库的报错形态**：消费者脚本调用不存在的 `cn_dejure_core_*` 时，游戏会报 `Unknown trigger/effect`
+  （`pdx_persistent_reader.cpp:216` 这一类；2026-11-21 的 error.log 里其他 mod 的 `Unknown trigger: is_dwarf`
+  就是同型）。所以消费者不能「先单独发」——**上传顺序 = 库先、消费者后**，工坊描述写清「需要前置库」。
+- **脚本对象是全局的**：所有启用 mod 的 `common/scripted_effects|triggers` 合进同一库，消费者按名字调用；
+  加载顺序把库放上面（启动器 `dependencies` 会排序，手动播放集兜底）。
+- **无头测不了「库 + 消费者」**：`ck3mod_headless` 把 `dlc_load.json` 写成 `[mod.enabledEntry]`（单条）。
+  替代：**合并副本冒烟**——`ck3mod_deploy <consumer>` → 把库的 `common/scripted_effects|triggers/*.txt`
+  复制进本机副本同路径 → `ck3mod_headless <consumer>` → 手工 grep 本轮 `error.log` 的库 token
+  （工具的 `modErrorLines` 只按消费者的 folder 过滤，会漏库的报错）→ `ck3mod_deploy --clean`。
+  真正的双/三 mod 依赖仍要真机联测。
+- **接口纪律**：库的 `数据-接口.mjs` 是唯一事实来源；库校验器断言快照导出集合**完全相等**（多/少都红）；
+  消费者校验器从接口表取名字并核对调用参数（`TIER` / `CHANGE`）、0 处内联回流。
+- **迁移等价/覆盖**：v1.0→v1.1 用 `工具-迁移比对.mjs`（16/16 块逐行一致）+ `工具-迁移覆盖.mjs`
+  （旧 29 条反向样本 29/29 有落点：organizer 31 / core 21）证明「只搬家、不改行为、不删检查」。
+- **本轮实测**：core 静态 A–M PASS、反向 21/21；dejure 2.4 静态 A–O PASS、反向 6/6（v1.0 反例 20/20）；
+  organizer 1.1 静态 A–P PASS、反向 31/31；合并副本无头：core WARN（到 history、0 报错、隔离干净，
+  连续 3 次未自退）、dejure PASS 29.1 s、organizer PASS 27.4 s；`check --all` 6/6、`reverse --all` 6/6。
