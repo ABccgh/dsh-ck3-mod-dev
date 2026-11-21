@@ -72,7 +72,7 @@ Never infer a path or a command from memory; read the mod README first.
   末字节 `"`（回填前 207 / 114 B）；organizer 首传只 +28 B（233→261 / 138→166 B），`supported_version` 没动。
   见 `[release]`。
 - **前置库 `ck3-de-jure-core`（法理核心 1.2，已上传 3843429156）**：`cn_dejure_core` 只有 2 个脚本文件
-  （7 effects + 8 triggers），**无决议/事件/loc/入口**；dejure **2.6** / organizer **1.3**（仓库快照，更新待传）
+  （7 effects + 8 triggers），**无决议/事件/loc/入口**；dejure **2.6**（已上传 3803258931）/ organizer **1.3**（已上传 3842795131）
   的 descriptor 写 `dependencies={ "法理核心 - De Jure Core" }`，必须三件套一起装；单独启用消费者会报
   `Unknown effect/trigger`。加载顺序把 core 放消费者上面。`configs.mjs` 现有 **6 个条目**
   （5 个已发布 + core 在研），`check --all` 6/6、`reverse --all` 6/6（core 的 shared loc 变异按「无 loc」跳过）。
@@ -309,7 +309,7 @@ documented expected count and say so.
   所以**上传顺序 = 库先、消费者后**，工坊描述必须写「需要前置库」。`ck3mod_headless` 一次只启用一个条目，
   无法直接测「库 + 消费者」：用**合并副本冒烟**（把库的 scripts 复制进消费者本机副本，跑完 clean）
   + 真机三件套联测。见 `[dependency]`。**2026-11-21 实测：core 1.2 首传成功（3843429156，空 ID 新建条目），
-  `remote_file_id` 新增、`supported_version` 仍 `1.21.*`；消费者更新待传。**
+  `remote_file_id` 新增、`supported_version` 仍 `1.21.*`；dejure 2.6 / organizer 1.3 更新也已上传（ID 不变、supported_version 未回写）。**
 - **共享状态联动（2026-11-21 core 1.2）**：dejure 胜利 → core 的 `mark_recent_conquest`（flag 365 天）；
   organizer 的 `cost` 用 **script_values** 读 core 的 `recent_conquest_trigger`，窗口内 0/0；点击后总效果末尾
   `clear`（一次胜利一次）；dejure 的战后建衔也读同一 window。**软联动**：dejure 不在 → trigger 恒 false，

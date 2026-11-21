@@ -666,4 +666,6 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   M5 旧存档 / M6 真实胜利 **SKIP（未测）**；现场已 `--end`/`--clean`。
 - **core 首传（2026-11-21）**：core 1.2 首次上传成功（<https://steamcommunity.com/sharedfiles/filedetails/?id=3843429156>）。
   空 `remote_file_id` 的点上传会新建条目（不可撤销）；上传后本机 descriptor 的 `remote_file_id` 新增、`supported_version`
-  仍 `1.21.*`（未回写），末字节 `"`；回填 META `remoteFileId` → 生成 → 部署 **5/5**、预检 PASS。消费者 2.6/1.3 更新待传。
+  仍 `1.21.*`（未回写），末字节 `"`；回填 META `remoteFileId` → 生成 → 部署 **5/5**、预检 PASS。
+  **消费者更新也已上传**：dejure 2.6（3803258931）/ organizer 1.3（3842795131）；本机 descriptor 与快照逐字节一致，
+  `remote_file_id` 不变、`supported_version` 仍 `1.21.*`（更新也未回写）；精确 `file_size` 均 SKIP。
