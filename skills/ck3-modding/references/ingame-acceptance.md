@@ -205,6 +205,8 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 > `has_work` 不满足时 M1 决议无效、窗口不被消耗；冷却中窗口内也要等冷却结束（365 天 > 180 天，通常够）。
 > organizer 单独装（无 dejure）时，`error.log` 不应出现 `Variable 'cn_dejure_suite_organizer' is set but is never used`
 > （决议里的 marker 使用点保证）；旧存档/禁用 organizer 的标记边界用上面两条控制台命令处理。
+>
+> **2026-11-21 实测**：M1–M3 + M4（只开 core+dejure）用户 PASS；M4b 伯爵级 / M5 旧存档 / M6 真实胜利 SKIP（未测）。
 
 **收场**：杀 `ck3.exe` → `工具-真机现场.mjs --end` → `ck3mod_deploy core|dejure|organizer clean`。
 日志归属按 §5：每个错误块的**链首**指向 `cn_dejure_core_*` / `cn_dejure_*` 才算本 mod 的错；
