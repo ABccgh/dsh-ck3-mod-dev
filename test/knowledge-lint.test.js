@@ -248,3 +248,41 @@ test('未知参数退出 1', () => {
   assert.equal(code, 1, out);
   assert.match(out, /未知参数/);
 });
+
+test('人格层删掉合并副本冒烟时报 PERSONA', () => {
+  const root = makeRepo();
+  write(root, PATCH_REL, read(root, PATCH_REL).replaceAll('合并副本冒烟', '合并冒烟'));
+  const { code, out } = run(['--repo', root, '--no-deploy']);
+  assert.equal(code, 1, out);
+  assert.match(out, /\[PERSONA\]/);
+  assert.match(out, /缺 1 句/);
+});
+
+test('人格层写回 organizer 版本时报版本枚举', () => {
+  const root = makeRepo();
+  write(root, PATCH_REL, read(root, PATCH_REL).replace('0.9.0 工具行为', 'organizer 1.3 工具行为'));
+  const { code, out } = run(['--repo', root, '--no-deploy']);
+  assert.equal(code, 1, out);
+  assert.match(out, /\[PERSONA\]/);
+  assert.match(out, /版本枚举/);
+});
+
+test('bundle 的 lib/tools/*.js 不一致报 DEPLOY/bundle', () => {
+  const root = makeRepo();
+  fs.mkdirSync(path.join(root, 'lib', 'tools'), { recursive: true });
+  write(root, path.join('lib', 'index.js'), '// index\n');
+  write(root, path.join('lib', 'tools', 'x.js'), '// repo version\n');
+  const bundle = fs.mkdtempSync(path.join(os.tmpdir(), 'ck3-lint-bundle-'));
+  created.push(bundle);
+  fs.mkdirSync(path.join(bundle, 'lib', 'tools'), { recursive: true });
+  write(bundle, path.join('lib', 'index.js'), '// index\n');
+  write(bundle, path.join('lib', 'tools', 'x.js'), '// installed version\n');
+  const { code, out } = run([
+    '--repo', root,
+    '--deploy', missing(root),
+    '--bundle', bundle,
+  ]);
+  assert.equal(code, 1, out);
+  assert.match(out, /\[DEPLOY\/bundle\]/);
+  assert.match(out, /lib\/tools\/x\.js/);
+});

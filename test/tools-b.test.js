@@ -566,6 +566,27 @@ test('vanilla：无命中不是错误；参数错误可执行', async (t) => {
   await assert.rejects(tool.execute({ query: 'x', scope: 'nope' }), /未知 scope：nope/);
 });
 
+test('vanilla：common/on_action 递归覆盖（on_game_start_after_lobby / set_global_variable）', async (t) => {
+  const config = makeConfig(t);
+  const base = path.join(config.gameRoot, 'game');
+  write(
+    path.join(base, 'common', 'on_action', 'game_start.txt'),
+    [
+      'on_game_start_after_lobby = {',
+      '\ton_actions = { zz_probe_game_start }',
+      '}',
+      'set_global_variable = { name = auto_spread_faith value = yes }',
+    ].join('\n') + '\n',
+  );
+  const tool = vanillaTool(makeDeps(config));
+
+  const afterLobby = await tool.execute({ query: 'on_game_start_after_lobby' });
+  assert.match(afterLobby.text, /game\/common\/on_action\/game_start\.txt:1/);
+
+  const variable = await tool.execute({ query: 'set_global_variable' });
+  assert.match(variable.text, /game\/common\/on_action\/game_start\.txt:4/);
+});
+
 test('vanilla：gameRoot 不存在时报可执行的错误', async (t) => {
   const root = tempDir(t);
   const config = normalizeConfig({

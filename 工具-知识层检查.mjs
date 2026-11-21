@@ -57,15 +57,27 @@ const EXPECTED_ANCHOR_COUNT = 145;
 /** 人格层（预设的 system prompt）文件；它是最先被模型读到的一层，最容易漂。 */
 const PATCH_FILE = 'cordis.patch.yml';
 
-/** bundle 安装副本里参与比对的关键文件（其余是运行时无关文件）。 */
+/** bundle 安装副本里参与比对的固定文件（其余是运行时无关文件）；`lib/` 由 bundleFiles() 递归补全。 */
 const BUNDLE_FILES = [
   'package.json',
   'cordis.patch.yml',
   'README.md',
   path.join('locale', 'en.json'),
   path.join('locale', 'zh.json'),
-  path.join('lib', 'index.js'),
 ];
+
+/**
+ * bundle 副本要逐文件比对的清单：固定文件 + 仓库 `lib/` 下全部文件。
+ *
+ * 2026-11-21（0.9.0）：以前只比 `lib/index.js`，改 `lib/tools/*.js` 时部署检查照样绿——
+ * 这正是「判据自己变弱也是 bug」。现在按仓库实际文件列表比对；`lib/` 不存在时只剩固定项。
+ * @param {string} repo 仓库根。
+ * @returns {string[]} 相对路径（统一用 /）。
+ */
+function bundleFiles(repo) {
+  const libFiles = listFiles(path.join(repo, 'lib')).map((rel) => `lib/${rel}`);
+  return [...BUNDLE_FILES, ...libFiles];
+}
 
 const SKILL_FILE = path.join(SKILL_REL, 'SKILL.md');
 const NOTES_FILE = path.join(SKILL_REL, 'references', 'verified-notes.md');
@@ -173,13 +185,17 @@ const PERSONA_REQUIRED = [
   '链首',
   'is_vassal_or_below_of',
   '在营 5 个',
+  '6 个工坊条目',
+  'is set but is never used',
+  'ugc_',
+  '合并副本冒烟',
 ];
 
 /** 人格层禁词：被推翻的旧结论 / 已知会漂的写法 / 已删除的 mod。 */
 const PERSONA_FORBIDDEN = ['dejure 2.2', '吃掉行尾', '少 1 属正常', '七层', 'curse'];
 
 /** 人格层禁止出现的 mod 版本枚举（版本以 工作区索引 / META 为准，写死在 prompt 里必漂）。 */
-const PERSONA_VERSION_ENUM = /(?:free|auto|dejure|de-jure|mastery)\s+\d+\.\d+/;
+const PERSONA_VERSION_ENUM = /(?:free|auto|dejure|de-jure|mastery|organizer|core)\s+\d+\.\d+/;
 
 /**
  * 退役 mod 的标识：知识层与人格层里不许再出现（历史只许留在 `.admin` 与 工作区索引）。
@@ -711,7 +727,7 @@ function checkDeploy(report, repo, options) {
     return;
   }
   let bad = 0;
-  for (const rel of BUNDLE_FILES) {
+  for (const rel of bundleFiles(repo)) {
     const src = path.join(repo, rel);
     const dst = path.join(options.bundle, rel);
     if (!fs.existsSync(src)) {

@@ -1,10 +1,10 @@
 # dsh-ck3-mod-dev —— CK3 模组开发智能体 + 工具插件
 
 > 一个 DSH profile bundle：一个可在会话里选择的智能体预设 **「CK3 模组开发」**（`preset-ck3mod`），
-> 外加 8 个 `ck3mod_*` 工具。工具只做**调用与汇总**——校验规则仍然归五个 mod 自己的
+> 外加 8 个 `ck3mod_*` 工具。工具只做**调用与汇总**——校验规则仍然归各 mod 自己的
 > `工具-*.mjs` 与 `ck3-modding-tools/cli.mjs`，本插件一份都不复制。
 
-- 包名：`@local/ck3moddev` · 版本 0.8.0 · MIT
+- 包名：`@local/ck3moddev` · 版本 0.9.0 · MIT
 - 作用域：Windows 本机、profile `desktop`、游戏 **CK3 1.21.0.3 "Florin"**（buildid 26785313）
 - 只做新增：不覆盖、不删除、不改动任何现有插件（`@local/ck3wiki`、`@local/steam`、`@local/prts` 等原样保留）
 - 仓库：<https://github.com/ABccgh/dsh-ck3-mod-dev>（MIT）
@@ -153,22 +153,22 @@ plugin_manager  action: install_bundle  target: %USERPROFILE%\dsh-bundles\ck3mod
 
 | 工具 | 写盘 | 启动游戏 | 说明 |
 |---|---|---|---|
-| `ck3mod_status` | — | — | 环境 + 五 mod 总览：快照/本机副本、能力、git、游戏版本与 **Steam buildid**（判热修）、日志时间、播放集哈希 |
-| `ck3mod_check` | — | — | `check` / `loc` / `reverse` / `selftest`，跑共享 CLI 的 `--json` 并渲染 |
+| `ck3mod_status` | — | — | 环境 + 6 个条目总览：快照/本机副本、能力、git、游戏版本与 **Steam buildid**（判热修）、mod 目录（本机副本 / `ugc_*` 计数）、**上传 ID 与 `ugc_<id>.mod` 是否已订阅**、日志时间、播放集哈希 |
+| `ck3mod_check` | — | — | `check` / `loc` / `reverse` / `selftest`，跑共享 CLI 的 `--json` 并渲染；附带**脚本卫生提示**（硬编码快照目录/版本字面量）与 `ReferenceError` 可读结论 |
 | `ck3mod_build` | ✅ 发布快照 | — | `generate` / `normalize`（写）或 `*-check`（只比对）/ `pipeline` |
-| `ck3mod_deploy` | ✅ `Documents\...\mod` | — | `deploy` / `check` / `clean`；按 mod 自己的部署脚本，能力探测决定 `--prune` 等 |
-| `ck3mod_headless` | ✅ 临时改 `dlc_load.json` | ✅ | 无头冒烟；带备份/还原/哈希核对/pending 自愈/日志分诊 |
-| `ck3mod_logs` | — | — | `error` / `debug` / `game`：`[E]` 行、`Enabled`/`Mounted` 隔离判断、按 mod 计数 |
-| `ck3mod_vanilla` | — | — | 在游戏安装目录检索原版脚本/本地化/`.info` 文档 |
-| `ck3mod_workshop` | — | — | 工坊描述**逐段** ≤8000 字节、descriptor 字段对照、缩略图、空 `remote_file_id` 警告 |
+| `ck3mod_deploy` | ✅ `Documents\...\mod` | — | `deploy` / `check` / `clean`；按 mod 自己的部署脚本，能力探测决定 `--prune` 等；「多出文件」会**归因到合并副本冒烟 extra** |
+| `ck3mod_headless` | ✅ 临时改 `dlc_load.json` | ✅ | 无头冒烟；带备份/还原/哈希核对/pending 自愈/日志分诊；**本 mod 全局变量名并入报错 token，单列「suite 变量未使用」** |
+| `ck3mod_logs` | — | — | `error` / `debug` / `game`：`[E]` 行、`Enabled`/`Mounted` 隔离判断、按 mod 计数、**全局变量未使用单独成段** |
+| `ck3mod_vanilla` | — | — | 在游戏安装目录检索原版脚本/本地化/`.info` 文档（`common` 递归，含 `common/on_action/`） |
+| `ck3mod_workshop` | — | — | 工坊描述**逐段** ≤8000 字节、三份 descriptor 字段对照、缩略图；**本机副本缺失提示先 deploy、首传/更新区分、launcher 回写豁免、`ugc_<id>.mod` 订阅状态、`file_size`/页面内容 SKIP** |
 
 只读工具并发安全；`build` / `deploy` / `headless` 串行，且 headless 有进程内互斥。
 
 ### 5.1 能力探测（不硬编码）
 
-在营 5 个（dejure / organizer / free / auto / mastery）的脚本并不统一：dejure 的部署支持
-`--check --clean --allow-launcher-rewrite`，mastery 支持 `--check --clean`，free 只有 `--check`，
-auto-spread **v2.1 起**有 `--check` / `--clean`（此前根本没有部署脚本）。
+在营 6 个条目（core / dejure / organizer / free / auto / mastery）的脚本并不统一：dejure 的部署支持
+`--check --clean --allow-launcher-rewrite`，mastery / auto / organizer / core 支持 `--check --clean`，
+free 只有 `--check`。**6 个部署脚本都没有 `--prune`**，所以合并副本冒烟留下的 extra 只能先 clean。
 插件在运行时读脚本文本里出现过的 `'--xxx'` 字面量，据此决定允许哪些参数；
 请求了不支持的开关会直接拒绝并列出该 mod 实际支持的项——**不会**把参数硬塞给脚本。
 
@@ -176,7 +176,7 @@ auto-spread **v2.1 起**有 `--check` / `--clean`（此前根本没有部署脚�
 
 | `scope` | 目录 | 体量（1.21.0 实测） |
 |---|---|---|
-| `common`（默认） | `game/common` | 3215 文件 / 77 MB |
+| `common`（默认） | `game/common`（**递归整棵子树，含 `common/on_action/` 单数目录**） | 3215 文件 / 77 MB |
 | `events` | `game/events` | 611 文件 / 41 MB |
 | `loc` | `localization/{english,simp_chinese}` | 1351 + 1350 文件 / 58 MB |
 | `docs` | 全游戏 `*.info`（脚本 API 文档） | 214 文件 / 1.3 MB |
@@ -184,6 +184,10 @@ auto-spread **v2.1 起**有 `--check` / `--clean`（此前根本没有部署脚�
 | `all` | common + events + tests + 全部 `.info`（**不含** localization） | ~119 MB |
 
 预算：最多 20000 文件 / 120 MB / 8 秒；超预算会在结果里标「部分结果」。
+
+`common` 是**递归**的，所以 1.21 的 `common/on_action/`（单数）天然覆盖：实测
+`on_game_start_after_lobby` 命中 `game/common/on_action/game_start.txt:2806`，
+`set_global_variable` 在整棵 common 里命中 630 行——查 on_action 钩子不需要单独 scope。
 
 ### 5.3 `ck3mod_workshop` 的分段
 
@@ -336,9 +340,16 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 - `headless.test.js`：临时目录 + fake run，覆盖 PASS/FAIL/超时/启动器占用/副本缺失/基线/自愈。
 - `plugin.test.js`：mock ctx，断言 8 个工具注册、`restrict` 的 deny 列表、apply 不返回值。
 - `tools-a.test.js` / `tools-b.test.js`：各工具的参数拼装与渲染边界。
+- `headless-suite-var.test.js`：`set_global_variable` 的变量名并入 headless/logs token；
+  `Variable ... is set but is never used` 判 FAIL 并单列（0.9.0）。
+- `workshop-local-upload.test.js`：本机副本缺失只提示、首传/更新文案、launcher 回写豁免、ugc、SKIP。
+- `deploy-prune.test.js`：`--prune` 不支持时的 clean 提示、冒烟 extra 归因、RESULT 二值不变。
+- `check-version-literal.test.js`：硬编码快照目录 / version 字面量提示、`ReferenceError` 可读化、expect 过期提示。
+- `status-upload.test.js`：上传 ID、`ugc_*` 存在性、mod 目录计数与收尾建议。
 - `knowledge-lint.test.js`：复制真实知识层到临时目录后做变异（删硬规则 26、改版本、改锚点、删 `[verify]` 节、
-  空部署副本、改 `SCHEMES_PER_TYPE`、人格层/SKILL 写回退役 mod），断言 `工具-知识层检查.mjs` 能分别报
-  `SKILL/rules` / `VERSION` / `C1` / `P9` / `NOTES/sections` / `DEPLOY/skill` / `M4` / `PERSONA` / `RETIRED`。
+  空部署副本、改 `SCHEMES_PER_TYPE`、人格层/SKILL 写回退役 mod、**人格新必备词 / organizer 版本枚举 / bundle 的 lib 文件**），
+  断言 `工具-知识层检查.mjs` 能分别报 `SKILL/rules` / `VERSION` / `C1` / `P9` / `NOTES/sections` /
+  `DEPLOY/skill` / `DEPLOY/bundle` / `M4` / `PERSONA` / `RETIRED`。
 
 测试**不启动真实游戏**、不写真实播放集。
 
@@ -350,6 +361,12 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 - **无头 ≠ 真机**：互动、UI、tooltip、本地化显示仍然只能进游戏点。
 - **全局屏蔽是 best-effort**：Host 插件晚于 2 秒注册的工具不会被隐藏；`restrict` 语义变化时静默降级。
 - **不自动上传工坊**：只做发布前检查；上传仍由启动器手动完成。
+- **部署脚本没有 `--prune`**：合并副本冒烟会留下 extra 文件，`ck3mod_deploy` 只能先 `action=clean` 再 deploy；
+  插件只按输出归因，不删文件。
+- **`ugc_*.mod` 是 launcher 的工坊描述符**：只在订阅后出现，不是本机副本；工具只能报存在性，
+  不能替你订阅。启动器「上传 Mod」也只列本机副本——空列表时先 deploy，别点「创建 MOD」。
+- **`ck3mod_check` 的脚本卫生只是提示**：硬编码快照目录 / 版本字面量 / `ReferenceError` 都只加提示，
+  不过滤 PASS/FAIL；判据仍在各 mod 自己的校验器里。
 - **不生成缩略图**：`工具-缩略图.py` 仍需手工跑（当前只有 mastery 有）。
 - **强杀 DSH 的极端情况**：`pending.json` 会在下次调用时自愈，但那次 `dlc_load.json` 可能短暂处于测试状态。
 - **`cordis.patch.yml` 含本机绝对路径**：`file:` URL 是预设子插件的唯一稳定引用方式（见 §3.3），
@@ -397,7 +414,7 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
   3. 复核 `references/ingame-acceptance.md`：启动参数表（`_commandline_options.info`）、五 mod 矩阵的
      入口与期望、证据命令；`[ingame]` 一节同步更新。
   4. 改 `SKILL.md` 的 Environment 与「1.2x 变化」段；`metadata.version` 加一。
-  5. 重跑 `cli.mjs check --all`（五个 mod 的 vanilla token 是否还在）；必要时跑无头冒烟与真机验收。
+  5. 重跑 `cli.mjs check --all`（各 mod 的 vanilla token 是否还在）；必要时跑无头冒烟与真机验收。
   6. `cordis.patch.yml` 的人格层与 SKILL 一起改（它是最先读到的摘要；别在里面枚举 mod 版本号，会漂）。
   7. `工具-同步技能.mjs` 同步 + `--check`；`工具-知识层检查.mjs` 必须绿（规则/节/映射/**锚点总数与逐编号覆盖**/
      人格必备词与禁词/References/版本/部署副本）；`.admin\工具-文档链接检查.mjs` 必须 0 缺失；
@@ -413,6 +430,34 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 5. **开游戏前先 `--begin`，收场用杀进程 + `--end`**；游戏内「退出游戏」会覆盖 `autosave_exit` / `last_save`。
 
 ## 13. 更新记录
+
+### 0.9.0（2026-11-21）— 复盘 11-21 三件套落地（P1–P6：suite 变量 / 工坊上传 / deploy 归因 / check lint / status 上传 ID）
+
+- **触发**：用户「更新智能体和插件」——11-21 法理三件套（core / dejure / organizer）复盘
+  （`.admin/retro-2026-11-21-ck3mod-suite.md`，S1–S28）与两份施工文档
+  （`persona-patch-2026-11-21.md`、`plugin-change-spec-2026-11-21.md`）。
+- **persona**：环境行改为「在营 5 个原 mod + 1 个前置库 core（6 个工坊条目）」；on_action 补
+  `common/on_action/` 单数目录、双钩子、自定义动作写法；新增 save 级标记、`Variable ... is set but is never used`、
+  「一个决议」终局、合并副本冒烟后 clean、项目收尾、0.9.0 工具行为；`?v=6 → 7`。
+- **P1 无头/日志**：新增 `modGlobalVariables`（扫快照/本机副本的 `common/events/history`）；
+  headless 把变量名并入报错 token 并单列「suite 变量未使用」（判 FAIL）；logs 同 token 过滤并单列小节。
+- **P2 工坊**：本机副本缺失 → 「先 deploy」提示（不拖 PASS）；三份 ID 全空才判首传；
+  `supported_version` 同 major.minor 差异按 launcher 回写豁免；`ugc_<id>.mod` 订阅状态；
+  精确 `file_size` / 页面内容 SKIP。
+- **P3 部署**：请求 `--prune` 而脚本不支持时给「先 action=clean」提示；「多出文件」按注册表归因到冒烟 extra。
+- **P4 检查**：新增 `lib/lint.js`（硬编码快照目录 / `version="X.Y"`，跳过 `.replace` 变异样本）；
+  validator `ReferenceError` 给可读结论 + `--root` 复现；reverse 失败提示 `configs.mjs` 的 expect 可能过期。
+- **P5 状态**：每块报上传 ID 与 `ugc_*`；环境段报 mod 目录（本机副本 / ugc 计数）；本机副本为 0 时给订阅提示。
+- **P6 vanilla**：递归 `common` 已覆盖 `common/on_action/`（不改代码；补回归测试 + README §5.2 实测行）。
+- **跨仓小修**：dejure / organizer 校验器的 `cn_dejure_core-vX.Y` 改为从 core `META.buildDir` 解析；
+  organizer 的 L8/L10/L11 不再 `existsSync` 静默跳过（此前写死 v1.0，三条 core 不变量实际 0 条生效）。
+- **知识层兜底**：`PERSONA_REQUIRED` +4（6 个工坊条目 / is set but is never used / ugc_ / 合并副本冒烟）、
+  `PERSONA_VERSION_ENUM` 加 organizer / core、`DEPLOY/bundle` 比对覆盖 `lib/**`（以前只比 `lib/index.js`）。
+- **规格更正**：P3.3「K 段报 extra」不成立（红的是部署脚本）；P1 引用的 evidence 不含那两行（改用合成 fixture）；
+  P4.2/P4.3 的 N/M 与结构计数已由校验器/JSON 动态输出，插件只加提示，不改共享工具。
+- **单测**：102 → **126**（5 个新文件 + 3 条知识层变异 + 1 条 on_action 回归）。
+- **验证**：`工具-知识层检查.mjs` **159 项**（`--no-deploy`）/ **161 项**（含部署副本）；`cli.mjs check --all`
+  与 `reverse --all` 仍 **6/6**；organizer / dejure 静态校验全绿。**未改** skill（0.10.0 保持）、未上传工坊、未进游戏。
 
 ### 0.8.0（2026-11-20）— 复盘 11-20 organizer 落地（O1–O26：规则 35–41 / `[title]` / 1.21.0.3 / Wiki 全量复核）
 
