@@ -146,6 +146,7 @@ test('无头：变量 set but never used 计入本 mod 报错并判 FAIL', async
     ]),
     now: () => new Date(),
     timeoutSec: 60,
+    tempDir: ws.tempDir,
   });
 
   assert.equal(result.verdict, 'FAIL', result.text);
@@ -164,6 +165,7 @@ test('无头：没有未使用变量时输出与旧口径一致', async () => {
     launch: fakeLaunch(ws, []),
     now: () => new Date(),
     timeoutSec: 60,
+    tempDir: ws.tempDir,
   });
 
   assert.equal(result.verdict, 'PASS', result.text);
@@ -183,6 +185,7 @@ test('无头：本机副本缺目录时变量扫描不炸（返回空列表）',
       launch: fakeLaunch(ws, []),
       now: () => new Date(),
       timeoutSec: 60,
+      tempDir: ws.tempDir,
     }),
     /本机没有 test 的 mod 副本/,
   );
