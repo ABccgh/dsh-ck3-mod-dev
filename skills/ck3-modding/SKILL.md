@@ -75,14 +75,16 @@ Never infer a path or a command from memory; read the mod README first.
   （7 effects + 8 triggers），**无决议/事件/loc/入口**；dejure **2.6**（已上传 3803258931）/ organizer **1.3**（已上传 3842795131）
   的 descriptor 写 `dependencies={ "法理核心 - De Jure Core" }`，必须三件套一起装；单独启用消费者会报
   `Unknown effect/trigger`。加载顺序把 core 放消费者上面。`configs.mjs` 现有 **6 个条目**
-  （5 个已发布 + core 在研），`check --all` 6/6、`reverse --all` 6/6（core 的 shared loc 变异按「无 loc」跳过）。
+  （5 个原已发布 + core 1.2 已上传），`check --all` 6/6、`reverse --all` 6/6（core 的 shared loc 变异按「无 loc」跳过）。
   **共享战后窗口**：flag `cn_dejure_core_recent_conquest` 365 天；dejure 胜利 mark；organizer 窗口内 cost 0/0；
   两者都用 core clear 消耗；**1.2 软合并标记** `SUITE_MARKER = cn_dejure_suite_organizer`（organizer on_action 设置，dejure 读取）；
-  详见 `[dependency]`。
+  详见 `[dependency]`。**2026-11-21 项目收尾**：三件套全部上传（core 3843429156 / dejure 2.6 3803258931 / organizer 1.3 3842795131）；
+  本机副本/`%TEMP%` 测试物已清，发布快照/审计保留；M1–M4b 用户 PASS、M5/M6 SKIP；见 `.admin/retro-2026-11-21-ck3mod-suite.md`。
 - **降祸 mod（curse）已于 2026-11-19 彻底删除**：工坊下架、仓库整目录移除、`ck3-modding-tools/configs.mjs`
   条目摘除。历史只留在 `.admin` 与 `工作区索引.md`；**别再按它写命令、验收项或检查项**。
-- **五个 mod 的本机副本都已删**（改用工坊订阅，避免重复定义）；要本地测先跑各自 `工具-部署.mjs` 重建
-  （mastery / de-jure / auto / organizer 支持 `--clean`，free 只有 `--check`）。
+- **六个工坊条目的本机副本都已删**（三件套 + free/auto/mastery；改用工坊订阅，避免重复定义）；要本地测先跑各自
+  `工具-部署.mjs` 重建（mastery / de-jure / auto / organizer 支持 `--clean`，free 只有 `--check`）。
+  `mod` 下的 `ugc_*.mod` 是 launcher 的工坊描述符，不是本机副本；新 core（3843429156）需先订阅才会出现。
 - **新版本上手第一件事**：跑该 mod 的 `工具-静态校验.mjs`。H 段（引擎 token）与 H2 段（原版角色货币覆盖）
   会回答「只发兼容版，还是要功能更新」——free 的 H2 就是 2026-11-18 为此加的。
   **判完若只是兼容发布，再用 L 段（`v_prev` ↔ `v_new` 差异断言）把「兼容发布 = 内容零改动」变成机器事实**，

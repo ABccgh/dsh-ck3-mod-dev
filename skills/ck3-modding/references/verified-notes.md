@@ -653,11 +653,13 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   window。**软联动**：dejure 不在 → trigger 恒 false，organizer 永远 300/300；organizer 不在 → dejure 窗口照常。
   两者仍只硬依赖 core。成本脚本值的 scope 是 root 角色；已在 organizer 的 H6 钉 values 逻辑。
 - **软合并标记（2026-11-21 core 1.2）**：`SUITE_MARKER = cn_dejure_suite_organizer`。organizer 的
-  `on_game_start` / `on_game_start_after_lobby` **只追加** `on_actions = { marker }`（直接写 `effect` 会覆盖原版），
-  marker 设 save 级全局变量；dejure 的战后决议在「标记 + 公爵级 + 有首都」时隐藏，伯爵级/单独装保留。
+  `on_game_start` / `on_game_start_after_lobby` **只追加** `on_actions = { marker }`（1.21 目录是
+  **`common/on_action/` 单数**；直接写 `effect` 会覆盖原版），marker 设 save 级全局变量；dejure 的战后决议在
+  「标记 + 公爵级 + 有首都」时隐藏，伯爵级/单独装保留。
   标记是 save 级：旧存档可能没有、禁用 organizer 后可能残留；控制台 `set_global_variable` /
   `remove_global_variable` 处理。**organizer 单独装必须用一次该变量**（例如决议里的 `custom_tooltip`），
-  否则引擎刷 2 条 `Variable 'cn_dejure_suite_organizer' is set but is never used`（实测：加使用点后消失）。
+  否则引擎刷 2 条 `Variable 'cn_dejure_suite_organizer' is set but is never used`（实测：加使用点后消失；
+  `ck3mod_headless` 的 folder token 过滤会漏掉它，A5 要按变量名扩展）。
   载入旧存档时钩子是否触发未机器证明；用户 M5 验证。
 - **本轮实测**：core 1.2 静态 A–M PASS、反向 27/27；dejure 2.6 静态 A–O PASS、反向 6/6（v1.0 反例 20/20）；
   organizer 1.3 静态 A–P + H10 PASS、反向 40/40；合并副本无头：core WARN（到 history、0 报错、隔离干净，
@@ -669,3 +671,7 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   仍 `1.21.*`（未回写），末字节 `"`；回填 META `remoteFileId` → 生成 → 部署 **5/5**、预检 PASS。
   **消费者更新也已上传**：dejure 2.6（3803258931）/ organizer 1.3（3842795131）；本机 descriptor 与快照逐字节一致，
   `remote_file_id` 不变、`supported_version` 仍 `1.21.*`（更新也未回写）；精确 `file_size` 均 SKIP。
+- **上传前置/本机空（2026-11-21）**：测完 `clean` 后启动器「上传 Mod」显示“无可用 Mod。”——它只列
+  `Documents\...\mod` 的本机副本；上传前必须 `ck3mod_deploy`。`mod\ugc_*.mod` 是 launcher 的 Workshop 描述符，
+  不是本机副本；新 core 3843429156 需在启动器订阅后才出现。工坊页面描述/缩略图内容未机器核对（只做文件预检），
+  与精确 `file_size` 一起记 SKIP。
