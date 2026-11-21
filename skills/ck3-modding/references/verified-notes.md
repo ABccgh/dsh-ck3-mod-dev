@@ -662,5 +662,5 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
 - **本轮实测**：core 1.2 静态 A–M PASS、反向 27/27；dejure 2.6 静态 A–O PASS、反向 6/6（v1.0 反例 20/20）；
   organizer 1.3 静态 A–P + H10 PASS、反向 40/40；合并副本无头：core WARN（到 history、0 报错、隔离干净，
   本次未自退）、dejure PASS 27.3 s、organizer PASS 25.4 s；`check --all` 6/6、`reverse --all` 6/6。
-  联动版真机 L1–L4 用户 2026-11-21 报 PASS；合并版 **M1–M3 + M4（只开 core+dejure）用户 PASS**；
-  M4b 伯爵级 / M5 旧存档 / M6 真实胜利 **SKIP（未测）**；现场已 `--end`/`--clean`，三件套 `clean`。
+  联动版真机 L1–L4 用户 2026-11-21 报 PASS；合并版 **M1–M3 + M4（只开 core+dejure）+ M4b（伯爵级）用户 PASS**；
+  M5 旧存档 / M6 真实胜利 **SKIP（未测）**；现场已 `--end`/`--clean`，三件套 `clean`。
