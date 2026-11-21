@@ -71,12 +71,13 @@ Never infer a path or a command from memory; read the mod README first.
   mastery **首次**上传后两份 descriptor 是「回写 `1.21.0` **+ 新增一行 `remote_file_id`**」：235 / 142 B、
   末字节 `"`（回填前 207 / 114 B）；organizer 首传只 +28 B（233→261 / 138→166 B），`supported_version` 没动。
   见 `[release]`。
-- **前置库 `ck3-de-jure-core`（法理核心 1.0，未上传）**：`cn_dejure_core` 只有 2 个脚本文件
-  （5 effects + 7 triggers），**无决议/事件/loc/入口**；dejure **2.4** / organizer **1.1**（仓库快照，均未上传）
+- **前置库 `ck3-de-jure-core`（法理核心 1.1，未上传）**：`cn_dejure_core` 只有 2 个脚本文件
+  （7 effects + 8 triggers），**无决议/事件/loc/入口**；dejure **2.5** / organizer **1.2**（仓库快照，均未上传）
   的 descriptor 写 `dependencies={ "法理核心 - De Jure Core" }`，必须三件套一起装；单独启用消费者会报
   `Unknown effect/trigger`。加载顺序把 core 放消费者上面。`configs.mjs` 现有 **6 个条目**
   （5 个已发布 + core 在研），`check --all` 6/6、`reverse --all` 6/6（core 的 shared loc 变异按「无 loc」跳过）。
-  详见 `[dependency]`。
+  **共享战后窗口**：flag `cn_dejure_core_recent_conquest` 365 天；dejure 胜利 mark；organizer 窗口内 cost 0/0；
+  两者都用 core clear 消耗；详见 `[dependency]`。
 - **降祸 mod（curse）已于 2026-11-19 彻底删除**：工坊下架、仓库整目录移除、`ck3-modding-tools/configs.mjs`
   条目摘除。历史只留在 `.admin` 与 `工作区索引.md`；**别再按它写命令、验收项或检查项**。
 - **五个 mod 的本机副本都已删**（改用工坊订阅，避免重复定义）；要本地测先跑各自 `工具-部署.mjs` 重建
@@ -279,11 +280,11 @@ Common order: **edit source → generate (if table-driven) → normalize → che
 | Mod | Source of truth | Generate/normalize | Check | Notes |
 |---|---|---|---|---|
 | `ck3-scheme-mastery` | `数据-设计.mjs`（三档数值 / 5 个类别 / loc 键）+ hand-written modifiers / decisions / events / loc | `工具-生成.mjs`（**只生成两份 descriptor**）、`工具-规范化.mjs`、`工具-缩略图.py` | `工具-检查.mjs`（静态 **A–N**，核心 **L0 类别覆盖率**：扫安装目录 `scheme_types` 反查类别；反向 **13**；`--root` 可验任意目录） | 决议「豢养刺客」+ 3 档角色修正 + 1 个面板事件；成功率上限 95%（contract 100%）；「所有计谋」靠 L0 机器证明，见 `[scheme]` |
-| `ck3-de-jure-conquest` | `数据-mod表.mjs` + CB script/loc | `工具-生成.mjs`, `工具-规范化.mjs` | `工具-检查.mjs`（静态 **A–O**：B 含 descriptor 字节形状 + `dependencies`；L 结构含 1.21 wrapper + 内联残留；M 决策只调 core（0 内联）+ wrapper 契约 + 战后报告已移除；N v2.3↔v2.4 差异；O configs↔快照；`--root` v1.0 must report **20**） | CB is hand-written; **2.4 = 战后决策循环体搬到 core**（行为不变，依赖《法理核心》）；v2.3 = 1.21 兼容 + 结算对齐 + 移除战后报告；v2.0 settlement checklist 在 `发布说明.md` |
+| `ck3-de-jure-conquest` | `数据-mod表.mjs` + CB script/loc | `工具-生成.mjs`, `工具-规范化.mjs` | `工具-检查.mjs`（静态 **A–O**：B 含 descriptor 字节形状 + `dependencies`；H 跳 core 调用 + 交叉核对 mark；M 决策只调 core（0 内联）+ 窗口 trigger/clear；N v2.4↔v2.5 差异；O configs↔快照；`--root` v1.0 must report **20**） | CB is hand-written; **2.5 = 共享战后窗口**（CB 窗口块/决策 flag 改调 core，依赖《法理核心》）；2.4 = 决策循环体搬到 core；v2.3 = 1.21 兼容 + 结算对齐 + 移除战后报告 |
 | `ck3-free-resources` | `数据-资源表.mjs` | `工具-生成.mjs` (golden check), `工具-部署.mjs` | `工具-检查.mjs` | generated events/loc; never hand-edit products |
 | `ck3-auto-spread` | `数据-元数据.mjs`（META / 快照路径）+ hand-written script/loc | `工具-生成.mjs`（**只生成两份 descriptor**，`--check` golden） | `工具-检查.mjs`（静态 A–M，含 L 段差异；loc 94；reverse 7） | settings via global variables + game rules；v2.1 起有 `工具-部署.mjs`（`--check` / `--clean`），**没有内容生成器** |
-| `ck3-de-jure-organizer` | `数据-设计.mjs`（5 阶段 / 12 事务 / 补建与授予级数）+ `数据-元数据.mjs`；effects / triggers / decisions 手写 | `工具-生成.mjs`（**只生成两份 descriptor**）、`工具-规范化.mjs`、`工具-缩略图.py` | `工具-检查.mjs`（静态 **A–P**：H4/H5/H7/H8/H9 调 core 契约（12 对 create/resolve、P3/P4 的 TIER/CHANGE、P1/P2 新伯爵、7 守卫 0 本地定义）；**L0–L11**（tier 反查、P1 链条、只留首都县、调 core 的受让人/等级上限/任命等级/封臣树）；P v1.0↔v1.1 变更范围；反向 **31**；部署 `--check` / `--clean`） | 单决议「一键法理整顿」；**1.1 = P3/P4/新伯爵/7 个守卫搬到 core**（行为不变）；「所有政体」= 7 政体 + 封臣统治者探针 8/8，见 `[title]` |
-| `ck3-de-jure-core` | `数据-接口.mjs`（5 effects + 7 triggers，唯一事实来源）+ `数据-元数据.mjs`；effects / triggers 手写 | `工具-生成.mjs`（**只生成两份 descriptor**）、`工具-规范化.mjs`、`工具-缩略图.py` | `工具-检查.mjs`（静态 **A–M**：D 导出集合与接口表**完全相等**；E 参数/事务；F 迁移结构（新伯爵九项/补建两分支/授予两分支/给 root 自开事务/7 守卫）；G 原版 token；L 无 localization（script-only）；M configs↔快照；反向 **21**；无 loc → shared `reverse` 跳过 5 条 loc 变异） | **前置库，无决议/事件/loc/入口**；被 dejure 2.4 / organizer 1.1 依赖；单独启用无任何游戏内效果；见 `[dependency]` |
+| `ck3-de-jure-organizer` | `数据-设计.mjs`（5 阶段 / 12 事务 / 补建与授予级数 / 窗口成本）+ `数据-元数据.mjs`；effects / triggers / decisions / values 手写 | `工具-生成.mjs`（**只生成两份 descriptor**）、`工具-规范化.mjs`、`工具-缩略图.py` | `工具-检查.mjs`（静态 **A–P**：H4 调 core 契约 + 窗口 tooltip/clear；H5/H7/H8/H9（12 对 create/resolve、P3/P4 的 TIER/CHANGE、P1/P2 新伯爵、7 守卫 0 本地定义）；H6 cost 脚本值 + values；**L0–L11**；L5 战后 tooltip；P v1.1↔v1.2 变更范围；反向 **36**；部署 `--check` / `--clean`） | 单决议「一键法理整顿」；**1.2 = 共享战后窗口内 0/0、用掉消失**；1.1 = P3/P4/新伯爵/7 守卫搬到 core；「所有政体」= 7 政体 + 封臣统治者探针 8/8，见 `[title]` |
+| `ck3-de-jure-core` | `数据-接口.mjs`（7 effects + 8 triggers，唯一事实来源）+ `数据-元数据.mjs`；effects / triggers 手写 | `工具-生成.mjs`（**只生成两份 descriptor**）、`工具-规范化.mjs`、`工具-缩略图.py` | `工具-检查.mjs`（静态 **A–M**：D 导出集合与接口表**完全相等**；E 参数/事务；F 迁移结构（新伯爵九项/补建两分支/授予两分支/给 root 自开事务/7 守卫/窗口 mark-clear-trigger）；G 原版 token；L 无 localization（script-only）；M configs↔快照；反向 **27**；无 loc → shared `reverse` 跳过 5 条 loc 变异） | **前置库，无决议/事件/loc/入口**；被 dejure 2.5 / organizer 1.2 依赖；共享战后窗口 flag `cn_dejure_core_recent_conquest`；单独启用无任何游戏内效果；见 `[dependency]` |
 
 After editing, always run the mod's `工具-检查.mjs check` (or the original `工具-静态校验.mjs`)
 and keep it output green. Do not "fix" a check by deleting it; if a check is stale, update its
@@ -307,6 +308,10 @@ documented expected count and say so.
   所以**上传顺序 = 库先、消费者后**，工坊描述必须写「需要前置库」。`ck3mod_headless` 一次只启用一个条目，
   无法直接测「库 + 消费者」：用**合并副本冒烟**（把库的 scripts 复制进消费者本机副本，跑完 clean）
   + 真机三件套联测。见 `[dependency]`。
+- **共享状态联动（2026-11-21 core 1.1）**：dejure 胜利 → core 的 `mark_recent_conquest`（flag 365 天）；
+  organizer 的 `cost` 用 **script_values** 读 core 的 `recent_conquest_trigger`，窗口内 0/0；点击后总效果末尾
+  `clear`（一次胜利一次）；dejure 的战后建衔也读同一 window。**软联动**：dejure 不在 → trigger 恒 false，
+  organizer 永远 300/300；organizer 不在 → dejure 窗口照常。两者仍只硬依赖 core。
 
 ## 真机验收（in-game acceptance）
 

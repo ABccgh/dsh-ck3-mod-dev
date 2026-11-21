@@ -184,16 +184,24 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 
 ### 4.6 core（前置库）与三件套联测
 
-**前置**：本机部署 core 1.0 + 消费者（dejure 2.4 / organizer 1.1）；启动器里三个都启用，
+**前置**：本机部署 core **1.1** + 消费者（dejure **2.5** / organizer **1.2**）；启动器里三个都启用，
 **core 放消费者上面**；禁用两个旧工坊订阅版（同名会重复定义）。core 单独启用**没有任何 UI**。
+
+**控制台**（debug_mode；在角色上跑）：
+`effect add_character_flag = { flag = cn_dejure_core_recent_conquest days = 365 }`
+（清窗口：`effect remove_character_flag = cn_dejure_core_recent_conquest`）。
 
 | 项 | 操作 | 期望 | 证据 |
 |---|---|---|---|
 | C1 三件套加载 | 启动到主菜单 / 载入存档 | 无缺依赖提示；`error.log` 无 `Unknown effect/trigger`、无 `cn_dejure_core` 起头的错误块 | 日志命令 |
-| C2 dejure 战后整理 | 拿到 `cn_dejure_conquest_recent_victory`（赢一场法理 CB 或用控制台补 flag）→ 决议「整合法理头衔」→ 点 | 所有可创建头衔建出并归玩家；扣 150 威望；flag 消耗；与 v2.3 一致 | 决议页 + 头衔列表 + 日志 |
-| C3 organizer 五阶段 | 决议「一键法理整顿」→ 点 | P1/P2 新伯爵、P3 补建、P4 首都县受让人、P5 转封各抽 1 项（见 §4.5 G1–G10）；行为与 v1.0 一致 | 头衔列表 + 角色面板 |
-| C4 同局两个决议 | 先 C2 再 C3（或反过来） | 不重复扣费/不重复建衔；无报错 | 资源条 + 日志 |
-| C5 只开 core | 只启用 core | 无决议/事件/按钮；`error.log` 无 `cn_dejure_core` 起头的错误块 | 日志 |
+| L1 窗口内免费 | 控制台设 `cn_dejure_core_recent_conquest` → 打开 organizer 决议 | cost **0 金 0 威望**；战后 tooltip 出现；dejure 战后决策（有可创建头衔时）可见 | 决议页截图 + 资源条 |
+| L2 整顿消耗 | 点 organizer 决议 | 12 事务照常（P1–P5 各抽 1 项）；flag 移除；cost 回 300/300；dejure 决策消失 | 头衔列表 + 决议页 + 日志 |
+| L3 建衔消耗 | 重设 flag → 点 dejure 战后决策 | 头衔建出；flag 移除；organizer 回 300/300 | 头衔列表 + 决议页 |
+| L4 窗口外 | 不设 flag | organizer 300/300、180 天冷却；dejure 决策不显示 | 决议页 |
+| L5 真实胜利（可选） | 赢一场法理 CB | 窗口自动挂上；organizer 0/0；再赢一场刷新 | 决议页 + 日志 |
+| L6/L7 软联动（可选） | 只开 core+organizer / core+dejure | 前者永远 300/300、无窗口；后者窗口照常；均无报错 | 决议页 + 日志 |
+
+> `has_work` 不满足时 L1 决议无效、窗口不被消耗；冷却中窗口内也要等冷却结束（365 天 > 180 天，通常够）。
 
 **收场**：杀 `ck3.exe` → `工具-真机现场.mjs --end` → `ck3mod_deploy core|dejure|organizer clean`。
 日志归属按 §5：每个错误块的**链首**指向 `cn_dejure_core_*` / `cn_dejure_*` 才算本 mod 的错；
