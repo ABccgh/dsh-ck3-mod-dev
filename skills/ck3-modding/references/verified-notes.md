@@ -663,4 +663,7 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
   organizer 1.3 静态 A–P + H10 PASS、反向 40/40；合并副本无头：core WARN（到 history、0 报错、隔离干净，
   本次未自退）、dejure PASS 27.3 s、organizer PASS 25.4 s；`check --all` 6/6、`reverse --all` 6/6。
   联动版真机 L1–L4 用户 2026-11-21 报 PASS；合并版 **M1–M3 + M4（只开 core+dejure）+ M4b（伯爵级）用户 PASS**；
-  M5 旧存档 / M6 真实胜利 **SKIP（未测）**；现场已 `--end`/`--clean`，三件套 `clean`。
+  M5 旧存档 / M6 真实胜利 **SKIP（未测）**；现场已 `--end`/`--clean`。
+- **core 首传（2026-11-21）**：core 1.2 首次上传成功（<https://steamcommunity.com/sharedfiles/filedetails/?id=3843429156>）。
+  空 `remote_file_id` 的点上传会新建条目（不可撤销）；上传后本机 descriptor 的 `remote_file_id` 新增、`supported_version`
+  仍 `1.21.*`（未回写），末字节 `"`；回填 META `remoteFileId` → 生成 → 部署 **5/5**、预检 PASS。消费者 2.6/1.3 更新待传。
