@@ -457,7 +457,7 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
   P4.2/P4.3 的 N/M 与结构计数已由校验器/JSON 动态输出，插件只加提示，不改共享工具。
 - **单测**：102 → **126**（5 个新文件 + 3 条知识层变异 + 1 条 on_action 回归）。
 - **验证**：`工具-知识层检查.mjs` **159 项**（`--no-deploy`）/ **161 项**（含部署副本）；`cli.mjs check --all`
-  与 `reverse --all` 仍 **6/6**；organizer / dejure 静态校验全绿。**未改** skill（0.10.0 保持）、未上传工坊、未进游戏。
+  与 `reverse --all` 仍 **6/6**；organizer / dejure 静态校验全绿；**CK3 会话人眼 PASS**（`ck3mod_status` 的 mod 目录/上传 ID/ugc 行、`ck3mod_check` 6/6 无卫生提示、`ck3mod_workshop core` 首传与缺失判定；persona 为「5 个原 mod + 1 前置库」新版）。**未改** skill（0.10.0 保持）、未上传工坊、未进游戏。
 
 ### 0.8.0（2026-11-20）— 复盘 11-20 organizer 落地（O1–O26：规则 35–41 / `[title]` / 1.21.0.3 / Wiki 全量复核）
 
