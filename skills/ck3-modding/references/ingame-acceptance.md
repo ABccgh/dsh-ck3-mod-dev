@@ -184,24 +184,27 @@ cd "D:\DSH workspace\dsh-ck3-mod-dev"
 
 ### 4.6 core（前置库）与三件套联测
 
-**前置**：本机部署 core **1.1** + 消费者（dejure **2.5** / organizer **1.2**）；启动器里三个都启用，
+**前置**：本机部署 core **1.2** + 消费者（dejure **2.6** / organizer **1.3**）；启动器里三个都启用，
 **core 放消费者上面**；禁用两个旧工坊订阅版（同名会重复定义）。core 单独启用**没有任何 UI**。
 
 **控制台**（debug_mode；在角色上跑）：
-`effect add_character_flag = { flag = cn_dejure_core_recent_conquest days = 365 }`
-（清窗口：`effect remove_character_flag = cn_dejure_core_recent_conquest`）。
+- 窗口：`effect add_character_flag = { flag = cn_dejure_core_recent_conquest days = 365 }`
+  （清窗口：`effect remove_character_flag = cn_dejure_core_recent_conquest`）
+- 软合并标记：`effect set_global_variable = { name = cn_dejure_suite_organizer value = yes }`
+  （移除：`effect remove_global_variable = cn_dejure_suite_organizer`）
 
 | 项 | 操作 | 期望 | 证据 |
 |---|---|---|---|
-| C1 三件套加载 | 启动到主菜单 / 载入存档 | 无缺依赖提示；`error.log` 无 `Unknown effect/trigger`、无 `cn_dejure_core` 起头的错误块 | 日志命令 |
-| L1 窗口内免费 | 控制台设 `cn_dejure_core_recent_conquest` → 打开 organizer 决议 | cost **0 金 0 威望**；战后 tooltip 出现；dejure 战后决策（有可创建头衔时）可见 | 决议页截图 + 资源条 |
-| L2 整顿消耗 | 点 organizer 决议 | 12 事务照常（P1–P5 各抽 1 项）；flag 移除；cost 回 300/300；dejure 决策消失 | 头衔列表 + 决议页 + 日志 |
-| L3 建衔消耗 | 重设 flag → 点 dejure 战后决策 | 头衔建出；flag 移除；organizer 回 300/300 | 头衔列表 + 决议页 |
-| L4 窗口外 | 不设 flag | organizer 300/300、180 天冷却；dejure 决策不显示 | 决议页 |
-| L5 真实胜利（可选） | 赢一场法理 CB | 窗口自动挂上；organizer 0/0；再赢一场刷新 | 决议页 + 日志 |
-| L6/L7 软联动（可选） | 只开 core+organizer / core+dejure | 前者永远 300/300、无窗口；后者窗口照常；均无报错 | 决议页 + 日志 |
+| M1 唯一决议 | 三件套、公爵+、创建时已启用 organizer 的存档 → 设窗口 → 决议面板 | **只有 organizer 合并「一键法理整顿」**（dejure 战后决议隐藏）；cost 0/0；战后 tooltip | 决议页截图 + 资源条 |
+| M2 预建衔+整顿 | 点 M1 决议 | 先建所有可创建头衔给你，再 P1–P5；可分配高等头衔按规则③给首都县持有人；同级/更高留你手里；flag 移除；回 300/300 | 头衔列表 + 决议页 + 日志 |
+| M3 窗口外 | 不设窗口 | organizer 300/300、180 天冷却；无预建衔；dejure 决议不显示 | 决议页 |
+| M4 伯爵/单独装 | 伯爵级窗口内；或只开 core+dejure | 伯爵：dejure 决议可见可用（150 威望）；单独装：dejure 决议照旧 | 决议页 + 头衔列表 |
+| M5 旧存档/标记 | 在 organizer 之前创建的旧存档载入；或控制台移除 marker | 若标记未设 → 两个决议；`set_global_variable` 后一个；`remove_global_variable` 后 dejure 回来 | 决议页 |
+| M6 真实胜利（可选） | 赢一场法理 CB | 窗口自动挂上；合并决议 0/0；再赢一场刷新 | 决议页 + 日志 |
 
-> `has_work` 不满足时 L1 决议无效、窗口不被消耗；冷却中窗口内也要等冷却结束（365 天 > 180 天，通常够）。
+> `has_work` 不满足时 M1 决议无效、窗口不被消耗；冷却中窗口内也要等冷却结束（365 天 > 180 天，通常够）。
+> organizer 单独装（无 dejure）时，`error.log` 不应出现 `Variable 'cn_dejure_suite_organizer' is set but is never used`
+> （决议里的 marker 使用点保证）；旧存档/禁用 organizer 的标记边界用上面两条控制台命令处理。
 
 **收场**：杀 `ck3.exe` → `工具-真机现场.mjs --end` → `ck3mod_deploy core|dejure|organizer clean`。
 日志归属按 §5：每个错误块的**链首**指向 `cn_dejure_core_*` / `cn_dejure_*` 才算本 mod 的错；

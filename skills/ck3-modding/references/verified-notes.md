@@ -646,13 +646,20 @@ Wiki 那页标题叫 `Resources modding`，**标题误导**：
 - **接口纪律**：库的 `数据-接口.mjs` 是唯一事实来源；库校验器断言快照导出集合**完全相等**（多/少都红）；
   消费者校验器从接口表取名字并核对调用参数（`TIER` / `CHANGE`）、0 处内联回流。
 - **迁移等价/覆盖**：v1.0→v1.1 用 `工具-迁移比对.mjs`（16/16 块逐行一致）+ `工具-迁移覆盖.mjs`
-  （旧 29 条反向样本 29/29 有落点：organizer 36 / core 27）证明「只搬家、不改行为、不删检查」。
-- **共享状态联动（2026-11-21 core 1.1）**：dejure 胜利 → core 的 `mark_recent_conquest`（flag
+  （旧 29 条反向样本 29/29 有落点：organizer 40 / core 27）证明「只搬家、不改行为、不删检查」。
+- **共享状态联动（2026-11-21 core 1.2）**：dejure 胜利 → core 的 `mark_recent_conquest`（flag
   `cn_dejure_core_recent_conquest` 365 天）；organizer 的 `cost` 用 **script_values** 读 core 的
   `recent_conquest_trigger`，窗口内 0/0；点击后总效果末尾 `clear`（一次胜利一次）；dejure 的战后建衔也读同一
   window。**软联动**：dejure 不在 → trigger 恒 false，organizer 永远 300/300；organizer 不在 → dejure 窗口照常。
   两者仍只硬依赖 core。成本脚本值的 scope 是 root 角色；已在 organizer 的 H6 钉 values 逻辑。
-- **本轮实测**：core 1.1 静态 A–M PASS、反向 27/27；dejure 2.5 静态 A–O PASS、反向 6/6（v1.0 反例 20/20）；
-  organizer 1.2 静态 A–P PASS、反向 36/36；合并副本无头：core WARN（到 history、0 报错、隔离干净，
-  本次未自退）、dejure PASS 27.8 s、organizer PASS 25.5 s；`check --all` 6/6、`reverse --all` 6/6。
-  真机 C1 + L1–L4（窗口内 0/0 / 用掉消失 / 建衔消耗 / 窗口外 300/300）待用户。
+- **软合并标记（2026-11-21 core 1.2）**：`SUITE_MARKER = cn_dejure_suite_organizer`。organizer 的
+  `on_game_start` / `on_game_start_after_lobby` **只追加** `on_actions = { marker }`（直接写 `effect` 会覆盖原版），
+  marker 设 save 级全局变量；dejure 的战后决议在「标记 + 公爵级 + 有首都」时隐藏，伯爵级/单独装保留。
+  标记是 save 级：旧存档可能没有、禁用 organizer 后可能残留；控制台 `set_global_variable` /
+  `remove_global_variable` 处理。**organizer 单独装必须用一次该变量**（例如决议里的 `custom_tooltip`），
+  否则引擎刷 2 条 `Variable 'cn_dejure_suite_organizer' is set but is never used`（实测：加使用点后消失）。
+  载入旧存档时钩子是否触发未机器证明；用户 M5 验证。
+- **本轮实测**：core 1.2 静态 A–M PASS、反向 27/27；dejure 2.6 静态 A–O PASS、反向 6/6（v1.0 反例 20/20）；
+  organizer 1.3 静态 A–P + H10 PASS、反向 40/40；合并副本无头：core WARN（到 history、0 报错、隔离干净，
+  本次未自退）、dejure PASS 27.3 s、organizer PASS 25.4 s；`check --all` 6/6、`reverse --all` 6/6。
+  联动版真机 L1–L4 用户 2026-11-21 报 PASS；合并版 M1–M5（唯一决议 / 预建衔+整顿 / 窗口外 / 伯爵+单独装 / 旧存档标记）待用户。
